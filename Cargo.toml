@@ -1,0 +1,9 @@
+[package]
+name = "rust-protein"
+version = "0.1.0"
+authors = ["orhanbalci@gmail.com <orhanbalci@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+nom = "5"
+chrono = "0.4"
