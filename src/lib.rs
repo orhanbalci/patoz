@@ -1,9 +1,3 @@
-pub mod tag;
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
+pub mod entity;
+pub mod primitive;
+pub mod record;

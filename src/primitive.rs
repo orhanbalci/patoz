@@ -3,8 +3,15 @@ use chrono::format::Parsed;
 use chrono::Datelike;
 use chrono::NaiveDate;
 use nom::bytes::complete::tag;
-use nom::character::complete::{alpha1, digit1, multispace0, multispace1};
-use nom::{do_parse, map, map_res, named, tag, take_str, IResult};
+use nom::character::complete::{
+    alpha1, alphanumeric1, digit1, multispace0, multispace1, space0, space1,
+};
+use nom::character::{is_alphanumeric, is_space};
+
+use super::entity::{Header, Obslte};
+use nom::{
+    alt, do_parse, fold_many0, map, map_res, named, opt, tag, take, take_str, take_while, IResult,
+};
 use std::result::Result;
 use std::str;
 use std::str::FromStr;
@@ -36,27 +43,39 @@ make_tagger!(sprsde);
 make_tagger!(jrnl);
 make_tagger!(end);
 
-#[derive(Debug)]
-struct Header {
-    classification: String,
-    deposition_date: NaiveDate,
-    id_code: String,
-}
+named!(
+    pub twodigit_integer<u32>,
+    map_res!(map_res!(take!(2), str::from_utf8), str::FromStr::from_str)
+);
 
 named!(
-    integer<u32>,
+    pub integer<u32>,
     map_res!(map_res!(digit1, str::from_utf8), str::FromStr::from_str)
 );
 
 named!(
-    ascii_word<String>,
+    pub ascii_word<String>,
     map_res!(map_res!(alpha1, str::from_utf8), String::from_str)
 );
 
-named!(spacer<()>, map!(multispace0, |_| ()));
+named!(
+    pub alphanum_word<String>,
+    map_res!(
+        map_res!(alphanumeric1, str::from_utf8),
+        str::FromStr::from_str
+    )
+);
 
 named!(
-    month_parser<u32>,
+    pub alphanum_word_with_spaces_inside<String>,
+    map_res!(
+        map_res!(take_while!(|s| {is_alphanumeric(s) || is_space(s)}), str::from_utf8),
+        str::FromStr::from_str
+    )
+);
+
+named!(
+    pub month_parser<u32>,
     map_res!(ascii_word, |s: String| -> Result<u32, ()> {
         let mut parsed = Parsed::new();
         chrono::format::parse(&mut parsed, s.as_str(), StrftimeItems::new("%b"))
@@ -66,7 +85,7 @@ named!(
 );
 
 named!(
-    date_parser<NaiveDate>,
+    pub date_parser<NaiveDate>,
     do_parse!(
         dayp: integer
             >> tag!("-")
@@ -78,35 +97,23 @@ named!(
 );
 
 named!(
-    header_parser<Header>,
-    do_parse!(
-        tag!("HEADER")
-            >> multispace1
-            >> classification_p: map!(take_str!(40), |s| s.trim())
-            >> deposition_date_p: date_parser
-            >> multispace1
-            >> id_code_p: take_str!(4)
-            >> (Header {
-                classification: classification_p.to_string(),
-                deposition_date: deposition_date_p,
-                id_code: id_code_p.to_string()
-            })
-    )
+    pub alphanum_word_space<String>,
+    do_parse!(w: alphanum_word >> space1 >> (w))
+);
+
+named!(
+    pub idcode_list<Vec<String>>,
+    fold_many0!(alphanum_word_space, Vec::new(), |mut acc: Vec<String>,
+                                                  item: String|
+     -> Vec<String> {
+        acc.push(item);
+        acc
+    })
 );
 
 #[cfg(test)]
 mod test_super {
     use super::*;
-
-    #[test]
-    fn test_header_parser() {
-        let head = header_parser(
-            "HEADER    PHOTOSYNTHESIS                          28-MAR-07   2UXK".as_bytes(),
-        )
-        .unwrap()
-        .1;
-        assert_eq!(head.classification, "PHOTOSYNTHESIS")
-    }
 
     #[test]
     fn test_date_parser() {
