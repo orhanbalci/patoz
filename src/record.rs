@@ -1,6 +1,7 @@
 use super::entity::*;
 use super::primitive::{
-    alphanum_word_with_spaces_inside, date_parser, idcode_list, twodigit_integer,
+    alphanum_word_with_spaces_inside, caveat, date_parser, header, idcode_list, obslte, split,
+    title, twodigit_integer,
 };
 use nom::character::complete::{multispace0, multispace1, newline, space0, space1};
 use nom::{do_parse, map, named, opt, tag, take, take_str};
@@ -8,7 +9,7 @@ use nom::{do_parse, map, named, opt, tag, take, take_str};
 named!(
     header_parser<Header>,
     do_parse!(
-        tag!("HEADER")
+        header
             >> multispace1
             >> classification_p: map!(take_str!(40), |s| s.trim())
             >> deposition_date_p: date_parser
@@ -27,7 +28,7 @@ named!(
 named!(
     obslte_parser<Obslte>,
     do_parse!(
-        tag!("OBSLTE")
+        obslte
             >> take!(2)
             >> cont: opt!(twodigit_integer)
             >> space0
@@ -46,7 +47,7 @@ named!(
 named!(
     title_parser<Title>,
     do_parse!(
-        tag!("TITLE")
+        title
             >> take!(2)
             >> cont: opt!(twodigit_integer)
             >> space1
@@ -63,11 +64,12 @@ named!(
 named!(
     split_parser<Split>,
     do_parse!(
-        tag!("SPLIT")
+        split
             >> take!(2)
             >> cont: opt!(twodigit_integer)
             >> space1
             >> ids: idcode_list
+            >> newline
             >> (Split {
                 continuation: if let Some(cc) = cont { cc } else { 0 },
                 id_codes: ids
@@ -78,7 +80,7 @@ named!(
 named!(
     caveat_parser<Caveat>,
     do_parse!(
-        tag!("CAVEAT")
+        caveat
             >> take!(2)
             >> cont: opt!(twodigit_integer)
             >> space1
@@ -92,7 +94,7 @@ named!(
 );
 
 #[cfg(test)]
-mod test_super {
+mod test {
     use super::*;
 
     #[test]
@@ -103,6 +105,16 @@ mod test_super {
         .unwrap()
         .1;
         assert_eq!(head.classification, "PHOTOSYNTHESIS")
+    }
+
+    #[test]
+    fn test_header_parser_2() {
+        let head = header_parser(
+            "HEADER    TRANSFERASE/TRANSFERASE                 28-MAR-07   2UXK \n".as_bytes(),
+        )
+        .unwrap()
+        .1;
+        assert_eq!(head.classification, "TRANSFERASE/TRANSFERASE")
     }
 
     #[test]
@@ -130,7 +142,7 @@ mod test_super {
     #[test]
     fn test_split_parser() {
         let splt = split_parser(
-            "SPLIT      1VOQ 1VOR 1VOS 1VOU 1VOV 1VOW 1VOX 1VOY 1VP0 1VOZ ;".as_bytes(),
+            "SPLIT      1VOQ 1VOR 1VOS 1VOU 1VOV 1VOW 1VOX 1VOY 1VP0 1VOZ \n".as_bytes(),
         )
         .unwrap()
         .1;

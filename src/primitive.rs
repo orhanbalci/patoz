@@ -19,11 +19,24 @@ use std::str::FromStr;
 macro_rules! make_tagger(
 
     ($fnname:ident) =>(
-            pub fn $fnname(s : &str) -> IResult<&str, &str>{
+            pub fn $fnname(s : &[u8]) -> IResult<&[u8], &[u8]>{
                 tag(stringify!($fnname).to_ascii_uppercase().as_str())(s)
             }
         );
     );
+
+macro_rules! make_token_tagger(
+    ($tokenname : ident) => (
+            named!(
+            $tokenname<()>,
+            do_parse!(
+                tag!(stringify!($tokenname).to_ascii_uppercase().as_str())
+                >> tag!(":")
+                >> ()
+            )
+        );
+    );
+);
 
 make_tagger!(master);
 make_tagger!(header);
@@ -111,8 +124,28 @@ named!(
     })
 );
 
+named!(
+    yes<bool>,
+    map_res!(tag!("YES"), |_| -> Result<bool, ()> { Ok(true) })
+);
+
+named!(
+    no<bool>,
+    map_res!(tag!("NO"), |_| -> Result<bool, ()> { Ok(false) })
+);
+
+make_token_tagger!(mol_id);
+make_token_tagger!(molecule);
+make_token_tagger!(chain);
+make_token_tagger!(fragment);
+make_token_tagger!(synonym);
+make_token_tagger!(ec);
+make_token_tagger!(engineered);
+make_token_tagger!(mutation);
+make_token_tagger!(other_details);
+
 #[cfg(test)]
-mod test_super {
+mod test {
     use super::*;
 
     #[test]
@@ -120,6 +153,27 @@ mod test_super {
         let temp: NaiveDate = date_parser("12-SEP-09".as_bytes()).unwrap().1;
         assert_eq!(temp.day(), 12);
         assert_eq!(temp.year(), 9);
+    }
+
+    #[test]
+    fn test_yes_parser() {
+        if let Ok((_, res)) = yes("YES".as_bytes()) {
+            assert_eq!(res, true);
+        }
+    }
+
+    #[test]
+    fn test_no_parser() {
+        if let Ok((_, res)) = no("NO".as_bytes()) {
+            assert_eq!(res, false);
+        }
+    }
+
+    #[test]
+    fn test_token_mol_id_parser() {
+        if let Ok((_, res)) = mol_id("MOL_ID:".as_bytes()) {
+            assert!(true);
+        }
     }
 
 }
