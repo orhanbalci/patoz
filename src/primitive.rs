@@ -6,18 +6,18 @@ use nom::bytes::complete::tag;
 use nom::character::complete::{
     alpha1, alphanumeric1, digit1, multispace0, multispace1, space0, space1,
 };
-use nom::character::{is_alphanumeric, is_space};
+use nom::character::{is_alphanumeric, is_digit, is_space};
 
 use super::entity::{Header, Obslte};
 use nom::{
-    alt, do_parse, fold_many0, map, map_res, named, opt, tag, take, take_str, take_while, IResult,
+    alt, do_parse, fold_many0, map, map_res, named, opt, separated_list, tag, take, take_str,
+    take_while, IResult,
 };
 use std::result::Result;
 use std::str;
 use std::str::FromStr;
 
 macro_rules! make_tagger(
-
     ($fnname:ident) =>(
             pub fn $fnname(s : &[u8]) -> IResult<&[u8], &[u8]>{
                 tag(stringify!($fnname).to_ascii_uppercase().as_str())(s)
@@ -28,7 +28,7 @@ macro_rules! make_tagger(
 macro_rules! make_token_tagger(
     ($tokenname : ident) => (
             named!(
-            $tokenname<()>,
+            pub $tokenname<()>,
             do_parse!(
                 tag!(stringify!($tokenname).to_ascii_uppercase().as_str())
                 >> tag!(":")
@@ -125,12 +125,28 @@ named!(
 );
 
 named!(
-    yes<bool>,
+    pub chain_value_parser<&[u8],Vec<String>>,
+    separated_list!(tag!(","), alphanum_word_with_spaces_inside)
+);
+
+named!(pub ec_value_parser<&[u8],Vec<String>>,
+        separated_list!(
+                        tag!(","),
+                        map_res!(
+                            map_res!(
+                                take_while!(|c : u8| {c == b'.' || is_digit(c) || is_space(c)}), str::from_utf8)
+                            , str::FromStr::from_str)
+                    )
+
+);
+
+named!(
+    pub yes<bool>,
     map_res!(tag!("YES"), |_| -> Result<bool, ()> { Ok(true) })
 );
 
 named!(
-    no<bool>,
+    pub no<bool>,
     map_res!(tag!("NO"), |_| -> Result<bool, ()> { Ok(false) })
 );
 

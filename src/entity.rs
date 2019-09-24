@@ -34,7 +34,7 @@ pub struct Caveat {
 
 #[derive(Debug)]
 pub enum Token {
-    MoleculeId(i32),
+    MoleculeId(u32),
     Molecule(String),
     Chain { identifiers: Vec<String> },
     Fragment(String),

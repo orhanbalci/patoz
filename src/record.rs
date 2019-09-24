@@ -1,10 +1,11 @@
 use super::entity::*;
 use super::primitive::{
-    alphanum_word_with_spaces_inside, caveat, date_parser, header, idcode_list, obslte, split,
-    title, twodigit_integer,
+    alphanum_word_with_spaces_inside, caveat, chain, chain_value_parser, date_parser, ec,
+    ec_value_parser, header, idcode_list, integer, mol_id, molecule, obslte, split, synonym, title,
+    twodigit_integer,
 };
-use nom::character::complete::{multispace0, multispace1, newline, space0, space1};
-use nom::{do_parse, map, named, opt, tag, take, take_str};
+use nom::character::complete::{multispace1, newline, space0, space1};
+use nom::{do_parse, map, named, opt, take, take_str};
 
 named!(
     header_parser<Header>,
@@ -93,6 +94,49 @@ named!(
     )
 );
 
+named!(
+    mol_id_parser<Token>,
+    do_parse!(mol_id >> space0 >> id: integer >> space0 >> (Token::MoleculeId(id)))
+);
+
+named!(
+    molecule_parser<Token>,
+    do_parse!(
+        molecule
+            >> space1
+            >> name: alphanum_word_with_spaces_inside
+            >> space0
+            >> (Token::Molecule(name))
+    )
+);
+
+named!(
+    chain_parser<Token>,
+    do_parse!(
+        chain
+            >> space1
+            >> chain: chain_value_parser
+            >> space0
+            >> (Token::Chain { identifiers: chain })
+    )
+);
+
+named!(
+    synonym_parser<Token>,
+    do_parse!(synonym >> space1 >> syns: chain_value_parser >> (Token::Synonym { synonyms: syns }))
+);
+
+named!(
+    ec_parser<Token>,
+    do_parse!(
+        ec >> space1
+            >> syns: ec_value_parser
+            >> (Token::Ec {
+                commission_numbers: syns,
+            })
+    )
+);
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -150,4 +194,53 @@ mod test {
         assert_eq!(splt.id_codes[0], "1VOQ")
     }
 
+    #[test]
+    fn test_mol_id_parser() {
+        if let Ok((_, Token::MoleculeId(res))) = mol_id_parser("MOL_ID:  1".as_bytes()) {
+            assert_eq!(res, 1);
+        } else {
+            assert!(false);
+        }
+    }
+
+    #[test]
+    fn test_molecule_parser() {
+        if let Ok((_, Token::Molecule(name))) =
+            molecule_parser("MOLECULE:  HEMOGLOBIN ALPHA CHAIN\n".as_bytes())
+        {
+            assert_eq!(name, "HEMOGLOBIN ALPHA CHAIN");
+        } else {
+            assert!(false);
+        }
+    }
+
+    #[test]
+    fn test_chain_parser() {
+        if let Ok((_, Token::Chain { identifiers: res })) = chain_parser("CHAIN: A,  C".as_bytes())
+        {
+            assert_eq!(res[1], "C")
+        }
+    }
+
+    #[test]
+    fn test_synonym_parser() {
+        if let Ok((_, Token::Synonym { synonyms: res })) =
+            synonym_parser("SYNONYM: PRECURSOR OF PLEUROTOLYSIN B".as_bytes())
+        {
+            assert_eq!(res[0], "PRECURSOR OF PLEUROTOLYSIN B");
+        }
+    }
+
+    #[test]
+    fn test_ec_parser() {
+        if let Ok((
+            _,
+            Token::Ec {
+                commission_numbers: res,
+            },
+        )) = ec_parser("EC:  3.2.1.14, 3.2.1.17".as_bytes())
+        {
+            assert_eq!(res[0], "3.2.1.14")
+        }
+    }
 }
