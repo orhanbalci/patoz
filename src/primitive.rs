@@ -235,7 +235,7 @@ mod test {
 
     #[test]
     fn test_token_mol_id_parser() {
-        if let Ok((_, res)) = mol_id("MOL_ID:".as_bytes()) {
+        if let Ok((_, _res)) = mol_id("MOL_ID:".as_bytes()) {
             assert!(true);
         }
     }

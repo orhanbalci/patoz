@@ -23,7 +23,7 @@ named!(
     do_parse!(
         header
             >> multispace1
-            >> classification_p: map!(take_str!(40), |s| s.trim())
+            >> classification_p: map!(take_str!(40), str::trim)
             >> deposition_date_p: date_parser
             >> multispace1
             >> id_code_p: take_str!(4)
@@ -376,9 +376,8 @@ named!(
         cmpnd_line_parser,
         Vec::new(),
         |acc: Vec<u8>, item: CmpndLine| {
-            println!("{}", item.remaining);
-            let a = acc.into_iter().chain(item.remaining.into_bytes()).collect();
-            a
+            //println!("{}", item.remaining);
+            acc.into_iter().chain(item.remaining.into_bytes()).collect()
         }
     )
 );
@@ -423,8 +422,7 @@ named!(
         Vec::new(),
         |acc: Vec<u8>, item: SourceLine| {
             //println!("{}", item.remaining);
-            let a = acc.into_iter().chain(item.remaining.into_bytes()).collect();
-            a
+            acc.into_iter().chain(item.remaining.into_bytes()).collect()
         }
     )
 );
@@ -438,7 +436,7 @@ named!(
                 //println!("Okkk {:?}", res);
                 res
             }
-            Err(err) => {
+            Err(_err) => {
                 //println!("Errrr {:?}", err);
                 Vec::new()
             }
