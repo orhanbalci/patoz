@@ -3,19 +3,17 @@ use chrono::format::Parsed;
 use chrono::Datelike;
 use chrono::NaiveDate;
 use nom::bytes::complete::tag;
-use nom::character::complete::{
-    alpha1, alphanumeric1, digit1, multispace0, multispace1, space0, space1,
-};
+use nom::character::complete::{alpha1, alphanumeric1, digit1, space0, space1};
 use nom::character::{is_alphanumeric, is_digit, is_space};
 
-use super::entity::{Header, Obslte};
 use nom::{
-    alt, do_parse, fold_many0, map, map_res, named, opt, separated_list, tag, take, take_str,
-    take_while, IResult,
+    alt, do_parse, fold_many0, map_res, named, separated_list, tag, take, take_while, IResult,
 };
 use std::result::Result;
 use std::str;
 use std::str::FromStr;
+
+#[macro_use]
 
 macro_rules! make_tagger(
     ($fnname:ident) =>(
@@ -25,6 +23,7 @@ macro_rules! make_tagger(
         );
     );
 
+#[macro_export]
 macro_rules! make_token_tagger(
     ($tokenname : ident) => (
             named!(
@@ -33,6 +32,23 @@ macro_rules! make_token_tagger(
                 tag!(stringify!($tokenname).to_ascii_uppercase().as_str())
                 >> tag!(":")
                 >> ()
+            )
+        );
+    );
+);
+
+#[macro_export]
+macro_rules! make_token_parser(
+    ($parser_name : ident, $tagger_name : ident, $value_parser : ident, $parse_val : ident, $ret_val : expr) => (
+        named!(
+            pub $parser_name<Token>,
+            do_parse!(
+                space0
+                    >> $tagger_name
+                    >> space1
+                    >> $parse_val : $value_parser
+                    >> space0
+                    >> ($ret_val)
             )
         );
     );
@@ -64,6 +80,16 @@ named!(
 named!(
     pub integer<u32>,
     map_res!(map_res!(digit1, str::from_utf8), str::FromStr::from_str)
+);
+
+named!(
+        pub integer_with_spaces<u32>,
+        do_parse!(space0 >> res: integer >> space0 >> (res))
+);
+
+named!(
+        pub integer_list<&[u8],Vec<u32>>,
+        separated_list!(tag!(","), integer_with_spaces)
 );
 
 named!(
@@ -150,6 +176,8 @@ named!(
     map_res!(tag!("NO"), |_| -> Result<bool, ()> { Ok(false) })
 );
 
+named!(pub yes_no_parser<bool>, alt!(yes | no));
+
 make_token_tagger!(mol_id);
 make_token_tagger!(molecule);
 make_token_tagger!(chain);
@@ -159,6 +187,26 @@ make_token_tagger!(ec);
 make_token_tagger!(engineered);
 make_token_tagger!(mutation);
 make_token_tagger!(other_details);
+make_token_tagger!(synthetic);
+make_token_tagger!(organism_scientific);
+make_token_tagger!(organism_common);
+make_token_tagger!(organism_tax_id);
+make_token_tagger!(strain);
+make_token_tagger!(variant);
+make_token_tagger!(cell_line);
+make_token_tagger!(atcc);
+make_token_tagger!(organ);
+make_token_tagger!(tissue);
+make_token_tagger!(cell);
+make_token_tagger!(organelle);
+make_token_tagger!(secretion);
+make_token_tagger!(cellular_location);
+make_token_tagger!(plasmid);
+make_token_tagger!(gene);
+make_token_tagger!(expression_system);
+make_token_tagger!(expression_system_common);
+make_token_tagger!(expression_system_tax_id);
+make_token_tagger!(expression_system_strain);
 
 #[cfg(test)]
 mod test {

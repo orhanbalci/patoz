@@ -1,11 +1,22 @@
 use super::entity::*;
 use super::primitive::{
-    alphanum_word_with_spaces_inside, caveat, chain, chain_value_parser, date_parser, ec,
-    ec_value_parser, header, idcode_list, integer, mol_id, molecule, obslte, split, synonym, title,
-    twodigit_integer,
+    alphanum_word_with_spaces_inside, atcc, caveat, cell, cell_line, cellular_location, chain,
+    chain_value_parser, date_parser, ec, ec_value_parser, engineered, expression_system,
+    expression_system_common, expression_system_strain, expression_system_tax_id, gene, header,
+    idcode_list, integer, integer_list, integer_with_spaces, mol_id, molecule, mutation, obslte,
+    organ, organelle, organism_common, organism_scientific, organism_tax_id, other_details,
+    plasmid, secretion, split, strain, synonym, synthetic, tissue, title, twodigit_integer,
+    variant, yes_no_parser,
 };
 use nom::character::complete::{multispace1, newline, space0, space1};
-use nom::{do_parse, map, named, opt, take, take_str};
+use nom::{
+    alt, do_parse, fold_many0, map, named, opt, separated_list, tag, take, take_str, take_until,
+};
+
+use std::str;
+use std::str::FromStr;
+
+use crate::make_token_parser;
 
 named!(
     header_parser<Header>,
@@ -94,46 +105,344 @@ named!(
     )
 );
 
-named!(
-    mol_id_parser<Token>,
-    do_parse!(mol_id >> space0 >> id: integer >> space0 >> (Token::MoleculeId(id)))
+make_token_parser!(mol_id_parser, mol_id, integer, a, Token::MoleculeId(a));
+make_token_parser!(
+    molecule_parser,
+    molecule,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::Molecule(a)
+);
+make_token_parser!(
+    chain_parser,
+    chain,
+    chain_value_parser,
+    a,
+    Token::Chain { identifiers: a }
+);
+make_token_parser!(
+    synonym_parser,
+    synonym,
+    chain_value_parser,
+    a,
+    Token::Synonym { synonyms: a }
+);
+make_token_parser!(
+    ec_parser,
+    ec,
+    ec_value_parser,
+    a,
+    Token::Ec {
+        commission_numbers: a
+    }
+);
+
+make_token_parser!(
+    engineered_parser,
+    engineered,
+    yes_no_parser,
+    a,
+    Token::Engineered(a)
+);
+
+make_token_parser!(
+    mutation_parser,
+    mutation,
+    yes_no_parser,
+    a,
+    Token::Mutation(a)
+);
+
+make_token_parser!(
+    other_details_parser,
+    other_details,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::OtherDetails(a)
+);
+
+make_token_parser!(
+    synthetic_parser,
+    synthetic,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::Synthetic(a)
+);
+
+make_token_parser!(
+    organism_scientific_parser,
+    organism_scientific,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::OrganismScientific(a)
+);
+
+make_token_parser!(
+    organism_common_parser,
+    organism_common,
+    chain_value_parser,
+    a,
+    Token::OrganismCommon { organisms: a }
+);
+
+make_token_parser!(
+    organism_tax_id_parser,
+    organism_tax_id,
+    integer_list,
+    a,
+    Token::OrganismTaxId { id: a }
+);
+
+make_token_parser!(
+    strain_parser,
+    strain,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::Strain(a)
+);
+
+make_token_parser!(
+    variant_parser,
+    variant,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::Variant(a)
+);
+
+make_token_parser!(
+    cell_line_parser,
+    cell_line,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::CellLine(a)
+);
+
+make_token_parser!(atcc_parser, atcc, integer_with_spaces, a, Token::Atcc(a));
+
+make_token_parser!(
+    organ_parser,
+    organ,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::Organ(a)
+);
+
+make_token_parser!(
+    tissue_parser,
+    tissue,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::Tissue(a)
+);
+
+make_token_parser!(
+    cell_parser,
+    cell,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::Cell(a)
+);
+
+make_token_parser!(
+    organelle_parser,
+    organelle,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::Organelle(a)
+);
+
+make_token_parser!(
+    secretion_parser,
+    secretion,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::Secretion(a)
+);
+
+make_token_parser!(
+    cellular_location_parser,
+    cellular_location,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::CellularLocation(a)
+);
+
+make_token_parser!(
+    plasmid_parser,
+    plasmid,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::Plasmid(a)
+);
+
+make_token_parser!(
+    gene_parser,
+    gene,
+    chain_value_parser,
+    a,
+    Token::Gene { gene: a }
+);
+
+make_token_parser!(
+    expression_system_parser,
+    expression_system,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::ExpressionSystem(a)
+);
+
+make_token_parser!(
+    expression_system_common_parser,
+    expression_system_common,
+    chain_value_parser,
+    a,
+    Token::ExpressionSystemCommon { systems: a }
+);
+
+make_token_parser!(
+    expression_system_tax_id_parser,
+    expression_system_tax_id,
+    integer_list,
+    a,
+    Token::ExpressionSystemTaxId { id: a }
+);
+
+make_token_parser!(
+    expression_system_strain_parser,
+    expression_system_strain,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::ExpressionSystemStrain(a)
 );
 
 named!(
-    molecule_parser<Token>,
-    do_parse!(
-        molecule
-            >> space1
-            >> name: alphanum_word_with_spaces_inside
-            >> space0
-            >> (Token::Molecule(name))
+    token_parser<Token>,
+    alt!(
+        molecule_parser
+            | mol_id_parser
+            | chain_parser
+            | synonym_parser
+            | ec_parser
+            | engineered_parser
+            | mutation_parser
+            | other_details_parser
+            | synthetic_parser
+            | organism_scientific_parser
+            | organism_common_parser
+            | organism_tax_id_parser
+            | strain_parser
+            | variant_parser
+            | cell_line_parser
+            | atcc_parser
+            | organ_parser
+            | tissue_parser
+            | cell_parser
+            | organelle_parser
+            | secretion_parser
+            | cellular_location_parser
+            | plasmid_parser
+            | gene_parser
+            | expression_system_parser
+            | expression_system_common_parser
+            | expression_system_tax_id_parser
+            | expression_system_strain_parser
     )
 );
 
 named!(
-    chain_parser<Token>,
+    tokens_parser<Vec<Token>>,
+    separated_list!(tag!(";"), token_parser)
+);
+
+named!(
+    cmpnd_line_parser<CmpndLine>,
     do_parse!(
-        chain
+        tag!("COMPND")
             >> space1
-            >> chain: chain_value_parser
+            >> cont: opt!(integer)
             >> space0
-            >> (Token::Chain { identifiers: chain })
-    )
-);
-
-named!(
-    synonym_parser<Token>,
-    do_parse!(synonym >> space1 >> syns: chain_value_parser >> (Token::Synonym { synonyms: syns }))
-);
-
-named!(
-    ec_parser<Token>,
-    do_parse!(
-        ec >> space1
-            >> syns: ec_value_parser
-            >> (Token::Ec {
-                commission_numbers: syns,
+            >> rest: take_until!("\n")
+            >> newline
+            >> (CmpndLine {
+                continuation: if let Some(cc) = cont { cc } else { 0 },
+                remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
             })
+    )
+);
+
+named!(
+    cmpnd_parser<Vec<u8>>,
+    fold_many0!(
+        cmpnd_line_parser,
+        Vec::new(),
+        |acc: Vec<u8>, item: CmpndLine| {
+            println!("{}", item.remaining);
+            let a = acc.into_iter().chain(item.remaining.into_bytes()).collect();
+            a
+        }
+    )
+);
+
+named!(
+    cmpnd_token_parser<Vec<Token>>,
+    map!(
+        cmpnd_parser,
+        |v: Vec<u8>| match tokens_parser(v.as_slice()) {
+            Ok((_, res)) => {
+                println!("Okkk {:?}", res);
+                res
+            }
+            Err(err) => {
+                println!("Errrr {:?}", err);
+                Vec::new()
+            }
+        }
+    )
+);
+
+named!(
+    source_line_parser<SourceLine>,
+    do_parse!(
+        tag!("SOURCE")
+            >> space1
+            >> cont: opt!(integer)
+            >> space0
+            >> rest: take_until!("\n")
+            >> newline
+            >> (SourceLine {
+                continuation: if let Some(cc) = cont { cc } else { 0 },
+                remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
+            })
+    )
+);
+
+named!(
+    source_parser<Vec<u8>>,
+    fold_many0!(
+        source_line_parser,
+        Vec::new(),
+        |acc: Vec<u8>, item: SourceLine| {
+            //println!("{}", item.remaining);
+            let a = acc.into_iter().chain(item.remaining.into_bytes()).collect();
+            a
+        }
+    )
+);
+
+named!(
+    source_token_parser<Vec<Token>>,
+    map!(
+        source_parser,
+        |v: Vec<u8>| match tokens_parser(v.as_slice()) {
+            Ok((_, res)) => {
+                //println!("Okkk {:?}", res);
+                res
+            }
+            Err(err) => {
+                //println!("Errrr {:?}", err);
+                Vec::new()
+            }
+        }
     )
 );
 
