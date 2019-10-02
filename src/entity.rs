@@ -45,6 +45,24 @@ pub struct SourceLine {
 }
 
 #[derive(Debug)]
+pub struct KeywdsLine {
+    pub continuation: u32,
+    pub remaining: String,
+}
+
+#[derive(Debug)]
+pub enum ExperimentalTechnique {
+    XRayDiffraction,
+    FiberDiffraction,
+    NeutronDiffraction,
+    ElectronCrystallography,
+    ElectronMicroscopy,
+    SolidStateNmr,
+    SolutionNmr,
+    SolutionScattering,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Token {
     MoleculeId(u32),
     Molecule(String),
@@ -81,8 +99,8 @@ pub enum Token {
     ExpressionSystemOrgan(String),
     ExpressionSystemTissue(String),
     ExpressionSystemCell(String),
-    ExpressionSystemOrgenelle(String),
-    ExpressionSystemCelularLocation(String),
+    ExpressionSystemOrganelle(String),
+    ExpressionSystemCellularLocation(String),
     ExpressionSystemVectorType(String),
     ExpressionSystemVector(String),
     ExpressionSystemPlasmid(String),

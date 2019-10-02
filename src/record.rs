@@ -2,9 +2,13 @@ use super::entity::*;
 use super::primitive::{
     alphanum_word_with_spaces_inside, atcc, caveat, cell, cell_line, cellular_location, chain,
     chain_value_parser, date_parser, ec, ec_value_parser, engineered, expression_system,
-    expression_system_common, expression_system_strain, expression_system_tax_id, gene, header,
-    idcode_list, integer, integer_list, integer_with_spaces, mol_id, molecule, mutation, obslte,
-    organ, organelle, organism_common, organism_scientific, organism_tax_id, other_details,
+    expression_system_atcc_number, expression_system_cell, expression_system_cell_line,
+    expression_system_cellular_location, expression_system_common, expression_system_gene,
+    expression_system_organ, expression_system_organelle, expression_system_plasmid,
+    expression_system_strain, expression_system_tax_id, expression_system_tissue,
+    expression_system_variant, expression_system_vector, expression_system_vector_type, gene,
+    header, idcode_list, integer, integer_list, integer_with_spaces, mol_id, molecule, mutation,
+    obslte, organ, organelle, organism_common, organism_scientific, organism_tax_id, other_details,
     plasmid, secretion, split, strain, synonym, synthetic, tissue, title, twodigit_integer,
     variant, yes_no_parser,
 };
@@ -315,6 +319,102 @@ make_token_parser!(
     Token::ExpressionSystemStrain(a)
 );
 
+make_token_parser!(
+    expression_system_variant_parser,
+    expression_system_variant,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::ExpressionSystemVariant(a)
+);
+
+make_token_parser!(
+    expression_system_cell_line_parser,
+    expression_system_cell_line,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::ExpressionSystemCellLine(a)
+);
+
+make_token_parser!(
+    expression_system_atcc_number_parser,
+    expression_system_atcc_number,
+    integer_with_spaces,
+    a,
+    Token::ExpressionSystemAtcc(a)
+);
+
+make_token_parser!(
+    expression_system_organ_parser,
+    expression_system_organ,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::ExpressionSystemOrgan(a)
+);
+
+make_token_parser!(
+    expression_system_tissue_parser,
+    expression_system_tissue,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::ExpressionSystemTissue(a)
+);
+
+make_token_parser!(
+    expression_system_cell_parser,
+    expression_system_cell,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::ExpressionSystemCell(a)
+);
+
+make_token_parser!(
+    expression_system_organelle_parser,
+    expression_system_organelle,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::ExpressionSystemOrganelle(a)
+);
+
+make_token_parser!(
+    expression_system_cellular_location_parser,
+    expression_system_cellular_location,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::ExpressionSystemCellularLocation(a)
+);
+
+make_token_parser!(
+    expression_system_vector_type_parser,
+    expression_system_vector_type,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::ExpressionSystemVectorType(a)
+);
+
+make_token_parser!(
+    expression_system_vector_parser,
+    expression_system_vector,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::ExpressionSystemVector(a)
+);
+
+make_token_parser!(
+    expression_system_plasmid_parser,
+    expression_system_plasmid,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::ExpressionSystemPlasmid(a)
+);
+
+make_token_parser!(
+    expression_system_gene_parser,
+    expression_system_gene,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::ExpressionSystemGene(a)
+);
+
 named!(
     token_parser<Token>,
     alt!(
@@ -346,6 +446,18 @@ named!(
             | expression_system_common_parser
             | expression_system_tax_id_parser
             | expression_system_strain_parser
+            | expression_system_variant_parser
+            | expression_system_cell_line_parser
+            | expression_system_atcc_number_parser
+            | expression_system_organ_parser
+            | expression_system_tissue_parser
+            | expression_system_cell_parser
+            | expression_system_organelle_parser
+            | expression_system_cellular_location_parser
+            | expression_system_vector_type_parser
+            | expression_system_vector_parser
+            | expression_system_plasmid_parser
+            | expression_system_gene_parser
     )
 );
 
@@ -441,6 +553,74 @@ named!(
                 Vec::new()
             }
         }
+    )
+);
+
+named!(
+    keywds_line_parser<KeywdsLine>,
+    do_parse!(
+        tag!("KEYWDS")
+            >> space1
+            >> cont: opt!(integer)
+            >> space0
+            >> rest: take_until!("\n")
+            >> newline
+            >> (KeywdsLine {
+                continuation: if let Some(cc) = cont { cc } else { 0 },
+                remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
+            })
+    )
+);
+
+named!(
+    keywds_line_folder<Vec<u8>>,
+    fold_many0!(
+        keywds_line_parser,
+        Vec::new(),
+        |acc: Vec<u8>, item: KeywdsLine| {
+            //println!("{}", item.remaining);
+            acc.into_iter().chain(item.remaining.into_bytes()).collect()
+        }
+    )
+);
+
+named!(
+    keywds_parser<Vec<String>>,
+    map!(
+        keywds_line_folder,
+        |v: Vec<u8>| match chain_value_parser(v.as_slice()) {
+            Ok((_, res)) => {
+                println!("Okkk {:?}", res);
+                res
+            }
+            Err(err) => {
+                println!("Errrr {:?}", err);
+                Vec::new()
+            }
+        }
+    )
+);
+
+named!(
+    experimental_technique_parser<ExperimentalTechnique>,
+    alt!(
+        do_parse!(tag!("X-RAY  DIFFRACTION") >> (ExperimentalTechnique::XRayDiffraction))
+            | do_parse!(tag!("FIBER  DIFFRACTION") >> (ExperimentalTechnique::FiberDiffraction))
+            | do_parse!(
+                tag!("NEUTRON  DIFFRACTION") >> (ExperimentalTechnique::NeutronDiffraction)
+            )
+            | do_parse!(
+                tag!("ELECTRON CRYSTALLOGRAPHY")
+                    >> (ExperimentalTechnique::ElectronCrystallography)
+            )
+            | do_parse!(
+                tag!("ELECTRON  MICROSCOPY") >> (ExperimentalTechnique::ElectronMicroscopy)
+            )
+            | do_parse!(tag!("SOLID-STATE  NMR") >> (ExperimentalTechnique::SolidStateNmr))
+            | do_parse!(tag!("SOLUTION  NMR") >> (ExperimentalTechnique::SolutionNmr))
+            | do_parse!(
+                tag!("SOLUTION  SCATTERING") >> (ExperimentalTechnique::SolutionScattering)
+            )
     )
 );
 
@@ -548,6 +728,46 @@ mod test {
         )) = ec_parser("EC:  3.2.1.14, 3.2.1.17".as_bytes())
         {
             assert_eq!(res[0], "3.2.1.14")
+        }
+    }
+
+    #[test]
+    fn test_cmpnd_token_parser() {
+        if let Ok((_, res)) = cmpnd_token_parser(
+            r#"COMPND    MOL_ID:  1;
+COMPND   2 MOLECULE:  HEMOGLOBIN ALPHA CHAIN;
+COMPND   3 CHAIN: A,  C;
+COMPND  10 SYNONYM:  DEOXYHEMOGLOBIN BETA CHAIN;
+COMPND   4 EC:  3.2.1.14, 3.2.1.17;
+COMPND  11 ENGINEERED: YES;
+COMPND  12 MUTATION:  NO
+"#
+            .as_bytes(),
+        ) {
+            assert_eq!(res[0], Token::MoleculeId(1));
+            assert_eq!(
+                res[1],
+                Token::Molecule("HEMOGLOBIN ALPHA CHAIN".to_string())
+            );
+            assert_eq!(
+                res[2],
+                Token::Chain {
+                    identifiers: vec!["A".to_string(), "C".to_string()]
+                }
+            );
+            assert_eq!(res[5], Token::Engineered(true));
+        }
+    }
+
+    #[test]
+    fn test_cmpnd_parser() {
+        if let Ok((_, res)) = cmpnd_parser(
+            "COMPND    MOL_ID:  1;\nCOMPND   2 MOLECULE:  HEMOGLOBIN ALPHA CHAIN;".as_bytes(),
+        ) {
+            assert_eq!(
+                str::from_utf8(res.as_slice()).unwrap(),
+                "MOL_ID:  1;MOLECULE:  HEMOGLOBIN ALPHA CHAIN;"
+            );
         }
     }
 }

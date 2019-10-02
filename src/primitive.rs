@@ -207,6 +207,18 @@ make_token_tagger!(expression_system);
 make_token_tagger!(expression_system_common);
 make_token_tagger!(expression_system_tax_id);
 make_token_tagger!(expression_system_strain);
+make_token_tagger!(expression_system_variant);
+make_token_tagger!(expression_system_cell_line);
+make_token_tagger!(expression_system_atcc_number);
+make_token_tagger!(expression_system_organ);
+make_token_tagger!(expression_system_tissue);
+make_token_tagger!(expression_system_cell);
+make_token_tagger!(expression_system_organelle);
+make_token_tagger!(expression_system_cellular_location);
+make_token_tagger!(expression_system_vector_type);
+make_token_tagger!(expression_system_vector);
+make_token_tagger!(expression_system_plasmid);
+make_token_tagger!(expression_system_gene);
 
 #[cfg(test)]
 mod test {
