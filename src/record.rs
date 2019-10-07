@@ -1,16 +1,16 @@
 use super::entity::*;
 use super::primitive::{
     alphanum_word_with_spaces_inside, atcc, caveat, cell, cell_line, cellular_location, chain,
-    chain_value_parser, date_parser, ec, ec_value_parser, engineered, expression_system,
+    chain_value_parser, date_parser, ec, ec_value_parser, engineered, expdta, expression_system,
     expression_system_atcc_number, expression_system_cell, expression_system_cell_line,
     expression_system_cellular_location, expression_system_common, expression_system_gene,
     expression_system_organ, expression_system_organelle, expression_system_plasmid,
     expression_system_strain, expression_system_tax_id, expression_system_tissue,
     expression_system_variant, expression_system_vector, expression_system_vector_type, gene,
-    header, idcode_list, integer, integer_list, integer_with_spaces, mol_id, molecule, mutation,
-    obslte, organ, organelle, organism_common, organism_scientific, organism_tax_id, other_details,
-    plasmid, secretion, split, strain, synonym, synthetic, tissue, title, twodigit_integer,
-    variant, yes_no_parser,
+    header, idcode_list, integer, integer_list, integer_with_spaces, keywds, mol_id, molecule,
+    mutation, nummdl, obslte, organ, organelle, organism_common, organism_scientific,
+    organism_tax_id, other_details, plasmid, secretion, split, strain, synonym, synthetic, tissue,
+    title, twodigit_integer, variant, yes_no_parser,
 };
 use nom::character::complete::{multispace1, newline, space0, space1};
 use nom::{
@@ -559,7 +559,7 @@ named!(
 named!(
     keywds_line_parser<KeywdsLine>,
     do_parse!(
-        tag!("KEYWDS")
+        keywds
             >> space1
             >> cont: opt!(integer)
             >> space0
@@ -589,14 +589,8 @@ named!(
     map!(
         keywds_line_folder,
         |v: Vec<u8>| match chain_value_parser(v.as_slice()) {
-            Ok((_, res)) => {
-                println!("Okkk {:?}", res);
-                res
-            }
-            Err(err) => {
-                println!("Errrr {:?}", err);
-                Vec::new()
-            }
+            Ok((_, res)) => res,
+            Err(_err) => Vec::new(),
         }
     )
 );
@@ -646,10 +640,11 @@ named!(
     experimental_technique_list_parser<Vec<ExperimentalTechnique>>,
     separated_list!(tag!(";"), experimental_technique_parser)
 );
+
 named!(
     expdata_line_parser<ExpdataLine>,
     do_parse!(
-        tag!("EXPDTA")
+        expdta
             >> space1
             >> cont: opt!(integer)
             >> space0
@@ -679,21 +674,15 @@ named!(
     map!(
         expdata_line_folder,
         |v: Vec<u8>| match experimental_technique_list_parser(v.as_slice()) {
-            Ok((_, res)) => {
-                println!("Okkk {:?}", res);
-                res
-            }
-            Err(err) => {
-                println!("Errrr {:?}", err);
-                Vec::new()
-            }
+            Ok((_, res)) => res,
+            Err(_err) => Vec::new(),
         }
     )
 );
 
 named!(
     nummdl_parser<u32>,
-    do_parse!(tag!("NUMMDL") >> space0 >> model_number: integer >> (model_number))
+    do_parse!(nummdl >> space0 >> model_number: integer >> (model_number))
 );
 
 #[cfg(test)]
