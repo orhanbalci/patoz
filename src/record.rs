@@ -604,24 +604,96 @@ named!(
 named!(
     experimental_technique_parser<ExperimentalTechnique>,
     alt!(
-        do_parse!(tag!("X-RAY  DIFFRACTION") >> (ExperimentalTechnique::XRayDiffraction))
-            | do_parse!(tag!("FIBER  DIFFRACTION") >> (ExperimentalTechnique::FiberDiffraction))
-            | do_parse!(
-                tag!("NEUTRON  DIFFRACTION") >> (ExperimentalTechnique::NeutronDiffraction)
-            )
-            | do_parse!(
-                tag!("ELECTRON CRYSTALLOGRAPHY")
-                    >> (ExperimentalTechnique::ElectronCrystallography)
-            )
-            | do_parse!(
-                tag!("ELECTRON  MICROSCOPY") >> (ExperimentalTechnique::ElectronMicroscopy)
-            )
-            | do_parse!(tag!("SOLID-STATE  NMR") >> (ExperimentalTechnique::SolidStateNmr))
-            | do_parse!(tag!("SOLUTION  NMR") >> (ExperimentalTechnique::SolutionNmr))
-            | do_parse!(
-                tag!("SOLUTION  SCATTERING") >> (ExperimentalTechnique::SolutionScattering)
-            )
+        do_parse!(
+            space0
+                >> tag!("X-RAY DIFFRACTION")
+                >> space0
+                >> (ExperimentalTechnique::XRayDiffraction)
+        ) | do_parse!(
+            space0
+                >> tag!("FIBER DIFFRACTION")
+                >> space0
+                >> (ExperimentalTechnique::FiberDiffraction)
+        ) | do_parse!(
+            space0
+                >> tag!("NEUTRON DIFFRACTION")
+                >> space0
+                >> (ExperimentalTechnique::NeutronDiffraction)
+        ) | do_parse!(
+            space0
+                >> tag!("ELECTRON CRYSTALLOGRAPHY")
+                >> space0
+                >> (ExperimentalTechnique::ElectronCrystallography)
+        ) | do_parse!(
+            space0
+                >> tag!("ELECTRON MICROSCOPY")
+                >> space0
+                >> (ExperimentalTechnique::ElectronMicroscopy)
+        ) | do_parse!(
+            space0 >> tag!("SOLID-STATE NMR") >> space0 >> (ExperimentalTechnique::SolidStateNmr)
+        ) | do_parse!(
+            space0 >> tag!("SOLUTION NMR") >> space0 >> (ExperimentalTechnique::SolutionNmr)
+        ) | do_parse!(
+            space0
+                >> tag!("SOLUTION SCATTERING")
+                >> space0
+                >> (ExperimentalTechnique::SolutionScattering)
+        )
     )
+);
+
+named!(
+    experimental_technique_list_parser<Vec<ExperimentalTechnique>>,
+    separated_list!(tag!(";"), experimental_technique_parser)
+);
+named!(
+    expdata_line_parser<ExpdataLine>,
+    do_parse!(
+        tag!("EXPDTA")
+            >> space1
+            >> cont: opt!(integer)
+            >> space0
+            >> rest: take_until!("\n")
+            >> newline
+            >> (ExpdataLine {
+                continuation: if let Some(cc) = cont { cc } else { 0 },
+                remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
+            })
+    )
+);
+
+named!(
+    expdata_line_folder<Vec<u8>>,
+    fold_many0!(
+        expdata_line_parser,
+        Vec::new(),
+        |acc: Vec<u8>, item: ExpdataLine| {
+            println!("{}", item.remaining);
+            acc.into_iter().chain(item.remaining.into_bytes()).collect()
+        }
+    )
+);
+
+named!(
+    expdata_parser<Vec<ExperimentalTechnique>>,
+    map!(
+        expdata_line_folder,
+        |v: Vec<u8>| match experimental_technique_list_parser(v.as_slice()) {
+            Ok((_, res)) => {
+                println!("Okkk {:?}", res);
+                res
+            }
+            Err(err) => {
+                println!("Errrr {:?}", err);
+                Vec::new()
+            }
+        }
+    )
+);
+
+named!(
+    nummdl_parser<u32>,
+    do_parse!(tag!("NUMMDL") >> space0 >> model_number: integer >> (model_number))
 );
 
 #[cfg(test)]

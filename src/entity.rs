@@ -51,6 +51,12 @@ pub struct KeywdsLine {
 }
 
 #[derive(Debug)]
+pub struct ExpdataLine {
+    pub continuation: u32,
+    pub remaining: String,
+}
+
+#[derive(Debug)]
 pub enum ExperimentalTechnique {
     XRayDiffraction,
     FiberDiffraction,
