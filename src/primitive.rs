@@ -54,6 +54,22 @@ macro_rules! make_token_parser(
     );
 );
 
+#[macro_export]
+macro_rules! make_line_folder (
+    ($parser_name : ident, $line_parser : ident, $line_type : ty) => {
+        named!(
+            $parser_name<Vec<u8>>,
+            fold_many0!(
+                    $line_parser,
+                    Vec::new(),
+                    |acc : Vec<u8>, item : $line_type|{
+                        acc.into_iter().chain(item.remaining.into_bytes()).collect()
+                    }
+                )
+            );
+    };
+);
+
 make_tagger!(master);
 make_tagger!(header);
 make_tagger!(obslte);

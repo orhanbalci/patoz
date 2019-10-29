@@ -20,6 +20,7 @@ use nom::{
 use std::str;
 use std::str::FromStr;
 
+use crate::make_line_folder;
 use crate::make_token_parser;
 
 named!(
@@ -482,22 +483,12 @@ named!(
     )
 );
 
-named!(
-    cmpnd_parser<Vec<u8>>,
-    fold_many0!(
-        cmpnd_line_parser,
-        Vec::new(),
-        |acc: Vec<u8>, item: CmpndLine| {
-            //println!("{}", item.remaining);
-            acc.into_iter().chain(item.remaining.into_bytes()).collect()
-        }
-    )
-);
+make_line_folder!(cmpnd_line_folder, cmpnd_line_parser, CmpndLine);
 
 named!(
     cmpnd_token_parser<Vec<Token>>,
     map!(
-        cmpnd_parser,
+        cmpnd_line_folder,
         |v: Vec<u8>| match tokens_parser(v.as_slice()) {
             Ok((_, res)) => {
                 println!("Okkk {:?}", res);
@@ -527,22 +518,12 @@ named!(
     )
 );
 
-named!(
-    source_parser<Vec<u8>>,
-    fold_many0!(
-        source_line_parser,
-        Vec::new(),
-        |acc: Vec<u8>, item: SourceLine| {
-            //println!("{}", item.remaining);
-            acc.into_iter().chain(item.remaining.into_bytes()).collect()
-        }
-    )
-);
+make_line_folder!(source_line_folder, source_line_parser, SourceLine);
 
 named!(
     source_token_parser<Vec<Token>>,
     map!(
-        source_parser,
+        source_line_folder,
         |v: Vec<u8>| match tokens_parser(v.as_slice()) {
             Ok((_, res)) => {
                 //println!("Okkk {:?}", res);
@@ -572,17 +553,7 @@ named!(
     )
 );
 
-named!(
-    keywds_line_folder<Vec<u8>>,
-    fold_many0!(
-        keywds_line_parser,
-        Vec::new(),
-        |acc: Vec<u8>, item: KeywdsLine| {
-            //println!("{}", item.remaining);
-            acc.into_iter().chain(item.remaining.into_bytes()).collect()
-        }
-    )
-);
+make_line_folder!(keywds_line_folder, keywds_line_parser, KeywdsLine);
 
 named!(
     keywds_parser<Vec<String>>,
@@ -657,17 +628,7 @@ named!(
     )
 );
 
-named!(
-    expdata_line_folder<Vec<u8>>,
-    fold_many0!(
-        expdata_line_parser,
-        Vec::new(),
-        |acc: Vec<u8>, item: ExpdataLine| {
-            println!("{}", item.remaining);
-            acc.into_iter().chain(item.remaining.into_bytes()).collect()
-        }
-    )
-);
+make_line_folder!(expdata_line_folder, expdata_line_parser, ExpdataLine);
 
 named!(
     expdata_parser<Vec<ExperimentalTechnique>>,
