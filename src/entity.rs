@@ -57,6 +57,14 @@ pub struct ExpdataLine {
 }
 
 #[derive(Debug)]
+pub struct AuthorLine {
+    pub continuation: u32,
+    pub remaining: String,
+}
+
+pub struct Author(pub String);
+
+#[derive(Debug)]
 pub enum ExperimentalTechnique {
     XRayDiffraction,
     FiberDiffraction,

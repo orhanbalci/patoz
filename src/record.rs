@@ -1,20 +1,11 @@
 use super::entity::*;
-use super::primitive::{
-    alphanum_word_with_spaces_inside, atcc, caveat, cell, cell_line, cellular_location, chain,
-    chain_value_parser, date_parser, ec, ec_value_parser, engineered, expdta, expression_system,
-    expression_system_atcc_number, expression_system_cell, expression_system_cell_line,
-    expression_system_cellular_location, expression_system_common, expression_system_gene,
-    expression_system_organ, expression_system_organelle, expression_system_plasmid,
-    expression_system_strain, expression_system_tax_id, expression_system_tissue,
-    expression_system_variant, expression_system_vector, expression_system_vector_type, gene,
-    header, idcode_list, integer, integer_list, integer_with_spaces, keywds, mol_id, molecule,
-    mutation, nummdl, obslte, organ, organelle, organism_common, organism_scientific,
-    organism_tax_id, other_details, plasmid, secretion, split, strain, synonym, synthetic, tissue,
-    title, twodigit_integer, variant, yes_no_parser,
-};
-use nom::character::complete::{multispace1, newline, space0, space1};
+use super::primitive::*;
+use nom::character::complete::{line_ending, multispace1, newline, space0, space1};
+use nom::character::{is_alphanumeric, is_space};
+use nom::Err;
 use nom::{
-    alt, do_parse, fold_many0, map, named, opt, separated_list, tag, take, take_str, take_until,
+    alt, do_parse, fold_many0, map, map_res, named, opt, separated_list, tag, take, take_str,
+    take_until, take_while,
 };
 
 use std::str;
@@ -470,7 +461,7 @@ named!(
 named!(
     cmpnd_line_parser<CmpndLine>,
     do_parse!(
-        tag!("COMPND")
+        compnd
             >> space1
             >> cont: opt!(integer)
             >> space0
@@ -505,7 +496,7 @@ named!(
 named!(
     source_line_parser<SourceLine>,
     do_parse!(
-        tag!("SOURCE")
+        source
             >> space1
             >> cont: opt!(integer)
             >> space0
@@ -646,6 +637,65 @@ named!(
     do_parse!(nummdl >> space0 >> model_number: integer >> (model_number))
 );
 
+named!(
+    author_line_parser<AuthorLine>,
+    do_parse!(
+        author
+            >> space1
+            >> cont: opt!(integer)
+            >> space0
+            >> rest: take_until!("\n")
+            >> line_ending
+            >> (AuthorLine {
+                continuation: if let Some(cc) = cont { cc } else { 0 },
+                remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
+            })
+    )
+);
+
+make_line_folder!(author_line_folder, author_line_parser, AuthorLine);
+
+named!(
+    author_value_parser<Author>,
+    map_res!(
+        map_res!(
+            map_res!(
+                take_while!(|s| {
+                    is_alphanumeric(s)
+                        || is_space(s)
+                        || char::from(s) == '.'
+                        || char::from(s) == '\''
+                }),
+                str::from_utf8
+            ),
+            str::FromStr::from_str
+        ),
+        |s: String| {
+            println!("{}", s);
+            Result::Ok::<Author, Err<String>>(Author(String::from_str(s.trim()).unwrap()))
+        }
+    )
+);
+
+named!(
+    author_list_parser<Vec<Author>>,
+    separated_list!(tag!(","), author_value_parser)
+);
+
+named!(
+    author_parser<Vec<Author>>,
+    map!(author_line_folder, |v: Vec<u8>| {
+        println!("{}", str::from_utf8(&v).unwrap());
+        match author_list_parser(v.as_slice()) {
+            Ok((_, res)) => res,
+            Err(err) => {
+                println!("{:?}", err);
+                Vec::new()
+            }
+        }
+    })
+);
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -763,7 +813,7 @@ COMPND  10 SYNONYM:  DEOXYHEMOGLOBIN BETA CHAIN;
 COMPND   4 EC:  3.2.1.14, 3.2.1.17;
 COMPND  11 ENGINEERED: YES;
 COMPND  12 MUTATION:  NO
-"#
+;"#
             .as_bytes(),
         ) {
             assert_eq!(res[0], Token::MoleculeId(1));
@@ -783,7 +833,7 @@ COMPND  12 MUTATION:  NO
 
     #[test]
     fn test_cmpnd_parser() {
-        if let Ok((_, res)) = cmpnd_parser(
+        if let Ok((_, res)) = cmpnd_line_folder(
             "COMPND    MOL_ID:  1;\nCOMPND   2 MOLECULE:  HEMOGLOBIN ALPHA CHAIN;".as_bytes(),
         ) {
             assert_eq!(

@@ -99,13 +99,13 @@ named!(
 );
 
 named!(
-        pub integer_with_spaces<u32>,
-        do_parse!(space0 >> res: integer >> space0 >> (res))
+    pub integer_with_spaces<u32>,
+    do_parse!(space0 >> res: integer >> space0 >> (res))
 );
 
 named!(
-        pub integer_list<&[u8],Vec<u32>>,
-        separated_list!(tag!(","), integer_with_spaces)
+    pub integer_list<&[u8],Vec<u32>>,
+    separated_list!(tag!(","), integer_with_spaces)
 );
 
 named!(
