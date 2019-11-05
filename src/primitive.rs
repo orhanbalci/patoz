@@ -7,7 +7,8 @@ use nom::character::complete::{alpha1, alphanumeric1, digit1, space0, space1};
 use nom::character::{is_alphanumeric, is_digit, is_space};
 
 use nom::{
-    alt, do_parse, fold_many0, map_res, named, separated_list, tag, take, take_while, IResult,
+    alt, do_parse, fold_many0, map_res, named, separated_list, tag, take, take_till, take_while,
+    IResult,
 };
 use std::result::Result;
 use std::str;
@@ -62,7 +63,7 @@ macro_rules! make_line_folder (
             fold_many0!(
                     $line_parser,
                     Vec::new(),
-                    |acc : Vec<u8>, item : $line_type|{
+                    |acc : Vec<u8>, item : Continuation<$line_type>|{
                         acc.into_iter().chain(item.remaining.into_bytes()).collect()
                     }
                 )
@@ -235,6 +236,8 @@ make_token_tagger!(expression_system_vector_type);
 make_token_tagger!(expression_system_vector);
 make_token_tagger!(expression_system_plasmid);
 make_token_tagger!(expression_system_gene);
+
+named!(pub till_line_ending<&[u8]>, take_till!(|c| char::from(c) == '\r' || char::from(c) == '\n'));
 
 #[cfg(test)]
 mod test {

@@ -1,13 +1,14 @@
 use super::entity::*;
 use super::primitive::*;
-use nom::character::complete::{line_ending, multispace1, newline, space0, space1};
+use nom::character::complete::{line_ending, multispace1, space0, space1};
 use nom::character::{is_alphanumeric, is_space};
 use nom::Err;
 use nom::{
     alt, do_parse, fold_many0, map, map_res, named, opt, separated_list, tag, take, take_str,
-    take_until, take_while,
+    take_while,
 };
 
+use std::marker::PhantomData;
 use std::str;
 use std::str::FromStr;
 
@@ -24,7 +25,7 @@ named!(
             >> multispace1
             >> id_code_p: take_str!(4)
             >> space0
-            >> newline
+            >> line_ending
             >> (Header {
                 classification: classification_p.to_string(),
                 deposition_date: deposition_date_p,
@@ -43,7 +44,7 @@ named!(
             >> cont_date: date_parser
             >> space0
             >> ids: idcode_list
-            >> newline
+            >> line_ending
             >> (Obslte {
                 continuation: if let Some(cc) = cont { cc } else { 0 },
                 replacement_date: cont_date,
@@ -61,7 +62,7 @@ named!(
             >> space1
             >> tit: alphanum_word_with_spaces_inside
             >> space0
-            >> newline
+            >> line_ending
             >> (Title {
                 continuation: if let Some(cc) = cont { cc } else { 0 },
                 title: tit
@@ -77,7 +78,7 @@ named!(
             >> cont: opt!(twodigit_integer)
             >> space1
             >> ids: idcode_list
-            >> newline
+            >> line_ending
             >> (Split {
                 continuation: if let Some(cc) = cont { cc } else { 0 },
                 id_codes: ids
@@ -93,7 +94,7 @@ named!(
             >> cont: opt!(twodigit_integer)
             >> space1
             >> com: take_str!(59)
-            >> newline
+            >> line_ending
             >> (Caveat {
                 continuation: if let Some(cc) = cont { cc } else { 0 },
                 comment: String::from(com),
@@ -102,6 +103,7 @@ named!(
 );
 
 make_token_parser!(mol_id_parser, mol_id, integer, a, Token::MoleculeId(a));
+
 make_token_parser!(
     molecule_parser,
     molecule,
@@ -109,6 +111,7 @@ make_token_parser!(
     a,
     Token::Molecule(a)
 );
+
 make_token_parser!(
     chain_parser,
     chain,
@@ -116,6 +119,7 @@ make_token_parser!(
     a,
     Token::Chain { identifiers: a }
 );
+
 make_token_parser!(
     synonym_parser,
     synonym,
@@ -123,6 +127,7 @@ make_token_parser!(
     a,
     Token::Synonym { synonyms: a }
 );
+
 make_token_parser!(
     ec_parser,
     ec,
@@ -459,17 +464,18 @@ named!(
 );
 
 named!(
-    cmpnd_line_parser<CmpndLine>,
+    cmpnd_line_parser<Continuation<CmpndLine>>,
     do_parse!(
         compnd
             >> space1
             >> cont: opt!(integer)
             >> space0
-            >> rest: take_until!("\n")
-            >> newline
-            >> (CmpndLine {
+            >> rest: till_line_ending
+            >> line_ending
+            >> (Continuation::<CmpndLine> {
                 continuation: if let Some(cc) = cont { cc } else { 0 },
                 remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
+                phantom: PhantomData,
             })
     )
 );
@@ -494,17 +500,18 @@ named!(
 );
 
 named!(
-    source_line_parser<SourceLine>,
+    source_line_parser<Continuation<SourceLine>>,
     do_parse!(
         source
             >> space1
             >> cont: opt!(integer)
             >> space0
-            >> rest: take_until!("\n")
-            >> newline
-            >> (SourceLine {
+            >> rest: till_line_ending
+            >> line_ending
+            >> (Continuation::<SourceLine> {
                 continuation: if let Some(cc) = cont { cc } else { 0 },
                 remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
+                phantom: PhantomData,
             })
     )
 );
@@ -529,17 +536,18 @@ named!(
 );
 
 named!(
-    keywds_line_parser<KeywdsLine>,
+    keywds_line_parser<Continuation<KeywdsLine>>,
     do_parse!(
         keywds
             >> space1
             >> cont: opt!(integer)
             >> space0
-            >> rest: take_until!("\n")
-            >> newline
-            >> (KeywdsLine {
+            >> rest: till_line_ending
+            >> line_ending
+            >> (Continuation::<KeywdsLine> {
                 continuation: if let Some(cc) = cont { cc } else { 0 },
                 remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
+                phantom: PhantomData,
             })
     )
 );
@@ -604,17 +612,18 @@ named!(
 );
 
 named!(
-    expdata_line_parser<ExpdataLine>,
+    expdata_line_parser<Continuation<ExpdataLine>>,
     do_parse!(
         expdta
             >> space1
             >> cont: opt!(integer)
             >> space0
-            >> rest: take_until!("\n")
-            >> newline
-            >> (ExpdataLine {
+            >> rest: till_line_ending
+            >> line_ending
+            >> (Continuation::<ExpdataLine> {
                 continuation: if let Some(cc) = cont { cc } else { 0 },
                 remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
+                phantom: PhantomData,
             })
     )
 );
@@ -638,17 +647,18 @@ named!(
 );
 
 named!(
-    author_line_parser<AuthorLine>,
+    author_line_parser<Continuation<AuthorLine>>,
     do_parse!(
         author
             >> space1
             >> cont: opt!(integer)
             >> space0
-            >> rest: take_until!("\n")
+            >> rest: till_line_ending
             >> line_ending
-            >> (AuthorLine {
+            >> (Continuation::<AuthorLine> {
                 continuation: if let Some(cc) = cont { cc } else { 0 },
                 remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
+                phantom: PhantomData,
             })
     )
 );
@@ -812,9 +822,8 @@ COMPND   3 CHAIN: A,  C;
 COMPND  10 SYNONYM:  DEOXYHEMOGLOBIN BETA CHAIN;
 COMPND   4 EC:  3.2.1.14, 3.2.1.17;
 COMPND  11 ENGINEERED: YES;
-COMPND  12 MUTATION:  NO
-;"#
-            .as_bytes(),
+COMPND  12 MUTATION:  NO;"#
+                .as_bytes(),
         ) {
             assert_eq!(res[0], Token::MoleculeId(1));
             assert_eq!(
@@ -834,7 +843,9 @@ COMPND  12 MUTATION:  NO
     #[test]
     fn test_cmpnd_parser() {
         if let Ok((_, res)) = cmpnd_line_folder(
-            "COMPND    MOL_ID:  1;\nCOMPND   2 MOLECULE:  HEMOGLOBIN ALPHA CHAIN;".as_bytes(),
+            r#"COMPND    MOL_ID:  1;
+COMPND   2 MOLECULE:  HEMOGLOBIN ALPHA CHAIN;"#
+                .as_bytes(),
         ) {
             assert_eq!(
                 str::from_utf8(res.as_slice()).unwrap(),

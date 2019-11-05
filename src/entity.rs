@@ -1,4 +1,5 @@
 use chrono::NaiveDate;
+use std::marker::PhantomData;
 
 #[derive(Debug)]
 pub struct Header {
@@ -33,34 +34,17 @@ pub struct Caveat {
 }
 
 #[derive(Debug)]
-pub struct CmpndLine {
+pub struct Continuation<T> {
     pub continuation: u32,
     pub remaining: String,
+    pub phantom: PhantomData<T>,
 }
 
-#[derive(Debug)]
-pub struct SourceLine {
-    pub continuation: u32,
-    pub remaining: String,
-}
-
-#[derive(Debug)]
-pub struct KeywdsLine {
-    pub continuation: u32,
-    pub remaining: String,
-}
-
-#[derive(Debug)]
-pub struct ExpdataLine {
-    pub continuation: u32,
-    pub remaining: String,
-}
-
-#[derive(Debug)]
-pub struct AuthorLine {
-    pub continuation: u32,
-    pub remaining: String,
-}
+pub struct CmpndLine;
+pub struct SourceLine;
+pub struct KeywdsLine;
+pub struct ExpdataLine;
+pub struct AuthorLine;
 
 pub struct Author(pub String);
 
