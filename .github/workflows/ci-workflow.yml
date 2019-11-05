@@ -88,10 +88,3 @@ jobs:
         with:
           command: clippy
           args: -- -D warnings
-  coverage:
-    name : coverage
-    runs-on: ubuntu-latest
-    steps:
-      - name: rust-grcov
-        uses: actions-rs/grcov@v0.1.3
-
