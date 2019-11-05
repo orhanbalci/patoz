@@ -107,6 +107,8 @@ jobs:
       
       - id : coverage
         uses: actions-rs/grcov@v0.1
+        with:
+          config: grcov.yml
       
       - uses: codecov/codecov-action@v1.0.3
         with:
