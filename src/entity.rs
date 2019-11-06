@@ -17,7 +17,6 @@ pub struct Obslte {
 
 #[derive(Debug)]
 pub struct Title {
-    pub continuation: u32,
     pub title: String,
 }
 
@@ -40,6 +39,7 @@ pub struct Continuation<T> {
     pub phantom: PhantomData<T>,
 }
 
+pub struct TitleLine;
 pub struct CmpndLine;
 pub struct SourceLine;
 pub struct KeywdsLine;

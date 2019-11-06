@@ -54,7 +54,7 @@ named!(
 );
 
 named!(
-    title_parser<Title>,
+    title_line_parser<Continuation<TitleLine>>,
     do_parse!(
         title
             >> take!(2)
@@ -63,10 +63,25 @@ named!(
             >> tit: alphanum_word_with_spaces_inside
             >> space0
             >> line_ending
-            >> (Title {
+            >> (Continuation::<TitleLine> {
                 continuation: if let Some(cc) = cont { cc } else { 0 },
-                title: tit
+                remaining: tit,
+                phantom: PhantomData,
             })
+    )
+);
+
+make_line_folder!(title_line_folder, title_line_parser, TitleLine);
+
+named!(
+    title_parser<String>,
+    map!(
+        title_line_folder,
+        |title: Vec<u8>| if let Ok(res) = String::from_utf8(title) {
+            res
+        } else {
+            "".to_owned()
+        }
     )
 );
 
@@ -747,7 +762,7 @@ mod test {
         .1;
 
         assert_eq!(
-            tit.title,
+            tit,
             "RHIZOPUSPEPSIN COMPLEXED WITH REDUCED PEPTIDE INHIBITOR"
         );
     }
