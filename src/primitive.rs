@@ -1,6 +1,5 @@
 use chrono::format::strftime::StrftimeItems;
 use chrono::format::Parsed;
-use chrono::Datelike;
 use chrono::NaiveDate;
 use nom::bytes::complete::tag;
 use nom::character::complete::{alpha1, alphanumeric1, digit1, space0, space1};
@@ -242,6 +241,7 @@ named!(pub till_line_ending<&[u8]>, take_till!(|c| char::from(c) == '\r' || char
 #[cfg(test)]
 mod test {
     use super::*;
+    use chrono::Datelike;
 
     #[test]
     fn test_date_parser() {

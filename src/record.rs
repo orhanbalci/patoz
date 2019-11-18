@@ -16,7 +16,7 @@ use crate::make_line_folder;
 use crate::make_token_parser;
 
 named!(
-    header_parser<Header>,
+    header_parser<Record>,
     do_parse!(
         header
             >> multispace1
@@ -26,7 +26,7 @@ named!(
             >> id_code_p: take_str!(4)
             >> space0
             >> line_ending
-            >> (Header {
+            >> (Record::Header {
                 classification: classification_p.to_string(),
                 deposition_date: deposition_date_p,
                 id_code: id_code_p.to_string()
@@ -35,22 +35,52 @@ named!(
 );
 
 named!(
-    obslte_parser<Obslte>,
+    obslte_line_parser<Continuation<ObslteLine>>,
     do_parse!(
         obslte
             >> take!(2)
             >> cont: opt!(twodigit_integer)
-            >> space0
+            >> space1
+            >> rest: till_line_ending
+            >> line_ending
+            >> (Continuation::<ObslteLine> {
+                continuation: if let Some(cc) = cont { cc } else { 0 },
+                remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
+                phantom: PhantomData,
+            })
+    )
+);
+
+make_line_folder!(obslte_line_folder, obslte_line_parser, ObslteLine);
+
+named!(
+    obslte_parser<Record>,
+    do_parse!(
+        space0
             >> cont_date: date_parser
             >> space0
             >> ids: idcode_list
-            >> line_ending
-            >> (Obslte {
-                continuation: if let Some(cc) = cont { cc } else { 0 },
+            >> (Record::Obslte {
                 replacement_date: cont_date,
                 replacement_ids: ids
             })
     )
+);
+
+named!(
+    obslte_record_parser<Record>,
+    map!(obslte_line_folder, |obslte: Vec<u8>| {
+        println!("{}", str::from_utf8(obslte.as_slice()).unwrap());
+        if let Ok((_, res)) = obslte_parser(obslte.as_slice()) {
+            res
+        } else {
+            println!("Obslte parser error");
+            Record::Obslte {
+                replacement_date: chrono::naive::MIN_DATE,
+                replacement_ids: Vec::new(),
+            }
+        }
+    })
 );
 
 named!(
@@ -74,13 +104,15 @@ named!(
 make_line_folder!(title_line_folder, title_line_parser, TitleLine);
 
 named!(
-    title_parser<String>,
+    title_parser<Record>,
     map!(
         title_line_folder,
         |title: Vec<u8>| if let Ok(res) = String::from_utf8(title) {
-            res
+            Record::Title { title: res }
         } else {
-            "".to_owned()
+            Record::Title {
+                title: "".to_owned(),
+            }
         }
     )
 );
@@ -732,7 +764,15 @@ mod test {
         )
         .unwrap()
         .1;
-        assert_eq!(head.classification, "PHOTOSYNTHESIS")
+        if let Record::Header {
+            classification: class,
+            ..
+        } = head
+        {
+            assert_eq!(class, "PHOTOSYNTHESIS")
+        } else {
+            assert!(false);
+        }
     }
 
     #[test]
@@ -742,15 +782,32 @@ mod test {
         )
         .unwrap()
         .1;
-        assert_eq!(head.classification, "TRANSFERASE/TRANSFERASE")
+        if let Record::Header {
+            classification: class,
+            ..
+        } = head
+        {
+            assert_eq!(class, "TRANSFERASE/TRANSFERASE")
+        } else {
+            assert!(false);
+        }
     }
 
     #[test]
     fn test_obslte_parser() {
-        let obs = obslte_parser("OBSLTE  02 31-JAN-94 1MBP      2MBP    \n".as_bytes())
+        let obs = obslte_record_parser("OBSLTE  02 31-JAN-94 1MBP      2MBP    \n".as_bytes())
             .unwrap()
             .1;
-        assert_eq!(obs.replacement_ids[0], "1MBP");
+
+        if let Record::Obslte {
+            replacement_ids: reps,
+            ..
+        } = obs
+        {
+            assert_eq!(reps[0], "1MBP");
+        } else {
+            assert!(false)
+        }
     }
 
     #[test]
@@ -761,10 +818,14 @@ mod test {
         .unwrap()
         .1;
 
-        assert_eq!(
-            tit,
-            "RHIZOPUSPEPSIN COMPLEXED WITH REDUCED PEPTIDE INHIBITOR"
-        );
+        if let Record::Title { title } = tit {
+            assert_eq!(
+                title,
+                "RHIZOPUSPEPSIN COMPLEXED WITH REDUCED PEPTIDE INHIBITOR"
+            )
+        } else {
+            assert!(false)
+        }
     }
 
     #[test]

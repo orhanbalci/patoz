@@ -2,25 +2,6 @@ use chrono::NaiveDate;
 use std::marker::PhantomData;
 
 #[derive(Debug)]
-pub struct Header {
-    pub classification: String,
-    pub deposition_date: NaiveDate,
-    pub id_code: String,
-}
-
-#[derive(Debug)]
-pub struct Obslte {
-    pub continuation: u32,
-    pub replacement_date: NaiveDate,
-    pub replacement_ids: Vec<String>,
-}
-
-#[derive(Debug)]
-pub struct Title {
-    pub title: String,
-}
-
-#[derive(Debug)]
 pub struct Split {
     pub continuation: u32,
     pub id_codes: Vec<String>,
@@ -40,6 +21,7 @@ pub struct Continuation<T> {
 }
 
 pub struct TitleLine;
+pub struct ObslteLine;
 pub struct CmpndLine;
 pub struct SourceLine;
 pub struct KeywdsLine;
@@ -103,4 +85,22 @@ pub enum Token {
     ExpressionSystemVector(String),
     ExpressionSystemPlasmid(String),
     ExpressionSystemGene(String),
+}
+
+#[derive(Debug)]
+pub enum Record {
+    Header {
+        classification: String,
+        deposition_date: NaiveDate,
+        id_code: String,
+    },
+
+    Title {
+        title: String,
+    },
+
+    Obslte {
+        replacement_date: NaiveDate,
+        replacement_ids: Vec<String>,
+    },
 }
