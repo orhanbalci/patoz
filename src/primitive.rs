@@ -59,7 +59,7 @@ macro_rules! make_line_folder (
     ($parser_name : ident, $line_parser : ident, $line_type : ty) => {
         named!(
             $parser_name<Vec<u8>>,
-            fold_many0!(
+            fold_many1!(
                     $line_parser,
                     Vec::new(),
                     |acc : Vec<u8>, item : Continuation<$line_type>|{

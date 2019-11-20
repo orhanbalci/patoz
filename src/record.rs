@@ -4,8 +4,8 @@ use nom::character::complete::{line_ending, multispace1, space0, space1};
 use nom::character::{is_alphanumeric, is_space};
 use nom::Err;
 use nom::{
-    alt, do_parse, fold_many0, map, map_res, named, opt, separated_list, tag, take, take_str,
-    take_while,
+    alt, complete, do_parse, fold_many0, fold_many1, map, map_res, named, opt, separated_list, tag,
+    take, take_str, take_while,
 };
 
 use std::marker::PhantomData;
@@ -108,6 +108,7 @@ named!(
     map!(
         title_line_folder,
         |title: Vec<u8>| if let Ok(res) = String::from_utf8(title) {
+            println!("Title {:?}", res);
             Record::Title { title: res }
         } else {
             Record::Title {
@@ -753,6 +754,19 @@ named!(
     })
 );
 
+named!(
+    pdb_record_parser<Record>,
+    alt!(complete!(header_parser) | complete!(obslte_parser) | complete!(title_parser))
+);
+
+named!(
+    pdb_records_parser<Vec<Record>>,
+    fold_many0!(pdb_record_parser, Vec::new(), |mut acc, r: Record| {
+        acc.push(r);
+        acc
+    })
+);
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -813,7 +827,9 @@ mod test {
     #[test]
     fn test_title_parser() {
         let tit = title_parser(
-            "TITLE     RHIZOPUSPEPSIN COMPLEXED WITH REDUCED PEPTIDE INHIBITOR\n".as_bytes(),
+            r#"TITLE     RHIZOPUSPEPSIN COMPLEXED WITH REDUCED PEPTIDE INHIBITOR
+"#
+            .as_bytes(),
         )
         .unwrap()
         .1;
@@ -927,6 +943,30 @@ COMPND   2 MOLECULE:  HEMOGLOBIN ALPHA CHAIN;"#
                 str::from_utf8(res.as_slice()).unwrap(),
                 "MOL_ID:  1;MOLECULE:  HEMOGLOBIN ALPHA CHAIN;"
             );
+        }
+    }
+
+    #[test]
+    fn test_pdb_records_parser() {
+        if let Ok((_, res)) = pdb_records_parser(
+            r#"HEADER    HYDROLASE                               20-APR-99   1CJY
+TITLE     HUMAN CYTOSOLIC PHOSPHOLIPASE A2
+"#
+            .as_bytes(),
+        ) {
+            if let Record::Header {
+                classification: class,
+                ..
+            } = &res[0]
+            {
+                assert_eq!(class, "HYDROLASE");
+            }
+
+            if let Record::Title { title: tit } = &res[1] {
+                assert_eq!(tit, "HUMAN CYTOSOLIC PHOSPHOLIPASE A2");
+            }
+        } else {
+            assert!(false);
         }
     }
 }

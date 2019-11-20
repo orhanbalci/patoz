@@ -87,7 +87,7 @@ pub enum Token {
     ExpressionSystemGene(String),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Record {
     Header {
         classification: String,
