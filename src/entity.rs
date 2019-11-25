@@ -17,6 +17,7 @@ pub struct SourceLine;
 pub struct KeywdsLine;
 pub struct ExpdataLine;
 pub struct AuthorLine;
+pub struct SprsdeLine;
 
 pub struct Author(pub String);
 
@@ -101,5 +102,11 @@ pub enum Record {
     Caveat {
         id_code: String,
         comment: String,
+    },
+
+    Sprsde {
+        sprsde_date: NaiveDate,
+        id_code: String,
+        superseeded: Vec<String>,
     },
 }
