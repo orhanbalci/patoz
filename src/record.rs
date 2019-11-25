@@ -104,7 +104,7 @@ named!(
 make_line_folder!(title_line_folder, title_line_parser, TitleLine);
 
 named!(
-    title_parser<Record>,
+    title_record_parser<Record>,
     map!(
         title_line_folder,
         |title: Vec<u8>| if let Ok(res) = String::from_utf8(title) {
@@ -119,37 +119,89 @@ named!(
 );
 
 named!(
-    split_parser<Split>,
+    split_line_parser<Continuation<SplitLine>>,
     do_parse!(
         split
             >> take!(2)
             >> cont: opt!(twodigit_integer)
             >> space1
-            >> ids: idcode_list
+            >> rest: till_line_ending
             >> line_ending
-            >> (Split {
+            >> (Continuation::<SplitLine> {
                 continuation: if let Some(cc) = cont { cc } else { 0 },
-                id_codes: ids
+                remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
+                phantom: PhantomData,
             })
     )
 );
 
+make_line_folder!(split_line_folder, split_line_parser, SplitLine);
+
 named!(
-    caveat_parser<Caveat>,
+    split_parser<Record>,
+    do_parse!(space0 >> ids: idcode_list >> (Record::Split { id_codes: ids }))
+);
+
+named!(
+    split_record_parser<Record>,
+    map!(split_line_folder, |split: Vec<u8>| {
+        if let Ok((_, res)) = split_parser(split.as_slice()) {
+            res
+        } else {
+            Record::Split {
+                id_codes: Vec::new(),
+            }
+        }
+    })
+);
+
+named!(
+    caveat_line_parser<Continuation<CaveatLine>>,
     do_parse!(
         caveat
             >> take!(2)
             >> cont: opt!(twodigit_integer)
             >> space1
-            >> com: take_str!(59)
+            >> rest: till_line_ending
             >> line_ending
-            >> (Caveat {
+            >> (Continuation::<CaveatLine> {
                 continuation: if let Some(cc) = cont { cc } else { 0 },
-                comment: String::from(com),
+                remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
+                phantom: PhantomData,
             })
     )
 );
 
+make_line_folder!(caveat_line_folder, caveat_line_parser, CaveatLine);
+
+named!(
+    caveat_parser<Record>,
+    do_parse!(
+        space0
+            >> id_code: alphanum_word
+            >> space0
+            >> comment: alphanum_word_with_spaces_inside
+            >> space0
+            >> (Record::Caveat {
+                id_code: id_code,
+                comment: comment,
+            })
+    )
+);
+
+named!(
+    caveat_record_parser<Record>,
+    map!(caveat_line_folder, |caveat: Vec<u8>| {
+        if let Ok((_, res)) = caveat_parser(caveat.as_slice()) {
+            res
+        } else {
+            Record::Caveat {
+                id_code: String::new(),
+                comment: String::new(),
+            }
+        }
+    })
+);
 make_token_parser!(mol_id_parser, mol_id, integer, a, Token::MoleculeId(a));
 
 make_token_parser!(
@@ -756,7 +808,13 @@ named!(
 
 named!(
     pdb_record_parser<Record>,
-    alt!(complete!(header_parser) | complete!(obslte_parser) | complete!(title_parser))
+    alt!(
+        complete!(header_parser)
+            | complete!(obslte_record_parser)
+            | complete!(title_record_parser)
+            | complete!(split_record_parser)
+            | complete!(caveat_record_parser)
+    )
 );
 
 named!(
@@ -826,7 +884,7 @@ mod test {
 
     #[test]
     fn test_title_parser() {
-        let tit = title_parser(
+        let tit = title_record_parser(
             r#"TITLE     RHIZOPUSPEPSIN COMPLEXED WITH REDUCED PEPTIDE INHIBITOR
 "#
             .as_bytes(),
@@ -846,13 +904,17 @@ mod test {
 
     #[test]
     fn test_split_parser() {
-        let splt = split_parser(
+        let splt = split_record_parser(
             "SPLIT      1VOQ 1VOR 1VOS 1VOU 1VOV 1VOW 1VOX 1VOY 1VP0 1VOZ \n".as_bytes(),
         )
         .unwrap()
         .1;
 
-        assert_eq!(splt.id_codes[0], "1VOQ")
+        if let Record::Split { id_codes } = splt {
+            assert_eq!(id_codes[0], "1VOQ")
+        } else {
+            assert!(false)
+        }
     }
 
     #[test]

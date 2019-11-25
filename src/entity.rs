@@ -2,26 +2,16 @@ use chrono::NaiveDate;
 use std::marker::PhantomData;
 
 #[derive(Debug)]
-pub struct Split {
-    pub continuation: u32,
-    pub id_codes: Vec<String>,
-}
-
-#[derive(Debug)]
-pub struct Caveat {
-    pub continuation: u32,
-    pub comment: String,
-}
-
-#[derive(Debug)]
 pub struct Continuation<T> {
     pub continuation: u32,
     pub remaining: String,
     pub phantom: PhantomData<T>,
 }
 
-pub struct TitleLine;
 pub struct ObslteLine;
+pub struct TitleLine;
+pub struct SplitLine;
+pub struct CaveatLine;
 pub struct CmpndLine;
 pub struct SourceLine;
 pub struct KeywdsLine;
@@ -102,5 +92,14 @@ pub enum Record {
     Obslte {
         replacement_date: NaiveDate,
         replacement_ids: Vec<String>,
+    },
+
+    Split {
+        id_codes: Vec<String>,
+    },
+
+    Caveat {
+        id_code: String,
+        comment: String,
     },
 }
