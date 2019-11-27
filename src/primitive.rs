@@ -2,12 +2,11 @@ use chrono::format::strftime::StrftimeItems;
 use chrono::format::Parsed;
 use chrono::NaiveDate;
 use nom::bytes::complete::tag;
-use nom::character::complete::{alpha1, alphanumeric1, digit1, space0, space1};
+use nom::character::complete::{alpha1, alphanumeric1, digit1, multispace1, space0, space1};
 use nom::character::{is_alphanumeric, is_digit, is_space};
-
 use nom::{
-    alt, do_parse, fold_many0, map_res, named, separated_list, tag, take, take_till, take_while,
-    IResult,
+    alt, do_parse, fold_many0, map_res, named, separated_list, tag, take, take_str, take_till,
+    take_while, IResult,
 };
 use std::result::Result;
 use std::str;
@@ -105,7 +104,7 @@ named!(
 
 named!(
     pub integer_list<&[u8],Vec<u32>>,
-    separated_list!(tag!(","), integer_with_spaces)
+    separated_list!(tag(","), integer_with_spaces)
 );
 
 named!(
@@ -238,6 +237,9 @@ make_token_tagger!(expression_system_gene);
 
 named!(pub till_line_ending<&[u8]>, take_till!(|c| char::from(c) == '\r' || char::from(c) == '\n'));
 
+named!(pub residue_parser<&str>, take_str!(3));
+named!(pub residue_list_parser<&[u8], Vec<&str>>, separated_list!(multispace1, residue_parser));
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -268,6 +270,32 @@ mod test {
     fn test_token_mol_id_parser() {
         if let Ok((_, _res)) = mol_id("MOL_ID:".as_bytes()) {
             assert!(true);
+        }
+    }
+
+    #[test]
+    fn test_residue_list_parser() {
+        let res = residue_list_parser("GLY ILE VAL".as_bytes());
+        match res {
+            Ok((_, r)) => {
+                assert_eq!(r[0], "GLY");
+                assert!(true);
+            }
+            Err(_err) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn test_integer_list_parser() {
+        let res = integer_list("1,2,3".as_bytes());
+        match res {
+            Ok((_, r)) => {
+                assert_eq!(r[0], 1);
+            }
+            Err(e) => {
+                println!("{:?}", e);
+                assert!(false);
+            }
         }
     }
 }
