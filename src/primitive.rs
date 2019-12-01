@@ -84,6 +84,7 @@ make_tagger!(mdltyp);
 make_tagger!(author);
 make_tagger!(revdat);
 make_tagger!(sprsde);
+make_tagger!(seqres);
 make_tagger!(jrnl);
 make_tagger!(end);
 

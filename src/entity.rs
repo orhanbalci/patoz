@@ -2,22 +2,11 @@ use chrono::NaiveDate;
 use std::marker::PhantomData;
 
 #[derive(Debug)]
-pub struct Continuation<T> {
+pub(crate) struct Continuation<T> {
     pub continuation: u32,
     pub remaining: String,
     pub phantom: PhantomData<T>,
 }
-
-pub struct ObslteLine;
-pub struct TitleLine;
-pub struct SplitLine;
-pub struct CaveatLine;
-pub struct CmpndLine;
-pub struct SourceLine;
-pub struct KeywdsLine;
-pub struct ExpdataLine;
-pub struct AuthorLine;
-pub struct SprsdeLine;
 
 pub struct Author(pub String);
 
