@@ -98,4 +98,9 @@ pub enum Record {
         id_code: String,
         superseeded: Vec<String>,
     },
+
+    Seqres {
+        chain_id: Option<char>,
+        residues: Vec<String>,
+    },
 }

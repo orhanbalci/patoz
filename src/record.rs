@@ -1,12 +1,10 @@
 use super::entity::*;
 use nom::{alt, complete, fold_many0, named};
 
-use super::caveat::caveat_record_parser;
-use super::header::header_parser;
-use super::obslte::obslte_record_parser;
-use super::split::split_record_parser;
-use super::sprsde::sprsde_record_parser;
-use super::title::title_record_parser;
+use super::{
+    caveat::caveat_record_parser, header::header_parser, obslte::obslte_record_parser,
+    split::split_record_parser, sprsde::sprsde_record_parser, title::title_record_parser,
+};
 
 named!(
     pdb_record_parser<Record>,

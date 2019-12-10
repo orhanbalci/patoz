@@ -1,16 +1,18 @@
-use chrono::format::strftime::StrftimeItems;
-use chrono::format::Parsed;
-use chrono::NaiveDate;
-use nom::bytes::complete::tag;
-use nom::character::complete::{alpha1, alphanumeric1, digit1, multispace1, space0, space1};
-use nom::character::{is_alphanumeric, is_digit, is_space};
+use chrono::{
+    format::{strftime::StrftimeItems, Parsed},
+    NaiveDate,
+};
 use nom::{
-    alt, do_parse, fold_many0, map_res, named, separated_list, tag, take, take_str, take_till,
+    alt,
+    bytes::complete::tag,
+    character::{
+        complete::{alpha1, alphanumeric1, digit1, multispace1, space0, space1},
+        is_alphanumeric, is_digit, is_space,
+    },
+    do_parse, fold_many0, map_res, named, separated_list, tag, take, take_str, take_till,
     take_while, IResult,
 };
-use std::result::Result;
-use std::str;
-use std::str::FromStr;
+use std::{result::Result, str, str::FromStr};
 
 #[macro_use]
 
@@ -238,8 +240,8 @@ make_token_tagger!(expression_system_gene);
 
 named!(pub till_line_ending<&[u8]>, take_till!(|c| char::from(c) == '\r' || char::from(c) == '\n'));
 
-named!(pub residue_parser<&str>, take_str!(3));
-named!(pub residue_list_parser<&[u8], Vec<&str>>, separated_list!(multispace1, residue_parser));
+named!(pub residue_parser<String>, map_res!(alt!(take_str!(3) | take_str!(2) | take_str!(1)), str::FromStr::from_str));
+named!(pub residue_list_parser<&[u8], Vec<String>>, separated_list!(multispace1, residue_parser));
 
 #[cfg(test)]
 mod test {

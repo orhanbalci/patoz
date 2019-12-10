@@ -1,14 +1,13 @@
-use super::entity::*;
-use super::primitive::*;
-use nom::character::complete::{line_ending, space0, space1};
-use nom::{alt, do_parse, fold_many1, map, named, opt, separated_list, tag};
+use super::{entity::*, primitive::*};
+use nom::{
+    alt,
+    character::complete::{line_ending, space0, space1},
+    do_parse, fold_many1, map, named, opt, separated_list, tag,
+};
 
-use crate::make_line_folder;
-use crate::make_token_parser;
+use crate::{make_line_folder, make_token_parser};
 
-use std::marker::PhantomData;
-use std::str;
-use std::str::FromStr;
+use std::{marker::PhantomData, str, str::FromStr};
 
 #[allow(dead_code)]
 struct CmpndLine;

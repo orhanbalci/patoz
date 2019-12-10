@@ -6,7 +6,7 @@ Protein Data Bank (pdb) file parser
 
 
 # Status
-## Implemented Record Parsers
+## Record Parser Status
 ### Title Section
 - [x] [Header](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#HEADER)
 - [x] [Obslte](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#OBSLTE)
@@ -28,7 +28,7 @@ Protein Data Bank (pdb) file parser
 - [ ] [Dbref](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#DBREF)
 - [ ] [Dbref1](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#DBREF1)
 - [ ] [Seqadv](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#SEQADV)
-- [ ] [Seqres](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#SEQRES)
+- [x] [Seqres](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#SEQRES)
 - [ ] [Modres](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#MODRES)
 ### Heterogen Section
 - [ ] [Het](http://www.wwpdb.org/documentation/file-format-content/format33/sect4.html#HET)

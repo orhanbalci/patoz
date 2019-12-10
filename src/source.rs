@@ -1,14 +1,13 @@
-use super::entity::*;
-use super::primitive::*;
-use nom::character::complete::{line_ending, space0, space1};
-use nom::{do_parse, fold_many1, map, named, opt};
+use super::{entity::*, primitive::*};
+use nom::{
+    character::complete::{line_ending, space0, space1},
+    do_parse, fold_many1, map, named, opt,
+};
 
 use super::compnd::tokens_parser;
 use crate::make_line_folder;
 
-use std::marker::PhantomData;
-use std::str;
-use std::str::FromStr;
+use std::{marker::PhantomData, str, str::FromStr};
 
 #[allow(dead_code)]
 struct SourceLine;

@@ -1,14 +1,15 @@
-use super::entity::*;
-use super::primitive::*;
-use nom::character::complete::{line_ending, space0, space1};
-use nom::character::{is_alphanumeric, is_space};
-use nom::{do_parse, fold_many1, map, map_res, named, opt, separated_list, tag, take_while, Err};
+use super::{entity::*, primitive::*};
+use nom::{
+    character::{
+        complete::{line_ending, space0, space1},
+        is_alphanumeric, is_space,
+    },
+    do_parse, fold_many1, map, map_res, named, opt, separated_list, tag, take_while, Err,
+};
 
 use crate::make_line_folder;
 
-use std::marker::PhantomData;
-use std::str;
-use std::str::FromStr;
+use std::{marker::PhantomData, str, str::FromStr};
 
 #[allow(dead_code)]
 struct AuthorLine;

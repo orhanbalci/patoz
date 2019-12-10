@@ -1,6 +1,5 @@
 use super::primitive::*;
-use nom::character::complete::space0;
-use nom::{do_parse, named};
+use nom::{character::complete::space0, do_parse, named};
 
 named!(
     nummdl_parser<u32>,

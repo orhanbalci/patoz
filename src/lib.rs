@@ -11,6 +11,7 @@ mod nummdl;
 mod obslte;
 pub mod primitive;
 pub mod record;
+mod seqres;
 mod source;
 mod split;
 mod sprsde;

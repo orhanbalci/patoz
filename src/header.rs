@@ -1,7 +1,8 @@
-use super::entity::*;
-use super::primitive::*;
-use nom::character::complete::{line_ending, multispace1, space0};
-use nom::{do_parse, map, named, take_str};
+use super::{entity::*, primitive::*};
+use nom::{
+    character::complete::{line_ending, multispace1, space0},
+    do_parse, map, named, take_str,
+};
 
 named!(
     pub (crate) header_parser<Record>,
