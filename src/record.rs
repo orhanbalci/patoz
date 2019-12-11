@@ -7,7 +7,7 @@ use super::{
 };
 
 named!(
-    pdb_record_parser<Record>,
+    pub pdb_record_parser<Record>,
     alt!(
         complete!(header_parser)
             | complete!(obslte_record_parser)
