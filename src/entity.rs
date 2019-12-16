@@ -103,4 +103,8 @@ pub enum Record {
         chain_id: Option<char>,
         residues: Vec<String>,
     },
+
+    Mdltyp {
+        structural_annotation: Vec<String>,
+    },
 }

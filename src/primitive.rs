@@ -173,6 +173,19 @@ named!(
     separated_list!(tag!(","), alphanum_word_with_spaces_inside)
 );
 
+named!(
+    pub structural_annotation<String>,
+    map_res!(
+        map_res!(take_while!(|s : u8| { s == b',' || is_alphanumeric(s) || is_space(s)}), str::from_utf8),
+        str::FromStr::from_str
+    )
+);
+
+named!(
+    pub structural_annotation_list_parser<&[u8], Vec<String>>,
+    separated_list!(tag!(";"), structural_annotation)
+);
+
 named!(pub ec_value_parser<&[u8],Vec<String>>,
         separated_list!(
                         tag!(","),
@@ -294,6 +307,27 @@ mod test {
         match res {
             Ok((_, r)) => {
                 assert_eq!(r[0], 1);
+            }
+            Err(e) => {
+                println!("{:?}", e);
+                assert!(false);
+            }
+        }
+    }
+
+    #[test]
+    fn test_structural_annotation_list_parser() {
+        let res = structural_annotation_list_parser(
+            "CA ATOMS ONLY, CHAIN A, B, C, D, E, F, G, H, I, J, K ; P ATOMS ONLY, CHAIN X, Y, Z-"
+                .as_bytes(),
+        );
+        match res {
+            Ok((_, ann)) => {
+                assert_eq!(
+                    ann[0],
+                    "CA ATOMS ONLY, CHAIN A, B, C, D, E, F, G, H, I, J, K "
+                );
+                assert_eq!(ann[1], " P ATOMS ONLY, CHAIN X, Y, Z");
             }
             Err(e) => {
                 println!("{:?}", e);

@@ -7,6 +7,7 @@ pub mod entity;
 mod expdta;
 mod header;
 mod keywds;
+mod mdltyp;
 mod nummdl;
 mod obslte;
 pub mod primitive;
