@@ -68,6 +68,12 @@ pub enum Token {
 }
 
 #[derive(Debug, Clone)]
+pub enum ModificationType {
+    InitialRelease,
+    OtherModification,
+}
+
+#[derive(Debug, Clone)]
 pub enum Record {
     Header {
         classification: String,
@@ -106,5 +112,13 @@ pub enum Record {
 
     Mdltyp {
         structural_annotation: Vec<String>,
+    },
+
+    Revdat {
+        modification_number: u32,
+        modification_date: NaiveDate,
+        idcode: String,
+        modification_type: ModificationType,
+        modification_detail: Vec<String>,
     },
 }

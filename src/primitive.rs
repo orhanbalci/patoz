@@ -209,6 +209,16 @@ named!(
 
 named!(pub yes_no_parser<bool>, alt!(yes | no));
 
+use super::entity::ModificationType;
+
+named!(
+    pub modification_type_parser<ModificationType>,
+    alt!(
+        do_parse!(tag!("0") >> (ModificationType::InitialRelease)) |
+        do_parse!(tag!("!") >> (ModificationType::OtherModification))
+    )
+);
+
 make_token_tagger!(mol_id);
 make_token_tagger!(molecule);
 make_token_tagger!(chain);
