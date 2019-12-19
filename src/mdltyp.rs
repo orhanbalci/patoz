@@ -1,7 +1,7 @@
 use super::{entity::*, primitive::*};
 use nom::{
     character::complete::{line_ending, space0, space1},
-    do_parse, fold_many1, named, opt,
+    do_parse, fold_many1, map, named, opt,
 };
 
 use crate::make_line_folder;
@@ -31,7 +31,7 @@ named!(
 make_line_folder!(mdltyp_line_folder, mdltyp_line_parser, MdltypLine);
 
 named!(
-    mdltyp_record_parser<Record>,
+    mdltyp_parser<Record>,
     do_parse!(
         space0
             >> structural_annotation: structural_annotation_list_parser
@@ -39,4 +39,17 @@ named!(
                 structural_annotation,
             })
     )
+);
+
+named!(
+    pub (crate) mdltyp_record_parser<Record>,
+    map!(mdltyp_line_folder, |mdltyp: Vec<u8>| {
+        if let Ok((_, res)) = mdltyp_parser(mdltyp.as_slice()) {
+            res
+        } else {
+            Record::Mdltyp {
+                structural_annotation : Vec::new()
+            }
+        }
+    })
 );

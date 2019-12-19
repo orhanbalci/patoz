@@ -62,15 +62,14 @@ named!(
                 let single_modification_parser_result = revdat_inner_parser(input.as_slice());
                 match single_modification_parser_result {
                     Ok((_, mut single_revdat_record)) => {
-                        match single_revdat_record {
-                            Record::Revdat {
-                                ref mut modification_number,
-                                ..
-                            } => {
-                                *modification_number = r.modification_number;
-                            }
-                            _ => (),
+                        if let Record::Revdat {
+                            ref mut modification_number,
+                            ..
+                        } = single_revdat_record
+                        {
+                            *modification_number = r.modification_number;
                         }
+
                         single_revdat_record
                     }
                     _ => Record::Revdat {

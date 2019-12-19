@@ -6,6 +6,7 @@ mod compnd;
 pub mod entity;
 mod expdta;
 mod header;
+mod jrnl;
 mod keywds;
 mod mdltyp;
 mod nummdl;

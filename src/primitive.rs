@@ -88,6 +88,7 @@ make_tagger!(revdat);
 make_tagger!(sprsde);
 make_tagger!(seqres);
 make_tagger!(jrnl);
+make_tagger!(auth);
 make_tagger!(end);
 
 named!(

@@ -56,7 +56,7 @@ named!(
 );
 
 named!(
-    author_list_parser<Vec<Author>>,
+    pub (crate) author_list_parser<Vec<Author>>,
     separated_list!(tag!(","), author_value_parser)
 );
 
