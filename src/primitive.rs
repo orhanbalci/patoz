@@ -64,7 +64,9 @@ macro_rules! make_line_folder (
                     $line_parser,
                     Vec::new(),
                     |acc : Vec<u8>, item : Continuation<$line_type>|{
-                        acc.into_iter().chain(item.remaining.into_bytes()).collect()
+                        let rem = if acc.len() > 0 { " ".to_owned() + &item.remaining }else{ item.remaining };
+                        let trimmed =  rem.trim_end();
+                        acc.into_iter().chain(trimmed.bytes()).collect()
                     }
                 )
             );
@@ -90,6 +92,7 @@ make_tagger!(seqres);
 make_tagger!(jrnl);
 make_tagger!(auth);
 make_tagger!(end);
+make_tagger!(titl);
 
 named!(
     pub twodigit_integer<u32>,
