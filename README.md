@@ -24,7 +24,7 @@ Protein Data Bank (pdb) file parser
 - [x] [Revdat](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#REVDAT)
 - [ ] [Jrnl](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#JRNL)
     - [x] Auth
-    - [ ] Titl
+    - [x] Titl
     - [ ] Edit
     - [ ] Ref
     - [ ] Publ
