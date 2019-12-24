@@ -27,7 +27,7 @@ Protein Data Bank (pdb) file parser
 - [ ] [Jrnl](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#JRNL)
     - [x] Auth
     - [x] Titl
-    - [ ] Edit
+    - [x] Edit
     - [ ] Ref
     - [ ] Publ
     - [ ] Refn

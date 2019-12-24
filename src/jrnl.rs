@@ -17,6 +17,9 @@ struct JrnlAuthorLine;
 #[allow(dead_code)]
 struct JrnlTitleLine;
 
+#[allow(dead_code)]
+struct JrnlEditLine;
+
 named!(
     jrnl_author_line_parser<Continuation<JrnlAuthorLine>>,
     do_parse!(
@@ -80,6 +83,37 @@ named!(
     pub (crate) jrnl_title_record_parser<String>,
     map!(jrnl_title_line_folder, |jrnl_title: Vec<u8>| {
         String::from(str::from_utf8(jrnl_title.as_slice()).unwrap())
+    })
+);
+
+named!(
+    jrnl_edit_line_parser<Continuation<JrnlEditLine>>,
+    do_parse!(
+        jrnl >> space1
+            >> edit
+            >> space1
+            >> cont: opt!(integer)
+            >> space0
+            >> rest: till_line_ending
+            >> line_ending
+            >> (Continuation::<JrnlEditLine> {
+                continuation: if let Some(cc) = cont { cc } else { 0 },
+                remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
+                phantom: PhantomData,
+            })
+    )
+);
+
+make_line_folder!(jrnl_edit_line_folder, jrnl_edit_line_parser, JrnlEditLine);
+
+named!(
+    jrnl_edit_record_parser<Vec<Author>>,
+    map!(jrnl_edit_line_folder, |jrnl_edit: Vec<u8>| {
+        if let Ok((_, res)) = author_list_parser(jrnl_edit.as_slice()) {
+            res
+        } else {
+            Vec::new()
+        }
     })
 );
 

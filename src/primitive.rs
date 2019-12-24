@@ -93,6 +93,7 @@ make_tagger!(jrnl);
 make_tagger!(auth);
 make_tagger!(end);
 make_tagger!(titl);
+make_tagger!(edit);
 
 named!(
     pub twodigit_integer<u32>,
