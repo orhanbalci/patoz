@@ -220,7 +220,7 @@ named!(
     pub modification_type_parser<ModificationType>,
     alt!(
         do_parse!(tag!("0") >> (ModificationType::InitialRelease)) |
-        do_parse!(tag!("!") >> (ModificationType::OtherModification))
+        do_parse!(tag!("1") >> (ModificationType::OtherModification))
     )
 );
 

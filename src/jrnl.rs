@@ -2,7 +2,7 @@ use super::entity::*;
 use super::primitive::*;
 use nom::{
     character::complete::{line_ending, space0, space1},
-    do_parse, fold_many1, map, named, opt,
+    do_parse, fold_many1, map, named, opt, tag, take_str,
 };
 
 use crate::author::author_list_parser;
@@ -19,6 +19,15 @@ struct JrnlTitleLine;
 
 #[allow(dead_code)]
 struct JrnlEditLine;
+
+#[allow(dead_code)]
+struct JrnlRefLine {
+    continuation: u32,
+    publication_name: String,
+    volume: u32,
+    page: u32,
+    year: u32,
+}
 
 named!(
     jrnl_author_line_parser<Continuation<JrnlAuthorLine>>,
@@ -115,6 +124,29 @@ named!(
             Vec::new()
         }
     })
+);
+
+named!(
+    jrnl_ref_line_parser<JrnlRefLine>,
+    do_parse!(
+        jrnl >> space1
+            >> tag!("REF")
+            >> space1
+            >> cont: opt!(integer)
+            >> publication_name: take_str!(28)
+            >> take_str!(2)
+            >> space0
+            >> volume: integer
+            >> page: integer
+            >> year: integer
+            >> (JrnlRefLine {
+                continuation: if let Some(cc) = cont { cc } else { 0 },
+                publication_name: publication_name.to_owned(),
+                volume,
+                page,
+                year,
+            })
+    )
 );
 
 #[cfg(test)]
