@@ -121,4 +121,16 @@ pub enum Record {
         modification_type: ModificationType,
         modification_detail: Vec<String>,
     },
+
+    JournalAuthor {
+        name: String,
+    },
+
+    JournalTitle {
+        title: String,
+    },
+
+    JournalEditor {
+        name: String,
+    },
 }

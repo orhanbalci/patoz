@@ -21,12 +21,13 @@ struct JrnlTitleLine;
 struct JrnlEditLine;
 
 #[allow(dead_code)]
+#[derive(Default, Clone)]
 struct JrnlRefLine {
     continuation: u32,
     publication_name: String,
-    volume: u32,
-    page: u32,
-    year: u32,
+    volume: Option<u32>,
+    page: Option<u32>,
+    year: Option<u32>,
 }
 
 named!(
@@ -54,10 +55,12 @@ make_line_folder!(
 );
 
 named!(
-    jrnl_author_record_parser<Vec<Author>>,
+    jrnl_author_record_parser<Vec<Record>>,
     map!(jrnl_author_line_folder, |jrnl_author: Vec<u8>| {
         if let Ok((_, res)) = author_list_parser(jrnl_author.as_slice()) {
-            res
+            res.into_iter()
+                .map(|a| Record::JournalAuthor { name: a.0 })
+                .collect()
         } else {
             Vec::new()
         }
@@ -89,9 +92,9 @@ make_line_folder!(
 );
 
 named!(
-    pub (crate) jrnl_title_record_parser<String>,
+    pub (crate) jrnl_title_record_parser<Record>,
     map!(jrnl_title_line_folder, |jrnl_title: Vec<u8>| {
-        String::from(str::from_utf8(jrnl_title.as_slice()).unwrap())
+        Record::JournalTitle{ title : String::from(str::from_utf8(jrnl_title.as_slice()).unwrap())}
     })
 );
 
@@ -116,10 +119,12 @@ named!(
 make_line_folder!(jrnl_edit_line_folder, jrnl_edit_line_parser, JrnlEditLine);
 
 named!(
-    jrnl_edit_record_parser<Vec<Author>>,
+    jrnl_edit_record_parser<Vec<Record>>,
     map!(jrnl_edit_line_folder, |jrnl_edit: Vec<u8>| {
         if let Ok((_, res)) = author_list_parser(jrnl_edit.as_slice()) {
-            res
+            res.into_iter()
+                .map(|editor| Record::JournalEditor { name: editor.0 })
+                .collect()
         } else {
             Vec::new()
         }
@@ -134,11 +139,11 @@ named!(
             >> space1
             >> cont: opt!(integer)
             >> publication_name: take_str!(28)
-            >> take_str!(2)
+            >> opt!(take_str!(2))
             >> space0
-            >> volume: integer
-            >> page: integer
-            >> year: integer
+            >> volume: opt!(integer)
+            >> page: opt!(integer)
+            >> year: opt!(integer)
             >> (JrnlRefLine {
                 continuation: if let Some(cc) = cont { cc } else { 0 },
                 publication_name: publication_name.to_owned(),
@@ -149,9 +154,27 @@ named!(
     )
 );
 
+named!(
+    jrnl_ref_line_folder<JrnlRefLine>,
+    fold_many1!(
+        jrnl_ref_line_parser,
+        JrnlRefLine::default(),
+        |acc: JrnlRefLine, item: JrnlRefLine| {
+            JrnlRefLine {
+                continuation: acc.continuation,
+                publication_name: acc.publication_name + &item.publication_name,
+                page: acc.page.or(item.page),
+                volume: acc.volume.or(item.volume),
+                year: acc.year.or(item.year),
+            }
+        }
+    )
+);
+
 #[cfg(test)]
 mod test {
     use super::jrnl_title_record_parser;
+    use crate::entity::Record;
 
     #[test]
     fn test_jrnl_title() {
@@ -164,10 +187,12 @@ JRNL        TITL 2 1.74 A RESOLUTION
 
         match res {
             Ok((_, r)) => {
-                assert_eq!(
-                    r,
-                    "THE CRYSTAL STRUCTURE OF  HUMAN DEOXYHAEMOGLOBIN AT 1.74 A RESOLUTION"
-                );
+                if let Record::JournalAuthor { name } = r {
+                    assert_eq!(
+                        name,
+                        "THE CRYSTAL STRUCTURE OF  HUMAN DEOXYHAEMOGLOBIN AT 1.74 A RESOLUTION"
+                    );
+                }
             }
             Err(e) => {
                 println!("{:?}", e);
