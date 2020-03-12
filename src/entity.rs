@@ -22,7 +22,7 @@ pub enum ExperimentalTechnique {
     SolutionScattering,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Token {
     MoleculeId(u32),
     Molecule(String),
@@ -121,7 +121,15 @@ pub enum Record {
         modification_type: ModificationType,
         modification_detail: Vec<String>,
     },
-
+    Cmpnd {
+        tokens: Vec<Token>,
+    },
+    Source {
+        tokens: Vec<Token>,
+    },
+    Keywds {
+        keywords: Vec<String>,
+    },
     JournalAuthor {
         name: String,
     },

@@ -32,18 +32,9 @@ named!(
 make_line_folder!(source_line_folder, source_line_parser, SourceLine);
 
 named!(
-    pub (crate) source_token_parser<Vec<Token>>,
+    pub (crate) source_token_parser<Record>,
     map!(
         source_line_folder,
-        |v: Vec<u8>| match tokens_parser(v.as_slice()) {
-            Ok((_, res)) => {
-                //println!("Okkk {:?}", res);
-                res
-            }
-            Err(_err) => {
-                //println!("Errrr {:?}", err);
-                Vec::new()
-            }
-        }
+        |v: Vec<u8>| tokens_parser(v.as_slice()).map(|res| Record::Source{tokens : res.1}).expect("Can not parse source record")
     )
 );

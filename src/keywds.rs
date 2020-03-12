@@ -31,12 +31,10 @@ named!(
 make_line_folder!(keywds_line_folder, keywds_line_parser, KeywdsLine);
 
 named!(
-    keywds_parser<Vec<String>>,
-    map!(
-        keywds_line_folder,
-        |v: Vec<u8>| match chain_value_parser(v.as_slice()) {
-            Ok((_, res)) => res,
-            Err(_err) => Vec::new(),
-        }
+    pub (crate) keywds_parser<Record>,
+    map!(keywds_line_folder, |v: Vec<u8>| chain_value_parser(
+        v.as_slice()
     )
+    .map(|res| Record::Keywds { keywords: res.1 })
+    .expect("Can not parse keywds record"))
 );

@@ -393,19 +393,12 @@ named!(
 make_line_folder!(cmpnd_line_folder, cmpnd_line_parser, CmpndLine);
 
 named!(
-    pub (crate) cmpnd_token_parser<Vec<Token>>,
+    pub (crate) cmpnd_token_parser<Record>,
     map!(
         cmpnd_line_folder,
-        |v: Vec<u8>| match tokens_parser(v.as_slice()) {
-            Ok((_, res)) => {
-                println!("Okkk {:?}", res);
-                res
-            }
-            Err(err) => {
-                println!("Errrr {:?}", err);
-                Vec::new()
-            }
-        }
+        |v: Vec<u8>|  tokens_parser(v.as_slice())
+                        .map(|res| Record::Cmpnd{ tokens : res.1})
+                        .expect("Could not parse tokesn")
     )
 );
 
@@ -479,7 +472,7 @@ COMPND   2 MOLECULE:  HEMOGLOBIN ALPHA CHAIN;"#
 
     #[test]
     fn test_cmpnd_token_parser() {
-        if let Ok((_, res)) = cmpnd_token_parser(
+        if let Ok((_, Record::Cmpnd { tokens: res })) = cmpnd_token_parser(
             r#"COMPND    MOL_ID:  1;
 COMPND   2 MOLECULE:  HEMOGLOBIN ALPHA CHAIN;
 COMPND   3 CHAIN: A,  C;

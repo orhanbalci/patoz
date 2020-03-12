@@ -28,7 +28,7 @@ Protein Data Bank (pdb) file parser
     - [x] Auth
     - [x] Titl
     - [x] Edit
-    - [ ] Ref
+    - [x] Ref
     - [ ] Publ
     - [ ] Refn
     - [ ] Pmid
