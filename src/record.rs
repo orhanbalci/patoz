@@ -2,8 +2,9 @@ use super::entity::*;
 use nom::{alt, complete, fold_many0, named};
 
 use super::{
-    caveat::caveat_record_parser, compnd::cmpnd_token_parser, header::header_parser,
-    keywds::keywds_parser, obslte::obslte_record_parser, source::source_token_parser,
+    caveat::caveat_record_parser, compnd::cmpnd_token_parser, expdta::expdata_record_parser,
+    header::header_parser, keywds::keywds_parser, mdltyp::mdltyp_record_parser,
+    nummdl::nummdl_record_parser, obslte::obslte_record_parser, source::source_token_parser,
     split::split_record_parser, sprsde::sprsde_record_parser, title::title_record_parser,
 };
 
@@ -19,6 +20,9 @@ named!(
             | complete!(cmpnd_token_parser)
             | complete!(source_token_parser)
             | complete!(keywds_parser)
+            | complete!(expdata_record_parser)
+            | complete!(nummdl_record_parser)
+            | complete!(mdltyp_record_parser)
 
     )
 );

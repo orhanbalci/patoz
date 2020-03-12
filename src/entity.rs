@@ -10,7 +10,7 @@ pub(crate) struct Continuation<T> {
 
 pub struct Author(pub String);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ExperimentalTechnique {
     XRayDiffraction,
     FiberDiffraction,
@@ -80,40 +80,32 @@ pub enum Record {
         deposition_date: NaiveDate,
         id_code: String,
     },
-
     Title {
         title: String,
     },
-
     Obslte {
         replacement_date: NaiveDate,
         replacement_ids: Vec<String>,
     },
-
     Split {
         id_codes: Vec<String>,
     },
-
     Caveat {
         id_code: String,
         comment: String,
     },
-
     Sprsde {
         sprsde_date: NaiveDate,
         id_code: String,
         superseeded: Vec<String>,
     },
-
     Seqres {
         chain_id: Option<char>,
         residues: Vec<String>,
     },
-
     Mdltyp {
         structural_annotation: Vec<String>,
     },
-
     Revdat {
         modification_number: u32,
         modification_date: NaiveDate,
@@ -133,12 +125,16 @@ pub enum Record {
     JournalAuthor {
         name: String,
     },
-
     JournalTitle {
         title: String,
     },
-
     JournalEditor {
         name: String,
+    },
+    Experimental {
+        techniques: Vec<ExperimentalTechnique>,
+    },
+    Nummdl {
+        num: u32,
     },
 }

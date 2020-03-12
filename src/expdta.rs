@@ -78,12 +78,10 @@ named!(
 make_line_folder!(expdata_line_folder, expdata_line_parser, ExpdataLine);
 
 named!(
-    expdata_parser<Vec<ExperimentalTechnique>>,
-    map!(
-        expdata_line_folder,
-        |v: Vec<u8>| match experimental_technique_list_parser(v.as_slice()) {
-            Ok((_, res)) => res,
-            Err(_err) => Vec::new(),
-        }
-    )
+    pub (crate) expdata_record_parser<Record>,
+    map!(expdata_line_folder, |v: Vec<u8>| {
+        experimental_technique_list_parser(v.as_slice())
+            .map(|res| Record::Experimental { techniques: res.1 })
+            .expect("Can not parse expdta records")
+    })
 );
