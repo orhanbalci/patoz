@@ -8,6 +8,7 @@ pub(crate) struct Continuation<T> {
     pub phantom: PhantomData<T>,
 }
 
+#[derive(Debug, Clone)]
 pub struct Author(pub String);
 
 #[derive(Debug, Clone)]
@@ -136,5 +137,8 @@ pub enum Record {
     },
     Nummdl {
         num: u32,
+    },
+    Authors {
+        authors: Vec<Author>,
     },
 }

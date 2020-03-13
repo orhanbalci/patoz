@@ -61,15 +61,11 @@ named!(
 );
 
 named!(
-    author_parser<Vec<Author>>,
+    pub (crate) author_record_parser<Record>,
     map!(author_line_folder, |v: Vec<u8>| {
         println!("{}", str::from_utf8(&v).unwrap());
-        match author_list_parser(v.as_slice()) {
-            Ok((_, res)) => res,
-            Err(err) => {
-                println!("{:?}", err);
-                Vec::new()
-            }
-        }
+        author_list_parser(v.as_slice())
+            .map(|res| Record::Authors { authors: res.1 })
+            .expect("Can not parse author record")
     })
 );
