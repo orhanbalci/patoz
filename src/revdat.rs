@@ -2,7 +2,7 @@ use super::entity::*;
 use super::primitive::*;
 use nom::{
     character::complete::{line_ending, space0, space1},
-    do_parse, many0, map, named, opt,
+    do_parse, many1, map, named, opt,
 };
 
 use itertools::Itertools;
@@ -35,7 +35,7 @@ named!(
 
 named!(
     revdat_line_folder<Vec<RevdatLine>>,
-    map!(many0!(revdat_line_parser), |revdat: Vec<RevdatLine>| {
+    map!(many1!(revdat_line_parser), |revdat: Vec<RevdatLine>| {
         revdat
             .into_iter()
             .group_by(|a| a.modification_number)
@@ -53,8 +53,8 @@ named!(
 );
 
 named!(
-    revdat_record_parser<Vec<Record>>,
-    map!(revdat_line_folder, |revdat: Vec<RevdatLine>| {
+    pub (crate) revdat_record_parser<Record>,
+    map! (map!(revdat_line_folder, |revdat: Vec<RevdatLine>| {
         revdat
             .into_iter()
             .map(|r: RevdatLine| {
@@ -62,17 +62,10 @@ named!(
                 let single_modification_parser_result = revdat_inner_parser(input.as_slice());
                 match single_modification_parser_result {
                     Ok((_, mut single_revdat_record)) => {
-                        if let Record::Revdat {
-                            ref mut modification_number,
-                            ..
-                        } = single_revdat_record
-                        {
-                            *modification_number = r.modification_number;
-                        }
-
+                        single_revdat_record.modification_number = r.modification_number;                       
                         single_revdat_record
                     }
-                    _ => Record::Revdat {
+                    _ => Revdat {
                         modification_number: 0,
                         modification_date: chrono::naive::MIN_DATE,
                         idcode: String::new(),
@@ -82,11 +75,11 @@ named!(
                 }
             })
             .collect()
-    })
+    }), |r : Vec<Revdat>| { Record::Revdats{revdat : r}})
 );
 
 named!(
-    revdat_inner_parser<Record>,
+    revdat_inner_parser<Revdat>,
     do_parse!(
         space0
             >> modification_date: date_parser
@@ -96,7 +89,7 @@ named!(
             >> modification_type: modification_type_parser
             >> space1
             >> modification_detail: idcode_list
-            >> (Record::Revdat {
+            >> (Revdat {
                 modification_number: 0,
                 modification_date,
                 idcode,

@@ -69,6 +69,15 @@ pub enum Token {
 }
 
 #[derive(Debug, Clone)]
+pub struct Revdat {
+    pub modification_number: u32,
+    pub modification_date: NaiveDate,
+    pub idcode: String,
+    pub modification_type: ModificationType,
+    pub modification_detail: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
 pub enum ModificationType {
     InitialRelease,
     OtherModification,
@@ -107,12 +116,8 @@ pub enum Record {
     Mdltyp {
         structural_annotation: Vec<String>,
     },
-    Revdat {
-        modification_number: u32,
-        modification_date: NaiveDate,
-        idcode: String,
-        modification_type: ModificationType,
-        modification_detail: Vec<String>,
+    Revdats {
+        revdat: Vec<Revdat>,
     },
     Cmpnd {
         tokens: Vec<Token>,
