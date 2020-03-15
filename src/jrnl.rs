@@ -55,15 +55,11 @@ make_line_folder!(
 );
 
 named!(
-    jrnl_author_record_parser<Vec<Record>>,
+    pub (crate) jrnl_author_record_parser<Record>,
     map!(jrnl_author_line_folder, |jrnl_author: Vec<u8>| {
-        if let Ok((_, res)) = author_list_parser(jrnl_author.as_slice()) {
-            res.into_iter()
-                .map(|a| Record::JournalAuthor { name: a.0 })
-                .collect()
-        } else {
-            Vec::new()
-        }
+        author_list_parser(jrnl_author.as_slice())
+            .map(|res| Record::JournalAuthors { authors: res.1 })
+            .expect("Can not parse journal author record")
     })
 );
 
@@ -119,14 +115,12 @@ named!(
 make_line_folder!(jrnl_edit_line_folder, jrnl_edit_line_parser, JrnlEditLine);
 
 named!(
-    jrnl_edit_record_parser<Vec<Record>>,
+    pub (crate) jrnl_edit_record_parser<Record>,
     map!(jrnl_edit_line_folder, |jrnl_edit: Vec<u8>| {
         if let Ok((_, res)) = author_list_parser(jrnl_edit.as_slice()) {
-            res.into_iter()
-                .map(|editor| Record::JournalEditor { name: editor.0 })
-                .collect()
+            Record::JournalEditors { name: res }
         } else {
-            Vec::new()
+            Record::JournalEditors { name: Vec::new() }
         }
     })
 );
@@ -187,7 +181,7 @@ JRNL        TITL 2 1.74 A RESOLUTION
 
         match res {
             Ok((_, r)) => {
-                if let Record::JournalAuthor { name } = r {
+                if let Record::JournalTitle { title: name } = r {
                     assert_eq!(
                         name,
                         "THE CRYSTAL STRUCTURE OF  HUMAN DEOXYHAEMOGLOBIN AT 1.74 A RESOLUTION"

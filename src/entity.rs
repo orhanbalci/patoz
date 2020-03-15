@@ -128,14 +128,14 @@ pub enum Record {
     Keywds {
         keywords: Vec<String>,
     },
-    JournalAuthor {
-        name: String,
+    JournalAuthors {
+        authors: Vec<Author>,
     },
     JournalTitle {
         title: String,
     },
-    JournalEditor {
-        name: String,
+    JournalEditors {
+        name: Vec<Author>,
     },
     Experimental {
         techniques: Vec<ExperimentalTechnique>,
