@@ -29,7 +29,7 @@ Protein Data Bank (pdb) file parser
     - [x] Titl
     - [x] Edit
     - [x] Ref
-    - [ ] Publ
+    - [x] Publ
     - [ ] Refn
     - [ ] Pmid
     - [ ] Doi
