@@ -21,6 +21,9 @@ struct JrnlTitleLine;
 struct JrnlEditLine;
 
 #[allow(dead_code)]
+struct JrnlPublLine;
+
+#[allow(dead_code)]
 #[derive(Default, Clone)]
 struct JrnlRefLine {
     continuation: u32,
@@ -163,6 +166,43 @@ named!(
             }
         }
     )
+);
+
+named!(
+    pub (crate) jrnl_ref_record_parser<Record>,
+    map!(jrnl_ref_line_folder, |jrnl_ref : JrnlRefLine| { Record::JournalReference{
+        publication_name : jrnl_ref.publication_name,
+        volume : jrnl_ref.volume,
+        page : jrnl_ref.page,
+        year : jrnl_ref.year,
+    }})
+);
+
+named!(
+    jrnl_publ_line_parser<Continuation<JrnlPublLine>>,
+    do_parse!(
+        jrnl >> space1
+            >> tag!("PUBL")
+            >> space1
+            >> cont: opt!(integer)
+            >> space0
+            >> rest: till_line_ending
+            >> line_ending
+            >> (Continuation::<JrnlPublLine> {
+                continuation: if let Some(cc) = cont { cc } else { 0 },
+                remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
+                phantom: PhantomData,
+            })
+    )
+);
+
+make_line_folder!(jrnl_publ_line_folder, jrnl_publ_line_parser, JrnlPublLine);
+
+named!(
+    pub (crate) jrnl_publ_record_parser<Record>,
+    map!(jrnl_publ_line_folder, |jrnl_publ: Vec<u8>| {
+        Record::JournalPublication{ publication : String::from(str::from_utf8(jrnl_publ.as_slice()).unwrap())}
+    })
 );
 
 #[cfg(test)]

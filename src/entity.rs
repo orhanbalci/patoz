@@ -137,6 +137,15 @@ pub enum Record {
     JournalEditors {
         name: Vec<Author>,
     },
+    JournalReference {
+        publication_name: String,
+        volume: Option<u32>,
+        page: Option<u32>,
+        year: Option<u32>,
+    },
+    JournalPublication {
+        publication: String,
+    },
     Experimental {
         techniques: Vec<ExperimentalTechnique>,
     },
