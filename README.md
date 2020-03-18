@@ -30,7 +30,7 @@ Protein Data Bank (pdb) file parser
     - [x] Edit
     - [x] Ref
     - [x] Publ
-    - [ ] Refn
+    - [x] Refn
     - [ ] Pmid
     - [ ] Doi
 - [ ] [Remarks](http://www.wwpdb.org/documentation/file-format-content/format33/remarks.html)

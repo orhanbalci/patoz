@@ -1,8 +1,9 @@
 use super::entity::*;
 use super::primitive::*;
 use nom::{
+    alt,
     character::complete::{line_ending, space0, space1},
-    do_parse, fold_many1, map, named, opt, tag, take_str,
+    do_parse, fold_many1, map, map_res, named, opt, tag, take_str,
 };
 
 use crate::author::author_list_parser;
@@ -32,6 +33,18 @@ struct JrnlRefLine {
     page: Option<u32>,
     year: Option<u32>,
 }
+
+named!(
+    pub issn<SerialNumber>,
+    map_res!(tag!("ISSN"), |_| -> Result<SerialNumber, ()> { Ok(SerialNumber::Issn) })
+);
+
+named!(
+    pub essn<SerialNumber>,
+    map_res!(tag!("ESSN"), |_| -> Result<SerialNumber, ()> { Ok(SerialNumber::Essn) })
+);
+
+named!(pub serial_number_parser<SerialNumber>, alt!(issn | essn));
 
 named!(
     jrnl_author_line_parser<Continuation<JrnlAuthorLine>>,
@@ -203,6 +216,26 @@ named!(
     map!(jrnl_publ_line_folder, |jrnl_publ: Vec<u8>| {
         Record::JournalPublication{ publication : String::from(str::from_utf8(jrnl_publ.as_slice()).unwrap())}
     })
+);
+
+named!(
+    pub (crate) jrnl_refn_record_parser<Record>,
+    do_parse!(
+        jrnl >> space1
+            >> tag!("REFN")
+            >> space1
+            >> serial_type : opt!(serial_number_parser)
+            >> space0
+            >> serial : opt!(till_line_ending)
+            >> line_ending
+            >> (
+                Record::JournalCitation{
+                    serial_type : serial_type,
+                    serial : if let Some(s) = serial {Some(String::from_str(str::from_utf8(s).unwrap()).unwrap()) }
+                    else {None}
+                }
+            )
+    )
 );
 
 #[cfg(test)]

@@ -84,6 +84,12 @@ pub enum ModificationType {
 }
 
 #[derive(Debug, Clone)]
+pub enum SerialNumber {
+    Issn,
+    Essn,
+}
+
+#[derive(Debug, Clone)]
 pub enum Record {
     Header {
         classification: String,
@@ -145,6 +151,10 @@ pub enum Record {
     },
     JournalPublication {
         publication: String,
+    },
+    JournalCitation {
+        serial_type: Option<SerialNumber>,
+        serial: Option<String>,
     },
     Experimental {
         techniques: Vec<ExperimentalTechnique>,
