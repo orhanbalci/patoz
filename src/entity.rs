@@ -156,6 +156,12 @@ pub enum Record {
         serial_type: Option<SerialNumber>,
         serial: Option<String>,
     },
+    JournalPubMedId {
+        id: u32,
+    },
+    JournalDoi {
+        id: String,
+    },
     Experimental {
         techniques: Vec<ExperimentalTechnique>,
     },

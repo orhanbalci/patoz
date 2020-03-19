@@ -1,5 +1,4 @@
-use super::entity::Record;
-use super::primitive::*;
+use super::{entity::Record, primitive::*};
 use nom::{character::complete::space0, do_parse, named};
 
 named!(

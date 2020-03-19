@@ -31,7 +31,7 @@ Protein Data Bank (pdb) file parser
     - [x] Ref
     - [x] Publ
     - [x] Refn
-    - [ ] Pmid
+    - [x] Pmid
     - [ ] Doi
 - [ ] [Remarks](http://www.wwpdb.org/documentation/file-format-content/format33/remarks.html)
 ### Primary Structure Section

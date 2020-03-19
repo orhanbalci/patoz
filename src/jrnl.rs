@@ -1,5 +1,4 @@
-use super::entity::*;
-use super::primitive::*;
+use super::{entity::*, primitive::*};
 use nom::{
     alt,
     character::complete::{line_ending, space0, space1},
@@ -233,6 +232,39 @@ named!(
                     serial_type : serial_type,
                     serial : if let Some(s) = serial {Some(String::from_str(str::from_utf8(s).unwrap()).unwrap()) }
                     else {None}
+                }
+            )
+    )
+);
+
+named!(
+    pub (crate) jrnl_pmid_record_parser<Record>,
+    do_parse!(
+        jrnl >> space1
+            >> tag!("PMID")
+            >> space1
+            >> pmid_id : integer
+            >> space0
+            >> line_ending
+            >> (
+                Record::JournalPubMedId{
+                    id : pmid_id,
+                }
+            )
+    )
+);
+
+named!(
+    pub (crate) jrnl_doi_record_parser<Record>,
+    do_parse!(
+        jrnl >> space1
+            >> tag!("DOI")
+            >> space1
+            >> id : till_line_ending
+            >> line_ending
+            >> (
+                Record::JournalDoi{
+                    id : String::from_str(str::from_utf8(id).unwrap()).unwrap(),
                 }
             )
     )

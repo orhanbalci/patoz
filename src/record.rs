@@ -2,13 +2,25 @@ use super::entity::*;
 use nom::{alt, complete, fold_many0, named};
 
 use super::{
-    author::author_record_parser, caveat::caveat_record_parser, compnd::cmpnd_token_parser,
-    expdta::expdata_record_parser, header::header_parser, jrnl::jrnl_author_record_parser,
-    jrnl::jrnl_edit_record_parser, jrnl::jrnl_publ_record_parser, jrnl::jrnl_ref_record_parser,
-    jrnl::jrnl_refn_record_parser, jrnl::jrnl_title_record_parser, keywds::keywds_parser,
-    mdltyp::mdltyp_record_parser, nummdl::nummdl_record_parser, obslte::obslte_record_parser,
-    revdat::revdat_record_parser, source::source_token_parser, split::split_record_parser,
-    sprsde::sprsde_record_parser, title::title_record_parser,
+    author::author_record_parser,
+    caveat::caveat_record_parser,
+    compnd::cmpnd_token_parser,
+    expdta::expdata_record_parser,
+    header::header_parser,
+    jrnl::{
+        jrnl_author_record_parser, jrnl_doi_record_parser, jrnl_edit_record_parser,
+        jrnl_pmid_record_parser, jrnl_publ_record_parser, jrnl_ref_record_parser,
+        jrnl_refn_record_parser, jrnl_title_record_parser,
+    },
+    keywds::keywds_parser,
+    mdltyp::mdltyp_record_parser,
+    nummdl::nummdl_record_parser,
+    obslte::obslte_record_parser,
+    revdat::revdat_record_parser,
+    source::source_token_parser,
+    split::split_record_parser,
+    sprsde::sprsde_record_parser,
+    title::title_record_parser,
 };
 
 named!(
@@ -34,6 +46,8 @@ named!(
             | complete!(jrnl_ref_record_parser)
             | complete!(jrnl_publ_record_parser)
             | complete!(jrnl_refn_record_parser)
+            | complete!(jrnl_pmid_record_parser)
+            | complete!(jrnl_doi_record_parser)
     )
 );
 
