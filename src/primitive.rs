@@ -101,6 +101,11 @@ named!(
 );
 
 named!(
+    pub threedigit_integer<u32>,
+    map_res!(map_res!(take!(3), str::from_utf8), str::FromStr::from_str)
+);
+
+named!(
     pub integer<u32>,
     map_res!(map_res!(digit1, str::from_utf8), str::FromStr::from_str)
 );
@@ -236,7 +241,7 @@ make_token_tagger!(other_details);
 make_token_tagger!(synthetic);
 make_token_tagger!(organism_scientific);
 make_token_tagger!(organism_common);
-make_token_tagger!(organism_tax_id);
+make_token_tagger!(organism_taxid);
 make_token_tagger!(strain);
 make_token_tagger!(variant);
 make_token_tagger!(cell_line);

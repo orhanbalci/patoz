@@ -98,7 +98,7 @@ make_token_parser!(
 
 make_token_parser!(
     organism_tax_id_parser,
-    organism_tax_id,
+    organism_taxid,
     integer_list,
     a,
     Token::OrganismTaxId { id: a }

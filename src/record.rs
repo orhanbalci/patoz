@@ -154,7 +154,7 @@ mod test {
     #[test]
     fn test_pdb_records_parser() {
         if let Ok((_, res)) = pdb_records_parser(
-            r#"HEADER    HYDROLASE                               20-APR-99   1CJY
+            r#"HEADER    HYDROLASE                               20-APR-99   1CJY   
 TITLE     HUMAN CYTOSOLIC PHOSPHOLIPASE A2
 "#
             .as_bytes(),
@@ -172,6 +172,40 @@ TITLE     HUMAN CYTOSOLIC PHOSPHOLIPASE A2
             }
         } else {
             assert!(false);
+        }
+    }
+
+    #[test]
+    fn ejg_header_test() {
+        if let Ok((_, res)) = pdb_records_parser(
+            r#"HEADER    PLANT PROTEIN                           02-MAR-00   1EJG               
+TITLE     CRAMBIN AT ULTRAHIGH RESOLUTION VALENCE ELECTRON DENSITY        
+COMPND    MOL_ID: 1;                                                            
+COMPND   2 MOLECULE: CRAMBIN (PRO22,SER22/LEU25,ILE25);                         
+COMPND   3 CHAIN: A;                                                            
+COMPND   4 FRAGMENT: CRAMBIN                                                    
+SOURCE    MOL_ID: 1;                                                            
+SOURCE   2 ORGANISM_SCIENTIFIC: CRAMBE HISPANICA SUBSP. ABYSSINICA;                                             
+SOURCE   3 STRAIN: SUBSP ABYSSINICA                                            
+KEYWDS    VALENCE ELECTRON DENSITY, MULTI-SUBSTATE, MULTIPOLE REFINEMENT, PLANT 
+KEYWDS   2 PROTEIN                                                                                                                 
+AUTHOR    C.JELSCH,M.M.TEETER,V.LAMZIN,V.PICHON-LESME,B.BLESSING,C.LECOMTE      
+JRNL        AUTH   C.JELSCH,M.M.TEETER,V.LAMZIN,V.PICHON-PESME,R.H.BLESSING,    
+JRNL        AUTH 2 C.LECOMTE                                                    
+JRNL        TITL   ACCURATE PROTEIN CRYSTALLOGRAPHY AT ULTRA-HIGH RESOLUTION:   
+JRNL        TITL 2 VALENCE ELECTRON DISTRIBUTION IN CRAMBIN.                    
+JRNL        REF    PROC.NATL.ACAD.SCI.USA        V.  97  3171 2000              
+JRNL        REFN                   ISSN 0027-8424                               
+JRNL        PMID   10737790                                                     
+JRNL        DOI    10.1073/PNAS.97.7.3171 
+"#
+            .as_bytes(),
+        ) {
+            println!("Length {}", res.len());
+            println!("{:?}", res);
+            assert!(true);
+        } else {
+            assert!(false)
         }
     }
 }

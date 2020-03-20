@@ -10,3 +10,7 @@ Cargo.lock
 **/*.rs.bk
 
 /.metals
+
+/pdb-harvester/target
+
+/pdb-harvester/res/downloads

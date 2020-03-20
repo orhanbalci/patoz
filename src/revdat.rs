@@ -1,7 +1,7 @@
 use super::{entity::*, primitive::*};
 use nom::{
     character::complete::{line_ending, space0, space1},
-    do_parse, many1, map, named, opt,
+    do_parse, many1, map, named, opt, take,
 };
 
 use itertools::Itertools;
@@ -19,8 +19,8 @@ named!(
     revdat_line_parser<RevdatLine>,
     do_parse!(
         revdat
-            >> space1
-            >> modification_number: twodigit_integer
+            >> take!(1)
+            >> modification_number: threedigit_integer
             >> cont: opt!(twodigit_integer)
             >> rest: till_line_ending
             >> line_ending
