@@ -1,8 +1,11 @@
 use super::{entity::*, primitive::*};
 use nom::{
     alt,
+    bytes::complete::tag,
     character::complete::{line_ending, space0, space1},
-    do_parse, fold_many1, map, named, opt, separated_list, tag,
+    do_parse, fold_many1, map,
+    multi::separated_list,
+    named, opt, IResult,
 };
 
 use crate::{make_line_folder, make_token_parser};
@@ -368,10 +371,14 @@ named!(
     )
 );
 
-named!(
-    pub (crate) tokens_parser<Vec<Token>>,
-    separated_list!(tag!(";"), token_parser)
-);
+// named!(
+//     pub (crate) tokens_parser<Vec<Token>>,
+//     separated_list!(tag!(";"), token_parser)
+// );
+
+pub(crate) fn tokens_parser(s: &[u8]) -> IResult<&[u8], Vec<Token>> {
+    separated_list(tag(";"), token_parser)(s)
+}
 
 named!(
     cmpnd_line_parser<Continuation<CmpndLine>>,
@@ -398,7 +405,7 @@ named!(
         cmpnd_line_folder,
         |v: Vec<u8>|  tokens_parser(v.as_slice())
                         .map(|res| Record::Cmpnd{ tokens : res.1})
-                        .expect("Could not parse tokesn")
+                        .expect("Could not parse tokens")
     )
 );
 
@@ -460,12 +467,13 @@ mod test {
     fn test_cmpnd_parser() {
         if let Ok((_, res)) = cmpnd_line_folder(
             r#"COMPND    MOL_ID:  1;
-COMPND   2 MOLECULE:  HEMOGLOBIN ALPHA CHAIN;"#
-                .as_bytes(),
+COMPND   2 MOLECULE:  HEMOGLOBIN ALPHA CHAIN;
+"#
+            .as_bytes(),
         ) {
             assert_eq!(
                 str::from_utf8(res.as_slice()).unwrap(),
-                "MOL_ID:  1;MOLECULE:  HEMOGLOBIN ALPHA CHAIN;"
+                "MOL_ID:  1; MOLECULE:  HEMOGLOBIN ALPHA CHAIN;"
             );
         }
     }
@@ -479,8 +487,9 @@ COMPND   3 CHAIN: A,  C;
 COMPND  10 SYNONYM:  DEOXYHEMOGLOBIN BETA CHAIN;
 COMPND   4 EC:  3.2.1.14, 3.2.1.17;
 COMPND  11 ENGINEERED: YES;
-COMPND  12 MUTATION:  NO;"#
-                .as_bytes(),
+COMPND  12 MUTATION:  NO
+"#
+            .as_bytes(),
         ) {
             assert_eq!(res[0], Token::MoleculeId(1));
             assert_eq!(

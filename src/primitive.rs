@@ -4,13 +4,16 @@ use chrono::{
 };
 use nom::{
     alt,
-    bytes::complete::tag,
+    branch::alt,
+    bytes::complete::{tag, take_till, take_while},
     character::{
         complete::{alpha1, alphanumeric1, digit1, multispace1, space0, space1},
         is_alphanumeric, is_digit, is_space,
     },
-    do_parse, fold_many0, map_res, named, separated_list, tag, take, take_str, take_till,
-    take_while, IResult,
+    combinator::map_res,
+    do_parse, fold_many0, map_res,
+    multi::separated_list,
+    named, separated_list, tag, take, take_str, IResult,
 };
 use std::{result::Result, str, str::FromStr};
 
@@ -136,8 +139,8 @@ named!(
 named!(
     pub alphanum_word_with_spaces_inside<String>,
     map_res!(
-        map_res!(take_while!(|s| {is_alphanumeric(s) || is_space(s)}), str::from_utf8),
-        str::FromStr::from_str
+        map_res!(take_while(|s| {is_alphanumeric(s) || is_space(s)}), str::from_utf8),
+        |s : &str| {str::FromStr::from_str(s.trim())}
     )
 );
 
@@ -178,46 +181,48 @@ named!(
     })
 );
 
-named!(
-    pub chain_value_parser<&[u8],Vec<String>>,
-    separated_list!(tag!(","), alphanum_word_with_spaces_inside)
-);
+pub fn chain_value_parser(s: &[u8]) -> IResult<&[u8], Vec<String>> {
+    separated_list(tag(","), alphanum_word_with_spaces_inside)(s)
+}
 
-named!(
-    pub structural_annotation<String>,
-    map_res!(
-        map_res!(take_while!(|s : u8| { s == b',' || is_alphanumeric(s) || is_space(s)}), str::from_utf8),
-        str::FromStr::from_str
-    )
-);
+pub fn structural_annotation(s: &[u8]) -> IResult<&[u8], String> {
+    map_res(
+        map_res(
+            take_while(|s: u8| s == b',' || is_alphanumeric(s) || is_space(s)),
+            str::from_utf8,
+        ),
+        str::FromStr::from_str,
+    )(s)
+}
 
-named!(
-    pub structural_annotation_list_parser<&[u8], Vec<String>>,
-    separated_list!(tag!(";"), structural_annotation)
-);
+pub fn structural_annotation_list_parser(s: &[u8]) -> IResult<&[u8], Vec<String>> {
+    separated_list(tag(";"), structural_annotation)(s)
+}
 
-named!(pub ec_value_parser<&[u8],Vec<String>>,
-        separated_list!(
-                        tag!(","),
-                        map_res!(
-                            map_res!(
-                                take_while!(|c : u8| {c == b'.' || is_digit(c) || is_space(c)}), str::from_utf8)
-                            , str::FromStr::from_str)
-                    )
+pub fn ec_value_parser(s: &[u8]) -> IResult<&[u8], Vec<String>> {
+    separated_list(
+        tag(","),
+        map_res(
+            map_res(
+                take_while(|c: u8| c == b'.' || is_digit(c) || is_space(c)),
+                str::from_utf8,
+            ),
+            str::FromStr::from_str,
+        ),
+    )(s)
+}
 
-);
+pub fn yes(s: &[u8]) -> IResult<&[u8], bool> {
+    map_res(tag("YES"), |_| -> Result<bool, ()> { Ok(true) })(s)
+}
 
-named!(
-    pub yes<bool>,
-    map_res!(tag!("YES"), |_| -> Result<bool, ()> { Ok(true) })
-);
+pub fn no(s: &[u8]) -> IResult<&[u8], bool> {
+    map_res(tag("NO"), |_| -> Result<bool, ()> { Ok(false) })(s)
+}
 
-named!(
-    pub no<bool>,
-    map_res!(tag!("NO"), |_| -> Result<bool, ()> { Ok(false) })
-);
-
-named!(pub yes_no_parser<bool>, alt!(yes | no));
+pub fn yes_no_parser(s: &[u8]) -> IResult<&[u8], bool> {
+    alt((yes, no))(s)
+}
 
 use super::entity::ModificationType;
 
@@ -271,10 +276,16 @@ make_token_tagger!(expression_system_vector);
 make_token_tagger!(expression_system_plasmid);
 make_token_tagger!(expression_system_gene);
 
-named!(pub till_line_ending<&[u8]>, take_till!(|c| char::from(c) == '\r' || char::from(c) == '\n'));
+
+pub fn till_line_ending(s: &[u8]) -> IResult<&[u8], &[u8]> {
+    take_till(|c| char::from(c) == '\r' || char::from(c) == '\n')(s)
+}
 
 named!(pub residue_parser<String>, map_res!(alt!(take_str!(3) | take_str!(2) | take_str!(1)), str::FromStr::from_str));
-named!(pub residue_list_parser<&[u8], Vec<String>>, separated_list!(multispace1, residue_parser));
+
+pub fn residue_list_parser(s: &[u8]) -> IResult<&[u8], Vec<String>> {
+    separated_list(multispace1, residue_parser)(s)
+}
 
 #[cfg(test)]
 mod test {

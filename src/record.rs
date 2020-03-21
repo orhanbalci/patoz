@@ -185,7 +185,7 @@ COMPND   2 MOLECULE: CRAMBIN (PRO22,SER22/LEU25,ILE25);
 COMPND   3 CHAIN: A;                                                            
 COMPND   4 FRAGMENT: CRAMBIN                                                    
 SOURCE    MOL_ID: 1;                                                            
-SOURCE   2 ORGANISM_SCIENTIFIC: CRAMBE HISPANICA SUBSP. ABYSSINICA;                                             
+SOURCE   2 ORGANISM_SCIENTIFIC: CRAMBE HISPANICA SUBSP ABYSSINICA;                                             
 SOURCE   3 STRAIN: SUBSP ABYSSINICA                                            
 KEYWDS    VALENCE ELECTRON DENSITY, MULTI-SUBSTATE, MULTIPOLE REFINEMENT, PLANT 
 KEYWDS   2 PROTEIN                                                                                                                 

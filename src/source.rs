@@ -38,3 +38,19 @@ named!(
         |v: Vec<u8>| tokens_parser(v.as_slice()).map(|res| Record::Source{tokens : res.1}).expect("Can not parse source record")
     )
 );
+
+#[cfg(test)]
+mod test {
+
+    #[test]
+    fn source() {
+        if let Ok((_, res)) = super::source_token_parser(br#"SOURCE    MOL_ID: 1;                                                            
+SOURCE   2 ORGANISM_SCIENTIFIC: CRAMBE HISPANICA SUBSP ABYSSINICA;                                             
+SOURCE   3 STRAIN: SUBSP ABYSSINICA  
+"#){
+assert!(true)
+        }else{
+            assert!(false)
+        }
+    }
+}

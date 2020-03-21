@@ -1,10 +1,11 @@
 use super::{entity::*, primitive::*};
 use nom::{
+    bytes::complete::take_while,
     character::{
         complete::{line_ending, space0, space1},
         is_alphanumeric, is_space,
     },
-    do_parse, fold_many1, map, map_res, named, opt, separated_list, tag, take_while, Err,
+    do_parse, fold_many1, map, map_res, named, opt, separated_list, tag, Err,
 };
 
 use crate::make_line_folder;
@@ -38,7 +39,7 @@ named!(
     map_res!(
         map_res!(
             map_res!(
-                take_while!(|s| {
+                take_while(|s| {
                     is_alphanumeric(s)
                         || is_space(s)
                         || char::from(s) == '.'
