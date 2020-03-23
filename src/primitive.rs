@@ -145,6 +145,19 @@ named!(
 );
 
 named!(
+    pub molecule_name_parser<String>,
+    map_res!(
+        map_res!(take_while(|s| {is_alphanumeric(s) || 
+            is_space(s) || char::from(s) == '(' || 
+            char::from(s) == ')' || 
+            char::from(s) == ',' || 
+            char::from(s) == '/'
+        }), str::from_utf8),
+        |s : &str| {str::FromStr::from_str(s.trim())}
+    )
+);
+
+named!(
     pub month_parser<u32>,
     map_res!(ascii_word, |s: String| -> Result<u32, ()> {
         let mut parsed = Parsed::new();
@@ -275,7 +288,6 @@ make_token_tagger!(expression_system_vector_type);
 make_token_tagger!(expression_system_vector);
 make_token_tagger!(expression_system_plasmid);
 make_token_tagger!(expression_system_gene);
-
 
 pub fn till_line_ending(s: &[u8]) -> IResult<&[u8], &[u8]> {
     take_till(|c| char::from(c) == '\r' || char::from(c) == '\n')(s)

@@ -20,7 +20,7 @@ make_token_parser!(mol_id_parser, mol_id, integer, a, Token::MoleculeId(a));
 make_token_parser!(
     molecule_parser,
     molecule,
-    alphanum_word_with_spaces_inside,
+    molecule_name_parser,
     a,
     Token::Molecule(a)
 );
@@ -31,6 +31,14 @@ make_token_parser!(
     chain_value_parser,
     a,
     Token::Chain { identifiers: a }
+);
+
+make_token_parser!(
+    fragment_parser,
+    fragment,
+    alphanum_word_with_spaces_inside,
+    a,
+    Token::Fragment(a)
 );
 
 make_token_parser!(
@@ -331,6 +339,7 @@ named!(
         molecule_parser
             | mol_id_parser
             | chain_parser
+            | fragment_parser
             | synonym_parser
             | ec_parser
             | engineered_parser
