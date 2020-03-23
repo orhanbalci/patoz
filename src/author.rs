@@ -1,11 +1,13 @@
 use super::{entity::*, primitive::*};
 use nom::{
-    bytes::complete::take_while,
+    bytes::complete::{tag, take_while},
     character::{
         complete::{line_ending, space0, space1},
         is_alphanumeric, is_space,
     },
-    do_parse, fold_many1, map, map_res, named, opt, separated_list, tag, Err,
+    do_parse, fold_many1, map, map_res,
+    multi::separated_list,
+    named, opt, Err, IResult,
 };
 
 use crate::make_line_folder;
@@ -44,6 +46,7 @@ named!(
                         || is_space(s)
                         || char::from(s) == '.'
                         || char::from(s) == '\''
+                        || char::from(s) == '-'
                 }),
                 str::from_utf8
             ),
@@ -56,10 +59,9 @@ named!(
     )
 );
 
-named!(
-    pub (crate) author_list_parser<Vec<Author>>,
-    separated_list!(tag!(","), author_value_parser)
-);
+pub fn author_list_parser(s: &[u8]) -> IResult<&[u8], Vec<Author>> {
+    separated_list(tag(","), author_value_parser)(s)
+}
 
 named!(
     pub (crate) author_record_parser<Record>,

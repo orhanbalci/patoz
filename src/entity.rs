@@ -83,7 +83,7 @@ pub enum ModificationType {
     OtherModification,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum SerialNumber {
     Issn,
     Essn,

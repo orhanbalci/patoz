@@ -143,6 +143,15 @@ named!(
         |s : &str| {str::FromStr::from_str(s.trim())}
     )
 );
+named!(
+    pub keywords_parser<String>,
+    map_res!(
+        map_res!(take_while(|s| {is_alphanumeric(s) || 
+            is_space(s) || char::from(s) == '-' 
+        }), str::from_utf8),
+        |s : &str| {str::FromStr::from_str(s.trim())}
+    )
+);
 
 named!(
     pub molecule_name_parser<String>,
@@ -196,6 +205,10 @@ named!(
 
 pub fn chain_value_parser(s: &[u8]) -> IResult<&[u8], Vec<String>> {
     separated_list(tag(","), alphanum_word_with_spaces_inside)(s)
+}
+
+pub fn keywds_value_parser(s: &[u8]) -> IResult<&[u8], Vec<String>> {
+    separated_list(tag(","), keywords_parser)(s)
 }
 
 pub fn structural_annotation(s: &[u8]) -> IResult<&[u8], String> {

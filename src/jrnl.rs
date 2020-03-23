@@ -148,14 +148,19 @@ named!(
             >> space1
             >> cont: opt!(integer)
             >> publication_name: take_str!(28)
+            >> space1
             >> opt!(take_str!(2))
-            >> space0
+            >> space1
             >> volume: opt!(integer)
+            >> space1
             >> page: opt!(integer)
+            >> space1
             >> year: opt!(integer)
+            >> space0
+            >> line_ending
             >> (JrnlRefLine {
                 continuation: if let Some(cc) = cont { cc } else { 0 },
-                publication_name: publication_name.to_owned(),
+                publication_name: publication_name.trim().to_owned(),
                 volume,
                 page,
                 year,
@@ -202,7 +207,7 @@ named!(
             >> line_ending
             >> (Continuation::<JrnlPublLine> {
                 continuation: if let Some(cc) = cont { cc } else { 0 },
-                remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
+                remaining: String::from_str(str::from_utf8(rest).unwrap().trim()).unwrap(),
                 phantom: PhantomData,
             })
     )
@@ -230,7 +235,7 @@ named!(
             >> (
                 Record::JournalCitation{
                     serial_type : serial_type,
-                    serial : if let Some(s) = serial {Some(String::from_str(str::from_utf8(s).unwrap()).unwrap()) }
+                    serial : if let Some(s) = serial {Some(String::from_str(str::from_utf8(s).unwrap().trim()).unwrap()) }
                     else {None}
                 }
             )
@@ -264,7 +269,7 @@ named!(
             >> line_ending
             >> (
                 Record::JournalDoi{
-                    id : String::from_str(str::from_utf8(id).unwrap()).unwrap(),
+                    id : String::from_str(str::from_utf8(id).unwrap().trim()).unwrap(),
                 }
             )
     )
@@ -272,8 +277,34 @@ named!(
 
 #[cfg(test)]
 mod test {
-    use super::jrnl_title_record_parser;
-    use crate::entity::Record;
+    use super::{jrnl_refn_record_parser, jrnl_title_record_parser};
+    use crate::entity::{Record, SerialNumber};
+
+    #[test]
+    fn test_refn_parser() {
+        let res = jrnl_refn_record_parser(
+            r#"JRNL        REFN                   ISSN 0027-8424                                             
+"#
+            .as_bytes(),
+        );
+
+        match res {
+            Ok((_, r)) => {
+                if let Record::JournalCitation {
+                    serial_type: st,
+                    serial: s,
+                } = r
+                {
+                    println!("{:?}", s);
+                    assert_eq!(st.unwrap(), SerialNumber::Issn);
+                }
+            }
+            Err(e) => {
+                println!("{:?}", e);
+                assert!(false);
+            }
+        }
+    }
 
     #[test]
     fn test_jrnl_title() {

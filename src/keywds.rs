@@ -32,7 +32,7 @@ make_line_folder!(keywds_line_folder, keywds_line_parser, KeywdsLine);
 
 named!(
     pub (crate) keywds_parser<Record>,
-    map!(keywds_line_folder, |v: Vec<u8>| chain_value_parser(
+    map!(keywds_line_folder, |v: Vec<u8>| keywds_value_parser(
         v.as_slice()
     )
     .map(|res| Record::Keywds { keywords: res.1 })

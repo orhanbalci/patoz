@@ -44,7 +44,7 @@ mod test {
 
     #[test]
     fn source() {
-        if let Ok((_, res)) = super::source_token_parser(br#"SOURCE    MOL_ID: 1;                                                            
+        if let Ok((_, _res)) = super::source_token_parser(br#"SOURCE    MOL_ID: 1;                                                            
 SOURCE   2 ORGANISM_SCIENTIFIC: CRAMBE HISPANICA SUBSP ABYSSINICA;                                             
 SOURCE   3 STRAIN: SUBSP ABYSSINICA  
 "#){
