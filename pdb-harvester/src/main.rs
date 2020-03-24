@@ -3,17 +3,56 @@ use std::{
     fs::File,
     io::{self, BufRead, Write},
     path::Path,
+    process::Command,
+    str,
+    str::FromStr,
 };
 
+use clap::{App, Arg, SubCommand};
+
 fn main() {
-    println!("Welcome to PDB harvester");
+    let matches = App::new("pdb-harvester")
+        .version("1.0")
+        .author("Orhan B. <orhanbalci@gmail.com>")
+        .about("Harvests odb files online and transforms them")
+        .subcommand(
+            SubCommand::with_name("download")
+                .about("Downloads pdb files from ncsb")
+                .version("1.0")
+                .author("Orhan B. <orhanbalci@gmail.com>")
+                .arg(
+                    Arg::with_name("count")
+                        .short("c")
+                        .help("Number of files to be downloaded"),
+                ),
+        )
+        .subcommand(
+            SubCommand::with_name("extract")
+                .about("Extracts parts of files and stores them in other files")
+                .version("1.0")
+                .arg(
+                    Arg::with_name("tag")
+                        .short("d")
+                        .help("Which tags will be extracted"),
+                ),
+        )
+        .get_matches();
+
+    if matches.is_present("download") {
+        download_command();
+    }
+
+    if matches.is_present("extract") {}
+}
+
+fn download_command() {
     get_pdb_identifiers()
         .iter()
         .take(100)
         .collect::<Vec<_>>()
         .par_iter()
         .for_each(|s| {
-            if !std::path::Path::new(&format!("./res/downloads/{}.pdb",s)).exists() {
+            if !std::path::Path::new(&format!("./res/downloads/{}.pdb", s)).exists() {
                 save_file(
                     &download_pdb_file(s),
                     std::path::Path::new(&format!("./res/downloads/{}.pdb", s)),
@@ -21,7 +60,6 @@ fn main() {
                 .expect("Can not save pdb file")
             }
         });
-    //println!("{:?}", get_pdb_identifiers());
 }
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
@@ -71,4 +109,15 @@ fn get_pdb_identifiers() -> Vec<String> {
     }
 
     result
+}
+
+fn run_ripgrep(file_name: &str) -> String {
+    let mut rg = Command::new("rg");
+    rg.arg("-e")
+        .arg("^HEADER")
+        .arg("-e")
+        .arg("^TITLE")
+        .arg(file_name);
+    let output = rg.output().ok().expect("Can not run rg");
+    String::from_str(str::from_utf8(&output.stdout[..]).unwrap()).unwrap()
 }
