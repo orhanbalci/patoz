@@ -1,4 +1,4 @@
-use super::{entity::*, primitive::*};
+use super::{ast::types::*, primitive::*};
 use nom::{
     character::complete::{line_ending, space0, space1},
     do_parse, fold_many1, map, named, opt,
@@ -35,6 +35,6 @@ named!(
     map!(keywds_line_folder, |v: Vec<u8>| keywds_value_parser(
         v.as_slice()
     )
-    .map(|res| Record::Keywds { keywords: res.1 })
+    .map(|res| Record::Keywds (Keywds{ keywords: res.1 }))
     .expect("Can not parse keywds record"))
 );

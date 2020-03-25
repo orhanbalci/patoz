@@ -1,4 +1,4 @@
-use super::{entity::*, primitive::*};
+use super::{ast::types::*, primitive::*};
 use nom::{
     bytes::complete::{tag, take_while},
     character::{
@@ -68,7 +68,7 @@ named!(
     map!(author_line_folder, |v: Vec<u8>| {
         println!("{}", str::from_utf8(&v).unwrap());
         author_list_parser(v.as_slice())
-            .map(|res| Record::Authors { authors: res.1 })
+            .map(|res| Record::Authors(Authors { authors: res.1 }))
             .expect("Can not parse author record")
     })
 );

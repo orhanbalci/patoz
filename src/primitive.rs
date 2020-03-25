@@ -250,7 +250,7 @@ pub fn yes_no_parser(s: &[u8]) -> IResult<&[u8], bool> {
     alt((yes, no))(s)
 }
 
-use super::entity::ModificationType;
+use super::ast::types::ModificationType;
 
 named!(
     pub modification_type_parser<ModificationType>,

@@ -1,4 +1,4 @@
-use super::{entity::*, primitive::*};
+use super::{ast::types::*, primitive::*};
 use nom::{
     character::complete::{line_ending, space0, space1},
     do_parse, fold_many1, map, named, opt, take,
@@ -31,7 +31,7 @@ make_line_folder!(split_line_folder, split_line_parser, SplitLine);
 
 named!(
     split_parser<Record>,
-    do_parse!(space0 >> ids: idcode_list >> (Record::Split { id_codes: ids }))
+    do_parse!(space0 >> ids: idcode_list >> (Record::Split(Split { id_codes: ids })))
 );
 
 named!(
@@ -40,9 +40,7 @@ named!(
         if let Ok((_, res)) = split_parser(split.as_slice()) {
             res
         } else {
-            Record::Split {
-                id_codes: Vec::new(),
-            }
+            Record::Split(Split::default())
         }
     })
 );

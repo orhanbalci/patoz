@@ -90,50 +90,117 @@ pub enum SerialNumber {
 }
 
 #[derive(Debug, Clone)]
+pub struct Header {
+    pub classification: String,
+    pub deposition_date: NaiveDate,
+    pub id_code: String,
+}
+
+impl std::default::Default for Header {
+    fn default() -> Self {
+        Header {
+            classification: String::default(),
+            deposition_date: NaiveDate::from_ymd(1900, 1, 1),
+            id_code: String::default(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct Title {
+    pub title: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct Obslte {
+    pub replacement_date: NaiveDate,
+    pub replacement_ids: Vec<String>,
+}
+
+impl std::default::Default for Obslte {
+    fn default() -> Self {
+        Obslte {
+            replacement_date: NaiveDate::from_ymd(1900, 1, 1),
+            replacement_ids: Vec::new(),
+        }
+    }
+}
+#[derive(Debug, Clone, Default)]
+pub struct Split {
+    pub id_codes: Vec<String>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct Caveat {
+    pub id_code: String,
+    pub comment: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct Sprsde {
+    pub sprsde_date: NaiveDate,
+    pub id_code: String,
+    pub superseeded: Vec<String>,
+}
+
+impl std::default::Default for Sprsde {
+    fn default() -> Self {
+        Sprsde {
+            sprsde_date: NaiveDate::from_ymd(1900, 1, 1),
+            superseeded: Vec::new(),
+            id_code: String::default(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct Seqres {
+    pub chain_id: Option<char>,
+    pub residues: Vec<String>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct Mdltyp {
+    pub structural_annotation: Vec<String>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct Revdats {
+    pub revdat: Vec<Revdat>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct Cmpnd {
+    pub tokens: Vec<Token>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct Source {
+    pub tokens: Vec<Token>,
+}
+#[derive(Debug, Clone, Default)]
+pub struct Keywds {
+    pub keywords: Vec<String>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct Authors {
+    pub authors: Vec<Author>,
+}
+#[derive(Debug, Clone)]
 pub enum Record {
-    Header {
-        classification: String,
-        deposition_date: NaiveDate,
-        id_code: String,
-    },
-    Title {
-        title: String,
-    },
-    Obslte {
-        replacement_date: NaiveDate,
-        replacement_ids: Vec<String>,
-    },
-    Split {
-        id_codes: Vec<String>,
-    },
-    Caveat {
-        id_code: String,
-        comment: String,
-    },
-    Sprsde {
-        sprsde_date: NaiveDate,
-        id_code: String,
-        superseeded: Vec<String>,
-    },
-    Seqres {
-        chain_id: Option<char>,
-        residues: Vec<String>,
-    },
-    Mdltyp {
-        structural_annotation: Vec<String>,
-    },
-    Revdats {
-        revdat: Vec<Revdat>,
-    },
-    Cmpnd {
-        tokens: Vec<Token>,
-    },
-    Source {
-        tokens: Vec<Token>,
-    },
-    Keywds {
-        keywords: Vec<String>,
-    },
+    Header(Header),
+    Title(Title),
+    Obslte(Obslte),
+    Split(Split),
+    Caveat(Caveat),
+    Sprsde(Sprsde),
+    Seqres(Seqres),
+    Mdltyp(Mdltyp),
+    Revdats(Revdats),
+    Cmpnd(Cmpnd),
+    Source(Source),
+    Keywds(Keywds),
     JournalAuthors {
         authors: Vec<Author>,
     },
@@ -168,7 +235,5 @@ pub enum Record {
     Nummdl {
         num: u32,
     },
-    Authors {
-        authors: Vec<Author>,
-    },
+    Authors(Authors),
 }

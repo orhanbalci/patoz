@@ -1,4 +1,4 @@
-use super::{entity::*, primitive::*};
+use super::{ast::types::*, primitive::*};
 use nom::{
     character::complete::{line_ending, space0, space1},
     do_parse, fold_many1, map, named, opt, take,
@@ -36,10 +36,10 @@ named!(
             >> cont_date: date_parser
             >> space0
             >> ids: idcode_list
-            >> (Record::Obslte {
+            >> (Record::Obslte(Obslte {
                 replacement_date: cont_date,
                 replacement_ids: ids
-            })
+            }))
     )
 );
 
@@ -51,10 +51,10 @@ named!(
             res
         } else {
             println!("Obslte parser error");
-            Record::Obslte {
+            Record::Obslte(Obslte {
                 replacement_date: chrono::naive::MIN_DATE,
                 replacement_ids: Vec::new(),
-            }
+            })
         }
     })
 );

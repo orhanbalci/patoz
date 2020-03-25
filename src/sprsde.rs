@@ -1,4 +1,4 @@
-use super::{entity::*, primitive::*};
+use super::{ast::types::*, primitive::*};
 use nom::{
     character::complete::{line_ending, space0, space1},
     do_parse, fold_many1, map, named, opt,
@@ -39,11 +39,11 @@ named!(
             >> id_code: alphanum_word
             >> space1
             >> superseeded: idcode_list
-            >> (Record::Sprsde {
+            >> (Record::Sprsde(Sprsde {
                 sprsde_date,
                 id_code,
                 superseeded,
-            })
+            }))
     )
 );
 
@@ -53,11 +53,11 @@ named!(
         if let Ok((_, res)) = sprsde_parser(sprsde.as_slice()) {
             res
         } else {
-            Record::Sprsde {
+            Record::Sprsde(Sprsde {
                 sprsde_date: chrono::naive::MIN_DATE,
                 id_code: String::new(),
                 superseeded: Vec::new(),
-            }
+            })
         }
     })
 );

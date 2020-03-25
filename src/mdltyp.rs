@@ -1,4 +1,4 @@
-use super::{entity::*, primitive::*};
+use super::{ast::types::*, primitive::*};
 use nom::{
     character::complete::{line_ending, space0, space1},
     do_parse, fold_many1, map, named, opt,
@@ -35,9 +35,9 @@ named!(
     do_parse!(
         space0
             >> structural_annotation: structural_annotation_list_parser
-            >> (Record::Mdltyp {
+            >> (Record::Mdltyp(Mdltyp {
                 structural_annotation,
-            })
+            }))
     )
 );
 
@@ -47,9 +47,9 @@ named!(
         if let Ok((_, res)) = mdltyp_parser(mdltyp.as_slice()) {
             res
         } else {
-            Record::Mdltyp {
+            Record::Mdltyp(Mdltyp {
                 structural_annotation : Vec::new()
-            }
+            })
         }
     })
 );

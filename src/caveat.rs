@@ -1,4 +1,4 @@
-use super::{entity::*, primitive::*};
+use super::{ast::types::*, primitive::*};
 use nom::{
     character::complete::{line_ending, space0, space1},
     do_parse, fold_many1, map, named, opt, take,
@@ -37,10 +37,10 @@ named!(
             >> space0
             >> comment: alphanum_word_with_spaces_inside
             >> space0
-            >> (Record::Caveat {
+            >> (Record::Caveat(Caveat {
                 id_code: id_code,
                 comment: comment,
-            })
+            }))
     )
 );
 
@@ -50,10 +50,10 @@ named!(
         if let Ok((_, res)) = caveat_parser(caveat.as_slice()) {
             res
         } else {
-            Record::Caveat {
+            Record::Caveat (Caveat{
                 id_code: String::new(),
                 comment: String::new(),
-            }
+            })
         }
     })
 );

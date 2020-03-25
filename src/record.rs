@@ -1,4 +1,4 @@
-use super::entity::*;
+use super::ast::types::*;
 use nom::{alt, complete, fold_many0, named};
 
 use super::{
@@ -70,10 +70,10 @@ mod test {
         )
         .unwrap()
         .1;
-        if let Record::Header {
+        if let Record::Header(Header {
             classification: class,
             ..
-        } = head
+        }) = head
         {
             assert_eq!(class, "PHOTOSYNTHESIS")
         } else {
@@ -88,10 +88,10 @@ mod test {
         )
         .unwrap()
         .1;
-        if let Record::Header {
+        if let Record::Header(Header {
             classification: class,
             ..
-        } = head
+        }) = head
         {
             assert_eq!(class, "TRANSFERASE/TRANSFERASE")
         } else {
@@ -105,10 +105,10 @@ mod test {
             .unwrap()
             .1;
 
-        if let Record::Obslte {
+        if let Record::Obslte(Obslte {
             replacement_ids: reps,
             ..
-        } = obs
+        }) = obs
         {
             assert_eq!(reps[0], "1MBP");
         } else {
@@ -126,9 +126,9 @@ mod test {
         .unwrap()
         .1;
 
-        if let Record::Title { title } = tit {
+        if let Record::Title(title) = tit {
             assert_eq!(
-                title,
+                title.title,
                 "RHIZOPUSPEPSIN COMPLEXED WITH REDUCED PEPTIDE INHIBITOR"
             )
         } else {
@@ -144,8 +144,8 @@ mod test {
         .unwrap()
         .1;
 
-        if let Record::Split { id_codes } = splt {
-            assert_eq!(id_codes[0], "1VOQ")
+        if let Record::Split(split) = splt {
+            assert_eq!(split.id_codes[0], "1VOQ")
         } else {
             assert!(false)
         }
@@ -159,16 +159,16 @@ TITLE     HUMAN CYTOSOLIC PHOSPHOLIPASE A2
 "#
             .as_bytes(),
         ) {
-            if let Record::Header {
+            if let Record::Header(Header {
                 classification: class,
                 ..
-            } = &res[0]
+            }) = &res[0]
             {
                 assert_eq!(class, "HYDROLASE");
             }
 
-            if let Record::Title { title: tit } = &res[1] {
-                assert_eq!(tit, "HUMAN CYTOSOLIC PHOSPHOLIPASE A2");
+            if let Record::Title(tit) = &res[1] {
+                assert_eq!(tit.title, "HUMAN CYTOSOLIC PHOSPHOLIPASE A2");
             }
         } else {
             assert!(false);

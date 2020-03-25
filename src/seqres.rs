@@ -1,4 +1,4 @@
-use super::{entity::*, primitive::*};
+use super::{ast::types::*, primitive::*};
 use nom::{
     character::complete::{anychar, space1},
     do_parse, many0, map, named, opt,
@@ -68,11 +68,13 @@ named!(
             .into_iter()
             .group_by(|a| a.chain_id)
             .into_iter()
-            .map(|(k, v)| Record::Seqres {
-                chain_id: k,
-                residues: v.fold(Vec::new(), |v: Vec<String>, sr: SeqresLine| {
-                    v.into_iter().chain(sr.residues).collect()
-                }),
+            .map(|(k, v)| {
+                Record::Seqres(Seqres {
+                    chain_id: k,
+                    residues: v.fold(Vec::new(), |v: Vec<String>, sr: SeqresLine| {
+                        v.into_iter().chain(sr.residues).collect()
+                    }),
+                })
             })
             .collect::<Vec<_>>()
     })

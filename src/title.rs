@@ -1,4 +1,4 @@
-use super::{entity::*, primitive::*};
+use super::{ast::types::*, primitive::*};
 use nom::{
     character::complete::{line_ending, space0, space1},
     do_parse, fold_many1, map, named, opt, take,
@@ -36,11 +36,11 @@ named!(
         title_line_folder,
         |title: Vec<u8>| if let Ok(res) = String::from_utf8(title) {
             println!("Title {:?}", res);
-            Record::Title { title: res }
+            Record::Title(Title { title: res })
         } else {
-            Record::Title {
+            Record::Title(Title {
                 title: "".to_owned(),
-            }
+            })
         }
     )
 );

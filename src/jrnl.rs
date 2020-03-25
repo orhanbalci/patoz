@@ -1,4 +1,4 @@
-use super::{entity::*, primitive::*};
+use super::{ast::types::*, primitive::*};
 use nom::{
     alt,
     character::complete::{line_ending, space0, space1},
@@ -278,7 +278,7 @@ named!(
 #[cfg(test)]
 mod test {
     use super::{jrnl_refn_record_parser, jrnl_title_record_parser};
-    use crate::entity::{Record, SerialNumber};
+    use crate::ast::types::{Record, SerialNumber};
 
     #[test]
     fn test_refn_parser() {

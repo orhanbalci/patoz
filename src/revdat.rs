@@ -1,4 +1,4 @@
-use super::{entity::*, primitive::*};
+use super::{ast::types::*, primitive::*};
 use nom::{
     character::complete::{line_ending, space0, space1},
     do_parse, many1, map, named, opt, take,
@@ -74,7 +74,7 @@ named!(
                 }
             })
             .collect()
-    }), |r : Vec<Revdat>| { Record::Revdats{revdat : r}})
+    }), |r : Vec<Revdat>| { Record::Revdats(Revdats{revdat : r})})
 );
 
 named!(

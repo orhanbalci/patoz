@@ -1,4 +1,4 @@
-use super::{entity::*, primitive::*};
+use super::{ast::types::*, primitive::*};
 use nom::{
     character::complete::{line_ending, multispace1, space0},
     do_parse, map, named, take_str,
@@ -15,10 +15,10 @@ named!(
             >> id_code_p: take_str!(4)
             >> space0
             >> line_ending
-            >> (Record::Header {
+            >> (Record::Header (Header{
                 classification: classification_p.to_string(),
                 deposition_date: deposition_date_p,
                 id_code: id_code_p.to_string()
-            })
+            }))
     )
 );

@@ -1,9 +1,9 @@
 #![recursion_limit = "128"]
 
+pub mod ast;
 mod author;
 mod caveat;
 mod compnd;
-pub mod entity;
 mod expdta;
 mod header;
 mod jrnl;

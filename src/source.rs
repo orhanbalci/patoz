@@ -1,4 +1,4 @@
-use super::{entity::*, primitive::*};
+use super::{ast::types::*, primitive::*};
 use nom::{
     character::complete::{line_ending, space0, space1},
     do_parse, fold_many1, map, named, opt,
@@ -35,7 +35,7 @@ named!(
     pub (crate) source_token_parser<Record>,
     map!(
         source_line_folder,
-        |v: Vec<u8>| tokens_parser(v.as_slice()).map(|res| Record::Source{tokens : res.1}).expect("Can not parse source record")
+        |v: Vec<u8>| tokens_parser(v.as_slice()).map(|res| Record::Source(Source{tokens : res.1})).expect("Can not parse source record")
     )
 );
 
