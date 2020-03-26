@@ -187,6 +187,60 @@ pub struct Keywds {
 pub struct Authors {
     pub authors: Vec<Author>,
 }
+
+#[derive(Debug, Clone, Default)]
+pub struct JournalAuthors {
+    pub authors: Vec<Author>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct JournalTitle {
+    pub title: String,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct JournalEditors {
+    pub name: Vec<Author>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct JournalReference {
+    pub publication_name: String,
+    pub volume: Option<u32>,
+    pub page: Option<u32>,
+    pub year: Option<u32>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct JournalCitation {
+    pub serial_type: Option<SerialNumber>,
+    pub serial: Option<String>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct JournalPublication {
+    pub publication: String,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct JournalPubMedId {
+    pub id: u32,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct JournalDoi {
+    pub id: String,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct Experimental {
+    pub techniques: Vec<ExperimentalTechnique>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct Nummdl {
+    pub num: u32,
+}
 #[derive(Debug, Clone)]
 pub enum Record {
     Header(Header),
@@ -201,39 +255,15 @@ pub enum Record {
     Cmpnd(Cmpnd),
     Source(Source),
     Keywds(Keywds),
-    JournalAuthors {
-        authors: Vec<Author>,
-    },
-    JournalTitle {
-        title: String,
-    },
-    JournalEditors {
-        name: Vec<Author>,
-    },
-    JournalReference {
-        publication_name: String,
-        volume: Option<u32>,
-        page: Option<u32>,
-        year: Option<u32>,
-    },
-    JournalPublication {
-        publication: String,
-    },
-    JournalCitation {
-        serial_type: Option<SerialNumber>,
-        serial: Option<String>,
-    },
-    JournalPubMedId {
-        id: u32,
-    },
-    JournalDoi {
-        id: String,
-    },
-    Experimental {
-        techniques: Vec<ExperimentalTechnique>,
-    },
-    Nummdl {
-        num: u32,
-    },
+    JournalAuthors(JournalAuthors),
+    JournalTitle(JournalTitle),
+    JournalEditors(JournalEditors),
+    JournalReference(JournalReference),
+    JournalCitation(JournalCitation),
+    JournalPublication(JournalPublication),
+    JournalPubMedId(JournalPubMedId),
+    JournalDoi(JournalDoi),
+    Experimental(Experimental),
+    Nummdl(Nummdl),
     Authors(Authors),
 }

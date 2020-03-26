@@ -73,7 +73,7 @@ named!(
     pub (crate) jrnl_author_record_parser<Record>,
     map!(jrnl_author_line_folder, |jrnl_author: Vec<u8>| {
         author_list_parser(jrnl_author.as_slice())
-            .map(|res| Record::JournalAuthors { authors: res.1 })
+            .map(|res| Record::JournalAuthors(JournalAuthors{ authors: res.1 }))
             .expect("Can not parse journal author record")
     })
 );
@@ -105,7 +105,7 @@ make_line_folder!(
 named!(
     pub (crate) jrnl_title_record_parser<Record>,
     map!(jrnl_title_line_folder, |jrnl_title: Vec<u8>| {
-        Record::JournalTitle{ title : String::from(str::from_utf8(jrnl_title.as_slice()).unwrap())}
+        Record::JournalTitle(JournalTitle{ title : String::from(str::from_utf8(jrnl_title.as_slice()).unwrap())})
     })
 );
 
@@ -133,9 +133,9 @@ named!(
     pub (crate) jrnl_edit_record_parser<Record>,
     map!(jrnl_edit_line_folder, |jrnl_edit: Vec<u8>| {
         if let Ok((_, res)) = author_list_parser(jrnl_edit.as_slice()) {
-            Record::JournalEditors { name: res }
+            Record::JournalEditors (JournalEditors{ name: res })
         } else {
-            Record::JournalEditors { name: Vec::new() }
+            Record::JournalEditors(JournalEditors::default())
         }
     })
 );
@@ -187,12 +187,12 @@ named!(
 
 named!(
     pub (crate) jrnl_ref_record_parser<Record>,
-    map!(jrnl_ref_line_folder, |jrnl_ref : JrnlRefLine| { Record::JournalReference{
+    map!(jrnl_ref_line_folder, |jrnl_ref : JrnlRefLine| { Record::JournalReference(JournalReference{
         publication_name : jrnl_ref.publication_name,
         volume : jrnl_ref.volume,
         page : jrnl_ref.page,
         year : jrnl_ref.year,
-    }})
+    })})
 );
 
 named!(
@@ -218,7 +218,7 @@ make_line_folder!(jrnl_publ_line_folder, jrnl_publ_line_parser, JrnlPublLine);
 named!(
     pub (crate) jrnl_publ_record_parser<Record>,
     map!(jrnl_publ_line_folder, |jrnl_publ: Vec<u8>| {
-        Record::JournalPublication{ publication : String::from(str::from_utf8(jrnl_publ.as_slice()).unwrap())}
+        Record::JournalPublication(JournalPublication{ publication : String::from(str::from_utf8(jrnl_publ.as_slice()).unwrap())})
     })
 );
 
@@ -233,11 +233,11 @@ named!(
             >> serial : opt!(till_line_ending)
             >> line_ending
             >> (
-                Record::JournalCitation{
+                Record::JournalCitation(JournalCitation{
                     serial_type : serial_type,
                     serial : if let Some(s) = serial {Some(String::from_str(str::from_utf8(s).unwrap().trim()).unwrap()) }
                     else {None}
-                }
+                })
             )
     )
 );
@@ -252,9 +252,9 @@ named!(
             >> space0
             >> line_ending
             >> (
-                Record::JournalPubMedId{
+                Record::JournalPubMedId(JournalPubMedId{
                     id : pmid_id,
-                }
+                })
             )
     )
 );
@@ -268,9 +268,9 @@ named!(
             >> id : till_line_ending
             >> line_ending
             >> (
-                Record::JournalDoi{
+                Record::JournalDoi(JournalDoi{
                     id : String::from_str(str::from_utf8(id).unwrap().trim()).unwrap(),
-                }
+                })
             )
     )
 );
@@ -278,7 +278,7 @@ named!(
 #[cfg(test)]
 mod test {
     use super::{jrnl_refn_record_parser, jrnl_title_record_parser};
-    use crate::ast::types::{Record, SerialNumber};
+    use crate::ast::types::{JournalCitation, Record, SerialNumber};
 
     #[test]
     fn test_refn_parser() {
@@ -290,10 +290,10 @@ mod test {
 
         match res {
             Ok((_, r)) => {
-                if let Record::JournalCitation {
+                if let Record::JournalCitation(JournalCitation {
                     serial_type: st,
                     serial: s,
-                } = r
+                }) = r
                 {
                     println!("{:?}", s);
                     assert_eq!(st.unwrap(), SerialNumber::Issn);
@@ -317,9 +317,9 @@ JRNL        TITL 2 1.74 A RESOLUTION
 
         match res {
             Ok((_, r)) => {
-                if let Record::JournalTitle { title: name } = r {
+                if let Record::JournalTitle(title) = r {
                     assert_eq!(
-                        name,
+                        title.title,
                         "THE CRYSTAL STRUCTURE OF  HUMAN DEOXYHAEMOGLOBIN AT 1.74 A RESOLUTION"
                     );
                 }

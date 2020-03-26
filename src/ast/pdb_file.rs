@@ -27,7 +27,7 @@ impl<'a, I> PdbHeader<I>
 where
     I: Iterator<Item = &'a Record>,
 {
-    fn title(&mut self) -> Option<Title> {
+    pub fn title(&mut self) -> Option<Title> {
         self.records
             .find(|s| match s {
                 Record::Title(_) => true,
@@ -39,7 +39,7 @@ where
             })
     }
 
-    fn header(&mut self) -> Option<Header> {
+    pub fn header(&mut self) -> Option<Header> {
         self.records
             .find(|s| match s {
                 Record::Header(_) => true,
@@ -51,7 +51,7 @@ where
             })
     }
 
-    fn obslte(&mut self) -> Option<Obslte> {
+    pub fn obslte(&mut self) -> Option<Obslte> {
         self.records
             .find(|s| match s {
                 Record::Obslte(_) => true,
@@ -63,7 +63,7 @@ where
             })
     }
 
-    fn caveat(&mut self) -> Option<Caveat> {
+    pub fn caveat(&mut self) -> Option<Caveat> {
         self.records
             .find(|s| match s {
                 Record::Caveat(_) => true,
@@ -75,7 +75,7 @@ where
             })
     }
 
-    fn sprsde(&mut self) -> Option<Sprsde> {
+    pub fn sprsde(&mut self) -> Option<Sprsde> {
         self.records
             .find(|s| match s {
                 Record::Sprsde(_) => true,
@@ -87,7 +87,7 @@ where
             })
     }
 
-    fn mdltyp(&mut self) -> Option<Mdltyp> {
+    pub fn mdltyp(&mut self) -> Option<Mdltyp> {
         self.records
             .find(|s| match s {
                 Record::Mdltyp(_) => true,
@@ -99,7 +99,7 @@ where
             })
     }
 
-    fn revdats(&mut self) -> Option<Revdats> {
+    pub fn revdats(&mut self) -> Option<Revdats> {
         self.records
             .find(|s| match s {
                 Record::Revdats(_) => true,
@@ -111,7 +111,7 @@ where
             })
     }
 
-    fn cmpnd(&mut self) -> Option<Cmpnd> {
+    pub fn cmpnd(&mut self) -> Option<Cmpnd> {
         self.records
             .find(|s| match s {
                 Record::Cmpnd(_) => true,
@@ -123,7 +123,7 @@ where
             })
     }
 
-    fn source(&mut self) -> Option<Source> {
+    pub fn source(&mut self) -> Option<Source> {
         self.records
             .find(|s| match s {
                 Record::Source(_) => true,
@@ -135,7 +135,7 @@ where
             })
     }
 
-    fn keywds(&mut self) -> Option<Keywds> {
+    pub fn keywds(&mut self) -> Option<Keywds> {
         self.records
             .find(|s| match s {
                 Record::Keywds(_) => true,
@@ -150,6 +150,7 @@ where
 
 #[cfg(test)]
 mod test {
+    #[test]
     fn test_pdb_file_constructor() {
         use super::{super::types::Record, *};
         let a = vec![Record::Title(Title {

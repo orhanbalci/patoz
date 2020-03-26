@@ -81,7 +81,7 @@ named!(
     pub (crate) expdata_record_parser<Record>,
     map!(expdata_line_folder, |v: Vec<u8>| {
         experimental_technique_list_parser(v.as_slice())
-            .map(|res| Record::Experimental { techniques: res.1 })
+            .map(|res| Record::Experimental(Experimental { techniques: res.1 }))
             .expect("Can not parse expdta records")
     })
 );
