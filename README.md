@@ -24,7 +24,7 @@ Protein Data Bank (pdb) file parser
 - [x] [Author](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#AUTHOR)
 - [x] [Sprsde](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#SPRSDE)
 - [x] [Revdat](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#REVDAT)
-- [ ] [Jrnl](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#JRNL)
+- [x] [Jrnl](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#JRNL)
     - [x] Auth
     - [x] Titl
     - [x] Edit
@@ -32,7 +32,7 @@ Protein Data Bank (pdb) file parser
     - [x] Publ
     - [x] Refn
     - [x] Pmid
-    - [ ] Doi
+    - [x] Doi
 - [ ] [Remarks](http://www.wwpdb.org/documentation/file-format-content/format33/remarks.html)
 ### Primary Structure Section
 - [ ] [Dbref](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#DBREF)
