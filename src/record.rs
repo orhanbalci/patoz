@@ -203,7 +203,9 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
         ) {
             println!("Length {}", res.len());
             println!("{:?}", res);
-            assert!(true);
+            use crate::ast::pdb_file::*;
+            let pubmedid = res.to_pdb_file().header().journal().pubmedid().unwrap();
+            assert_eq!(pubmedid.id, 10737790);
         } else {
             assert!(false)
         }
