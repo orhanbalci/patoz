@@ -1,21 +1,21 @@
 #![recursion_limit = "128"]
 
 pub mod ast;
-mod author;
-mod caveat;
-mod compnd;
-mod expdta;
-mod header;
-mod jrnl;
-mod keywds;
-mod mdltyp;
-mod nummdl;
-mod obslte;
+pub mod author;
+pub mod caveat;
+pub mod compnd;
+pub mod expdta;
+pub mod header;
+pub mod jrnl;
+pub mod keywds;
+pub mod mdltyp;
+pub mod nummdl;
+pub mod obslte;
 pub mod primitive;
 pub mod record;
-mod revdat;
+pub mod revdat;
 pub mod seqres;
-mod source;
-mod split;
-mod sprsde;
-mod title;
+pub mod source;
+pub mod split;
+pub mod sprsde;
+pub mod title;

@@ -1,3 +1,7 @@
+/*!
+Contains parsers related to [Obslte](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#OBSLTE)
+records. Obslte record indicates that this entry is removed from PDB and replaced with another entry.
+*/
 use super::{ast::types::*, primitive::*};
 use nom::{
     character::complete::{line_ending, space0, space1},
@@ -43,8 +47,8 @@ named!(
     )
 );
 
-named!(
-    pub (crate) obslte_record_parser<Record>,
+named!( #[doc=r#""#],
+    pub obslte_record_parser<Record>,
     map!(obslte_line_folder, |obslte: Vec<u8>| {
         println!("{}", str::from_utf8(obslte.as_slice()).unwrap());
         if let Ok((_, res)) = obslte_parser(obslte.as_slice()) {
