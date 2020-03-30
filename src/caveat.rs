@@ -1,3 +1,7 @@
+/*!
+Contains parsers related to  [Caveat](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#CAVEAT) records.
+CAVEAT warns of errors and unresolved issues in the entry. Use caution when using an entry containing this record.
+*/
 use super::{ast::types::*, primitive::*};
 use nom::{
     character::complete::{line_ending, space0, space1},
@@ -44,16 +48,23 @@ named!(
     )
 );
 
-named!(
-    pub (crate) caveat_record_parser<Record>,
+named!(#[doc = r#"Parses CAVEAT records. It is a continuation type of record which can span multi lines.
+There is only one CAVEAT record per pdb file. If successfull  returns [Record](../ast/types/enum.Record.html) variant 
+containing [Caveat](../ast/types/struct.Split.html) instance. Structure of the record is : 
+
+| COLUMNS   | DATA  TYPE    | FIELD        | DEFINITION                                   |
+|-----------|---------------|--------------|----------------------------------------------|
+|   1 - 6   | Record name   | CAVEAT       |                                              |
+|  9 - 10   | Continuation  | continuation | Allows concatenation of multiple records.    |
+| 12 - 15   | IDcode        | idCode       | PDB ID code of this entry.                   |
+| 20 - 79   | String        | comment      | Free text giving the reason for the  CAVEAT. |
+"#],
+    pub  caveat_record_parser<Record>,
     map!(caveat_line_folder, |caveat: Vec<u8>| {
         if let Ok((_, res)) = caveat_parser(caveat.as_slice()) {
             res
         } else {
-            Record::Caveat (Caveat{
-                id_code: String::new(),
-                comment: String::new(),
-            })
+            Record::Caveat(Caveat::default())
         }
     })
 );
