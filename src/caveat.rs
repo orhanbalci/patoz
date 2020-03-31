@@ -52,6 +52,8 @@ named!(#[doc = r#"Parses CAVEAT records. It is a continuation type of record whi
 There is only one CAVEAT record per pdb file. If successfull  returns [Record](../ast/types/enum.Record.html) variant 
 containing [Caveat](../ast/types/struct.Split.html) instance. Structure of the record is : 
 
+Record structure :
+
 | COLUMNS   | DATA  TYPE    | FIELD        | DEFINITION                                   |
 |-----------|---------------|--------------|----------------------------------------------|
 |   1 - 6   | Record name   | CAVEAT       |                                              |

@@ -44,6 +44,8 @@ named!(#[doc = r#"Parses SPLIT records. It is a continuation type of record whic
 There is only one SPLIT record per pdb file. If successfull  returns [Record](../ast/types/enum.Record.html) variant 
 containing [Split](../ast/types/struct.Split.html) instance.
 
+Record structure : 
+
 |COLUMNS  |  DATA TYPE    | FIELD        | DEFINITION                                |
 |---------|---------------|--------------|------------------------------------------ |
 | 1 -  6  |  Record  name | "SPLIT "     |                                           |

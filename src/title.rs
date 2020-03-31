@@ -37,6 +37,7 @@ make_line_folder!(title_line_folder, title_line_parser, TitleLine);
 named!( #[doc=r#"Parses title record which is a continuation record. This record may span multi lines. There is
 only one title record per pdb file. 
 If succesfull returns [Record](../ast/types/enum.Record.html) variant containing [Title](../ast/types/struct.Title.html) instance
+
 Record structure is given below
 
 | COLUMNS    | DATA  TYPE    | FIELD        | DEFINITION                                |

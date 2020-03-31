@@ -52,6 +52,8 @@ Parses obslte records which is a continuation type of record. Continuation recor
 that span multi lines. There is only one OBSLTE record for each pdb file which is optional.
 If succesfull returns [Record](../ast/types/enum.Record.html) variant containing [Obslte](../ast/types/struct.Obslte.html) instance
 
+Record structure : 
+
 | COLUMNS    | DATA  TYPE    | FIELD         | DEFINITION                               |
 |------------|---------------|---------------|------------------------------------------|
 | 1 -  6     | Record name   | OBSLTE        |                                          |

@@ -12,6 +12,8 @@ named!(#[doc=r#"Parses a line of [Header](http://www.wwpdb.org/documentation/fil
 This type of record is neither separated to multi lines nor repeated. There is just single line of unique header record in a pdb file.
 If succesfull returns [Record](../ast/types/enum.Record.html) variant containing [Header](../ast/types/struct.Header.html) instance
 
+Record structure :
+
 | COLUMNS      | DATA  TYPE   | FIELD          | DEFINITION                                |
 |--------------|--------------|----------------|-------------------------------------------|
 | 1 -  6       | Record name  | HEADER         |                                           |
