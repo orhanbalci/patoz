@@ -423,8 +423,8 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_mol_id_parser() {
-        if let Ok((_, Token::MoleculeId(res))) = mol_id_parser("MOL_ID:  1".as_bytes()) {
+    fn mol_id_parser() {
+        if let Ok((_, Token::MoleculeId(res))) = super::mol_id_parser("MOL_ID:  1".as_bytes()) {
             assert_eq!(res, 1);
         } else {
             assert!(false);
@@ -432,9 +432,9 @@ mod test {
     }
 
     #[test]
-    fn test_molecule_parser() {
+    fn molecule_parser() {
         if let Ok((_, Token::Molecule(name))) =
-            molecule_parser("MOLECULE:  HEMOGLOBIN ALPHA CHAIN\n".as_bytes())
+            super::molecule_parser("MOLECULE:  HEMOGLOBIN ALPHA CHAIN\n".as_bytes())
         {
             assert_eq!(name, "HEMOGLOBIN ALPHA CHAIN");
         } else {

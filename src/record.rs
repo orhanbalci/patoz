@@ -62,10 +62,16 @@ named!(
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::ast::pdb_file::*;
+    use std::{
+        fs::File,
+        io::{BufReader, Read},
+        path::PathBuf,
+    };
 
     #[test]
-    fn test_header_parser() {
-        let head = header_parser(
+    fn header_parser() {
+        let head = super::header_parser(
             "HEADER    PHOTOSYNTHESIS                          28-MAR-07   2UXK \n".as_bytes(),
         )
         .unwrap()
@@ -82,8 +88,8 @@ mod test {
     }
 
     #[test]
-    fn test_header_parser_2() {
-        let head = header_parser(
+    fn header_parser_2() {
+        let head = super::header_parser(
             "HEADER    TRANSFERASE/TRANSFERASE                 28-MAR-07   2UXK \n".as_bytes(),
         )
         .unwrap()
@@ -100,7 +106,7 @@ mod test {
     }
 
     #[test]
-    fn test_obslte_parser() {
+    fn obslte_parser() {
         let obs = obslte_record_parser("OBSLTE  02 31-JAN-94 1MBP      2MBP    \n".as_bytes())
             .unwrap()
             .1;
@@ -117,7 +123,7 @@ mod test {
     }
 
     #[test]
-    fn test_title_parser() {
+    fn title_parser() {
         let tit = title_record_parser(
             r#"TITLE     RHIZOPUSPEPSIN COMPLEXED WITH REDUCED PEPTIDE INHIBITOR
 "#
@@ -137,7 +143,7 @@ mod test {
     }
 
     #[test]
-    fn test_split_parser() {
+    fn split_parser() {
         let splt = split_record_parser(
             "SPLIT      1VOQ 1VOR 1VOS 1VOU 1VOV 1VOW 1VOX 1VOY 1VP0 1VOZ \n".as_bytes(),
         )
@@ -152,8 +158,8 @@ mod test {
     }
 
     #[test]
-    fn test_pdb_records_parser() {
-        if let Ok((_, res)) = pdb_records_parser(
+    fn pdb_records_parser() {
+        if let Ok((_, res)) = super::pdb_records_parser(
             r#"HEADER    HYDROLASE                               20-APR-99   1CJY   
 TITLE     HUMAN CYTOSOLIC PHOSPHOLIPASE A2
 "#
@@ -176,8 +182,8 @@ TITLE     HUMAN CYTOSOLIC PHOSPHOLIPASE A2
     }
 
     #[test]
-    fn ejg_header_test() {
-        if let Ok((_, res)) = pdb_records_parser(
+    fn ejg_header() {
+        if let Ok((_, res)) = super::pdb_records_parser(
             r#"HEADER    PLANT PROTEIN                           02-MAR-00   1EJG               
 TITLE     CRAMBIN AT ULTRAHIGH RESOLUTION VALENCE ELECTRON DENSITY        
 COMPND    MOL_ID: 1;                                                            
@@ -209,5 +215,44 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
         } else {
             assert!(false)
         }
+    }
+
+    fn get_test_file_path(file_name: &str) -> PathBuf {
+        let mut current_file_path = PathBuf::from(file!());
+        current_file_path.pop();
+        current_file_path.pop();
+        current_file_path.push("res");
+        current_file_path.push(file_name);
+        current_file_path
+    }
+
+    fn read_file(path: &PathBuf) -> String {
+        let file = File::open(path).unwrap();
+        let mut buf_reader = BufReader::new(file);
+        let mut contents = String::new();
+        buf_reader.read_to_string(&mut contents);
+        contents
+    }
+    #[test]
+    fn parse_from_file() {
+        let test_file_path = get_test_file_path("1BXO.pdb");
+        let contents = read_file(&test_file_path);
+        let recs = super::pdb_records_parser(contents.as_bytes()).unwrap().1;
+        println!("{:?}", recs);
+        assert_eq!(
+            "HYDROLASE",
+            recs.to_pdb_file().header().header().unwrap().classification
+        );
+        assert_eq!(
+            "1BXO",
+            recs.to_pdb_file().header().header().unwrap().id_code
+        );
+
+        // assert_eq!(
+        //     "acid proteinase (penicillopepsin) (e.c.3.4.23.20) complex with",
+        //     recs.to_pdb_file().header().title().unwrap().title
+        // );
+
+        assert!(true)
     }
 }

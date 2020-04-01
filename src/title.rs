@@ -21,7 +21,7 @@ named!(
             >> take!(2)
             >> cont: opt!(twodigit_integer)
             >> space1
-            >> tit: alphanum_word_with_spaces_inside
+            >> tit: title_parser
             >> space0
             >> line_ending
             >> (Continuation::<TitleLine> {

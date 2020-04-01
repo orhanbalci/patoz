@@ -81,6 +81,7 @@ pub struct Revdat {
 pub enum ModificationType {
     InitialRelease,
     OtherModification,
+    UnknownModification,
 }
 
 #[derive(Debug, Clone, PartialEq)]

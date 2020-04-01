@@ -167,6 +167,23 @@ named!(
 );
 
 named!(
+    pub title_parser<String>,
+    map_res!(
+        map_res!(take_while(|s| {is_alphanumeric(s) || 
+            is_space(s) || char::from(s) == '(' || 
+            char::from(s) == ')' || 
+            char::from(s) == '.' || 
+            char::from(s) == '/' ||
+            char::from(s) == '[' ||
+            char::from(s) == ']' ||
+            char::from(s) == ':' ||
+            char::from(s) == '-'
+        }), str::from_utf8),
+        |s : &str| {str::FromStr::from_str(s.trim())}
+    )
+);
+
+named!(
     pub month_parser<u32>,
     map_res!(ascii_word, |s: String| -> Result<u32, ()> {
         let mut parsed = Parsed::new();
@@ -256,7 +273,8 @@ named!(
     pub modification_type_parser<ModificationType>,
     alt!(
         do_parse!(tag!("0") >> (ModificationType::InitialRelease)) |
-        do_parse!(tag!("1") >> (ModificationType::OtherModification))
+        do_parse!(tag!("1") >> (ModificationType::OtherModification)) |
+        do_parse!(take!(1) >> (ModificationType::UnknownModification))
     )
 );
 

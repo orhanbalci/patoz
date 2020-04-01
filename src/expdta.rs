@@ -1,8 +1,11 @@
 use super::{ast::types::*, primitive::*};
 use nom::{
     alt,
+    bytes::complete::tag,
     character::complete::{line_ending, space0, space1},
-    do_parse, fold_many1, map, named, opt, separated_list, tag,
+    do_parse, fold_many1, map,
+    multi::separated_list,
+    named, opt, tag, IResult,
 };
 
 use crate::make_line_folder;
@@ -53,11 +56,9 @@ named!(
     )
 );
 
-named!(
-    experimental_technique_list_parser<Vec<ExperimentalTechnique>>,
-    separated_list!(tag!(";"), experimental_technique_parser)
-);
-
+pub fn experimental_technique_list_parser(s: &[u8]) -> IResult<&[u8], Vec<ExperimentalTechnique>> {
+    separated_list(tag(";"), experimental_technique_parser)(s)
+}
 named!(
     expdata_line_parser<Continuation<ExpdataLine>>,
     do_parse!(
