@@ -230,8 +230,11 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
         let file = File::open(path).unwrap();
         let mut buf_reader = BufReader::new(file);
         let mut contents = String::new();
-        buf_reader.read_to_string(&mut contents);
-        contents
+        if let Ok(_read_res) = buf_reader.read_to_string(&mut contents) {
+            contents
+        } else {
+            "".to_owned()
+        }
     }
     #[test]
     fn parse_from_file() {
@@ -252,7 +255,5 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
         //     "acid proteinase (penicillopepsin) (e.c.3.4.23.20) complex with",
         //     recs.to_pdb_file().header().title().unwrap().title
         // );
-
-        assert!(true)
     }
 }

@@ -105,7 +105,7 @@ named!(
 
 named!(
     pub threedigit_integer<u32>,
-    map_res!(map_res!(take!(3), str::from_utf8), str::FromStr::from_str)
+    map_res!(map_res!(take!(3), str::from_utf8), |s : &str| str::FromStr::from_str(s.trim()))
 );
 
 named!(
@@ -408,5 +408,20 @@ mod test {
                 assert!(false);
             }
         }
+    }
+
+    #[test]
+    fn threedigit() {
+        if let Ok((_, res)) = super::threedigit_integer(b"  7") {
+            assert_eq!(7, res)
+        } else {
+            assert!(false)
+        }
+    }
+
+    #[test]
+    fn parseint() {
+        let a = "  7".trim().parse::<u32>();
+        assert_eq!(7, a.unwrap());
     }
 }

@@ -9,6 +9,7 @@ use itertools::Itertools;
 use std::{str, str::FromStr};
 
 #[allow(dead_code)]
+#[derive(Debug)]
 struct RevdatLine {
     modification_number: u32,
     continuation: u32,
@@ -52,7 +53,7 @@ named!(
 );
 
 named!(
-    pub (crate) revdat_record_parser<Record>,
+    pub revdat_record_parser<Record>,
     map! (map!(revdat_line_folder, |revdat: Vec<RevdatLine>| {
         revdat
             .into_iter()
@@ -97,3 +98,26 @@ named!(
             })
     )
 );
+#[cfg(test)]
+mod test {
+
+    #[test]
+    fn revdat() {
+        let res =  super::revdat_record_parser(
+            r#"REVDAT   7   13-JUL-11 1BXO    1       VERSN                                    
+REVDAT   6   24-FEB-09 1BXO    1       VERSN                                    
+REVDAT   5   01-APR-03 1BXO    1       JRNL                                     
+REVDAT   4   26-SEP-01 1BXO    3       ATOM   CONECT                            
+REVDAT   3   24-JAN-01 1BXO    3       ATOM                                     
+REVDAT   2   22-DEC-99 1BXO    4       HEADER COMPND REMARK JRNL                
+REVDAT   2 2                           ATOM   SOURCE SEQRES                     
+REVDAT   1   14-OCT-98 1BXO    0                                                                            
+"#
+                .as_bytes(),
+        );
+        match res {
+            Ok((_, _rest)) => assert!(true),
+            Err(_err) => assert!(false),
+        }
+    }
+}
