@@ -236,24 +236,37 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
             "".to_owned()
         }
     }
-    #[test]
-    fn parse_from_file() {
-        let test_file_path = get_test_file_path("1BXO.pdb");
+    fn parse_from_file(pdb_entry: &str) {
+        use serde_json::Value;
+
+        let test_file_path = get_test_file_path(&format!("{}.pdb", pdb_entry));
+        let expected_file_path = get_test_file_path(&format!("{}.exp", pdb_entry));
         let contents = read_file(&test_file_path);
+        let expected = read_file(&expected_file_path);
+        let expected_val: Value = serde_json::from_str(&expected).unwrap();
         let recs = super::pdb_records_parser(contents.as_bytes()).unwrap().1;
         println!("{:?}", recs);
         assert_eq!(
-            "HYDROLASE",
+            expected_val["header.classification"],
             recs.to_pdb_file().header().header().unwrap().classification
         );
         assert_eq!(
-            "1BXO",
+            expected_val["header.id_code"],
             recs.to_pdb_file().header().header().unwrap().id_code
         );
+        assert_eq!(
+            expected_val["header.keywords"][0],
+            recs.to_pdb_file().header().keywds().unwrap().keywords[0]
+        )
 
         // assert_eq!(
         //     "acid proteinase (penicillopepsin) (e.c.3.4.23.20) complex with",
         //     recs.to_pdb_file().header().title().unwrap().title
         // );
+    }
+
+    #[test]
+    fn bxo() {
+        parse_from_file("1BXO");
     }
 }

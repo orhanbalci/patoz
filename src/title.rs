@@ -50,7 +50,7 @@ Record structure is given below
     map!(
         title_line_folder,
         |title: Vec<u8>| if let Ok(res) = String::from_utf8(title) {
-            println!("Title {:?}", res);
+            // println!("Title {:?}", res);
             Record::Title(Title { title: res })
         } else {
             Record::Title(Title {

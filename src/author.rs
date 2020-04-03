@@ -53,7 +53,7 @@ named!(
             str::FromStr::from_str
         ),
         |s: String| {
-            println!("{}", s);
+            // println!("{}", s);
             Result::Ok::<Author, Err<String>>(Author(String::from_str(s.trim()).unwrap()))
         }
     )
@@ -66,7 +66,7 @@ pub fn author_list_parser(s: &[u8]) -> IResult<&[u8], Vec<Author>> {
 named!(
     pub (crate) author_record_parser<Record>,
     map!(author_line_folder, |v: Vec<u8>| {
-        println!("{}", str::from_utf8(&v).unwrap());
+        // println!("{}", str::from_utf8(&v).unwrap());
         author_list_parser(v.as_slice())
             .map(|res| Record::Authors(Authors { authors: res.1 }))
             .expect("Can not parse author record")
