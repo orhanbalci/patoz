@@ -100,7 +100,7 @@ make_tagger!(edit);
 
 named!(
     pub twodigit_integer<u32>,
-    map_res!(map_res!(take!(2), str::from_utf8), str::FromStr::from_str)
+    map_res!(map_res!(take!(2), str::from_utf8), |s : &str| str::FromStr::from_str(s.trim()))
 );
 
 named!(

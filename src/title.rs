@@ -18,7 +18,7 @@ named!(
     title_line_parser<Continuation<TitleLine>>,
     do_parse!(
         title
-            >> take!(2)
+            >> take!(3)
             >> cont: opt!(twodigit_integer)
             >> space1
             >> tit: title_parser

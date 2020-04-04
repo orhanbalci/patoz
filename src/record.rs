@@ -245,7 +245,7 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
         let expected = read_file(&expected_file_path);
         let expected_val: Value = serde_json::from_str(&expected).unwrap();
         let recs = super::pdb_records_parser(contents.as_bytes()).unwrap().1;
-        println!("{:?}", recs);
+        //println!("{:?}", recs);
         assert_eq!(
             expected_val["header.classification"],
             recs.to_pdb_file().header().header().unwrap().classification
@@ -257,7 +257,11 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
         assert_eq!(
             expected_val["header.keywords"][0],
             recs.to_pdb_file().header().keywds().unwrap().keywords[0]
-        )
+        );
+        assert_eq!(
+            expected_val["header.title"],
+            recs.to_pdb_file().header().title().unwrap().title
+        );
 
         // assert_eq!(
         //     "acid proteinase (penicillopepsin) (e.c.3.4.23.20) complex with",
@@ -268,5 +272,10 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
     #[test]
     fn bxo() {
         parse_from_file("1BXO");
+    }
+
+    #[test]
+    fn nls() {
+        parse_from_file("1NLS")
     }
 }
