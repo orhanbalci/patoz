@@ -262,11 +262,10 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
             expected_val["header.title"],
             recs.to_pdb_file().header().title().unwrap().title
         );
-
-        println!("{:?}", expected_val["header.experimental"][0]);
         assert_eq!(
             expected_val["header.experimental"][0]
-                .to_string()
+                .as_str()
+                .unwrap()
                 .parse::<ExperimentalTechnique>()
                 .unwrap(),
             recs.to_pdb_file().header().expdta().unwrap().techniques[0]

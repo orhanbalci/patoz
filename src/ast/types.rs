@@ -35,7 +35,7 @@ impl FromStr for ExperimentalTechnique {
             "SOLID-STATE NMR" => Ok(ExperimentalTechnique::SolidStateNmr),
             "SOLUTION NMR" => Ok(ExperimentalTechnique::SolutionNmr),
             "SOLUTION SCATTERING" => Ok(ExperimentalTechnique::SolutionScattering),
-            _ => Err("Unknown experimental result".to_owned()),
+            _ => Err(format!("Unknown experimental result {}", inp)),
         }
     }
 }
