@@ -263,6 +263,15 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
             recs.to_pdb_file().header().title().unwrap().title
         );
 
+        println!("{:?}", expected_val["header.experimental"][0]);
+        assert_eq!(
+            expected_val["header.experimental"][0]
+                .to_string()
+                .parse::<ExperimentalTechnique>()
+                .unwrap(),
+            recs.to_pdb_file().header().expdta().unwrap().techniques[0]
+        )
+
         // assert_eq!(
         //     "acid proteinase (penicillopepsin) (e.c.3.4.23.20) complex with",
         //     recs.to_pdb_file().header().title().unwrap().title

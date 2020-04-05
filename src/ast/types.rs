@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use std::marker::PhantomData;
+use std::{marker::PhantomData, str::FromStr};
 
 #[derive(Debug)]
 pub(crate) struct Continuation<T> {
@@ -11,7 +11,7 @@ pub(crate) struct Continuation<T> {
 #[derive(Debug, Clone)]
 pub struct Author(pub String);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ExperimentalTechnique {
     XRayDiffraction,
     FiberDiffraction,
@@ -21,6 +21,23 @@ pub enum ExperimentalTechnique {
     SolidStateNmr,
     SolutionNmr,
     SolutionScattering,
+}
+
+impl FromStr for ExperimentalTechnique {
+    type Err = String;
+    fn from_str(inp: &str) -> std::result::Result<Self, <Self as std::str::FromStr>::Err> {
+        match inp {
+            "X-RAY DIFFRACTION" => Ok(ExperimentalTechnique::XRayDiffraction),
+            "FIBER DIFFRACTION" => Ok(ExperimentalTechnique::FiberDiffraction),
+            "NEUTRON DIFFRACTION" => Ok(ExperimentalTechnique::NeutronDiffraction),
+            "ELECTRON CRYSTALLOGRAPHY" => Ok(ExperimentalTechnique::ElectronCrystallography),
+            "ELECTRON MICROSCOPY" => Ok(ExperimentalTechnique::ElectronMicroscopy),
+            "SOLID-STATE NMR" => Ok(ExperimentalTechnique::SolidStateNmr),
+            "SOLUTION NMR" => Ok(ExperimentalTechnique::SolutionNmr),
+            "SOLUTION SCATTERING" => Ok(ExperimentalTechnique::SolutionScattering),
+            _ => Err("Unknown experimental result".to_owned()),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]

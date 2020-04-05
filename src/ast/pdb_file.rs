@@ -69,6 +69,7 @@ where
     impl_record_filter!(title -> Title -> Title);
     impl_record_filter!(header -> Header -> Header);
     impl_record_filter!(keywds -> Keywds -> Keywds);
+    impl_record_filter!(expdta ->  Experimental -> Experimental);
 
     pub fn journal(self) -> PdbJournal<I> {
         PdbJournal {
