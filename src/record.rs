@@ -269,12 +269,69 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
                 .parse::<ExperimentalTechnique>()
                 .unwrap(),
             recs.to_pdb_file().header().expdta().unwrap().techniques[0]
-        )
+        );
 
-        // assert_eq!(
-        //     "acid proteinase (penicillopepsin) (e.c.3.4.23.20) complex with",
-        //     recs.to_pdb_file().header().title().unwrap().title
-        // );
+        assert_eq!(
+            Author(
+                expected_val["header.authors"][0]
+                    .as_str()
+                    .unwrap()
+                    .to_owned()
+            ),
+            recs.to_pdb_file().header().authors().unwrap().authors[0]
+        );
+
+        assert_eq!(
+            Author(
+                expected_val["header.journal.authors"][0]
+                    .as_str()
+                    .unwrap()
+                    .to_owned()
+            ),
+            recs.to_pdb_file()
+                .header()
+                .journal()
+                .authors()
+                .unwrap()
+                .authors[0]
+        );
+
+        assert_eq!(
+            expected_val["header.journal.title"],
+            recs.to_pdb_file().header().journal().title().unwrap().title
+        );
+
+        assert_eq!(
+            expected_val["header.journal.reference.publication_name"],
+            recs.to_pdb_file()
+                .header()
+                .journal()
+                .reference()
+                .unwrap()
+                .publication_name
+        );
+
+        assert_eq!(
+            expected_val["header.journal.reference.volume"],
+            recs.to_pdb_file()
+                .header()
+                .journal()
+                .reference()
+                .unwrap()
+                .volume
+                .unwrap()
+        );
+
+        assert_eq!(
+            expected_val["header.journal.reference.page"],
+            recs.to_pdb_file()
+                .header()
+                .journal()
+                .reference()
+                .unwrap()
+                .page
+                .unwrap()
+        );
     }
 
     #[test]

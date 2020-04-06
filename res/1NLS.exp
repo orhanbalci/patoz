@@ -3,5 +3,12 @@
     "header.id_code" : "1NLS",
     "header.title" : "CONCANAVALIN A AND ITS BOUND SOLVENT AT 0.94A RESOLUTION",
     "header.keywords" : ["CONCANAVALIN A"],
-    "header.experimental" : ["X-RAY DIFFRACTION"]
-}
+    "header.experimental" : ["X-RAY DIFFRACTION"],
+    "header.authors" : ["A.M.DEACON"],
+    "header.journal.authors" : ["A.DEACON"],
+    "header.journal.title" : "THE STRUCTURE OF CONCANAVALIN A AND ITS BOUND SOLVENT DETERMINED WITH SMALL-MOLECULE ACCURACY AT 0.94 A RESOLUTION",
+    "header.journal.reference.publication_name" : "J.CHEM.SOC.,FARADAY TRANS.",
+    "header.journal.reference.volume" : 93,
+    "header.journal.reference.page" : 4305,
+    "header.journal.reference.year" : 1997 
+    }

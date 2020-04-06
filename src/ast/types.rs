@@ -8,7 +8,7 @@ pub(crate) struct Continuation<T> {
     pub phantom: PhantomData<T>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Author(pub String);
 
 #[derive(Debug, Clone, PartialEq)]

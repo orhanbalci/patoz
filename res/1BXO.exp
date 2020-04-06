@@ -3,5 +3,12 @@
     "header.id_code" : "1BXO",
     "header.title" : "ACID PROTEINASE (PENICILLOPEPSIN) (E.C.3.4.23.20) COMPLEX WITH PHOSPHONATE INHIBITOR: METHYL CYCLO[(2S)-2-[[(1R)-1-(N-(L-N-(3- METHYLBUTANOYL)VALYL-L-ASPARTYL)AMINO)-3-METHYLBUT YL] HYDROXYPHOSPHINYLOXY]-3-(3-AMINOMETHYL) PHENYLPROPANOATE",
     "header.keywords" : ["HYDROLASE"],
-    "header.experimental" : ["X-RAY DIFFRACTION"]
+    "header.experimental" : ["X-RAY DIFFRACTION"],
+    "header.authors" : ["A.R.KHAN"],
+    "header.journal.authors" : ["A.R.KHAN"],
+    "header.journal.title" : "LOWERING THE ENTROPIC BARRIER FOR BINDING CONFORMATIONALLY FLEXIBLE INHIBITORS TO ENZYMES.",
+    "header.journal.reference.publication_name" : "BIOCHEMISTRY",
+    "header.journal.reference.volume" : 37,
+    "header.journal.reference.page" : 16839,
+    "header.journal.reference.year" : 1988
 }
