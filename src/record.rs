@@ -343,4 +343,9 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
     fn nls() {
         parse_from_file("1NLS")
     }
+
+    #[test]
+    fn byi(){
+        parse_from_file("1BYI")
+    }
 }

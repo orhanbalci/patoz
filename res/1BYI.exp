@@ -1,0 +1,14 @@
+{
+    "header.classification" : "LIGASE",
+    "header.id_code" : "1BYI",
+    "header.title" : "STRUCTURE OF APO-DETHIOBIOTIN SYNTHASE AT 0.97 ANGSTROMS RESOLUTION",
+    "header.keywords" : ["BIOTIN SYNTHESIS"],
+    "header.experimental" : ["X-RAY DIFFRACTION"],
+    "header.authors" : ["T.SANDALOVA"],
+    "header.journal.authors" : ["T.SANDALOVA"],
+    "header.journal.title" : "STRUCTURE OF DETHIOBIOTIN SYNTHETASE AT 0.97 A RESOLUTION.",
+    "header.journal.reference.publication_name" : "ACTA CRYSTALLOGR.,SECT.D",
+    "header.journal.reference.volume" : 55,
+    "header.journal.reference.page" : 610,
+    "header.journal.reference.year" : 1999
+}
