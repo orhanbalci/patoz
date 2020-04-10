@@ -43,8 +43,8 @@ macro_rules! make_token_tagger(
 
 #[macro_export]
 macro_rules! make_token_parser(
-    ($parser_name : ident, $tagger_name : ident, $value_parser : ident, $parse_val : ident, $ret_val : expr) => (
-        named!(
+    ($doc_comment : expr, $parser_name : ident, $tagger_name : ident, $value_parser : ident, $parse_val : ident, $ret_val : expr) => (
+        named!(#[doc=$doc_comment],
             pub $parser_name<Token>,
             do_parse!(
                 space0

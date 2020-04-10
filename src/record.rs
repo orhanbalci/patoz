@@ -345,7 +345,7 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
     }
 
     #[test]
-    fn byi(){
+    fn byi() {
         parse_from_file("1BYI")
     }
 }
