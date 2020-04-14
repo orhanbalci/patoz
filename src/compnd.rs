@@ -1,6 +1,7 @@
 /*!
 Contains parsers related to [Compnd](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#COMPND) records.
-The COMPND record describes the macromolecular contents of an entry.
+The COMPND record describes the macromolecular contents of an entry. Also contains tokens parsers which are utilized  from
+other records such as SOURCE records
 */
 use super::{ast::types::*, primitive::*};
 use nom::{
@@ -437,7 +438,8 @@ named!(
     )
 );
 
-pub(crate) fn tokens_parser(s: &[u8]) -> IResult<&[u8], Vec<Token>> {
+/// parses a list of ; seperated tokens
+pub fn tokens_parser(s: &[u8]) -> IResult<&[u8], Vec<Token>> {
     separated_list(tag(";"), token_parser)(s)
 }
 
@@ -460,9 +462,10 @@ named!(
 
 make_line_folder!(cmpnd_line_folder, cmpnd_line_parser, CmpndLine);
 
-named!(#[doc=r#"Parses COMPND record which is a multi line continuation record. Contains a list of comma separated predefined key-value pairs
-If succesfull returns [Record](../ast/types/enum.Record.html) variant containing [COMPND](../ast/types/struct.Compnd.html) instance. Record layout is
-given below :
+named!(#[doc=r#"Parses COMPND record which is a multi line continuation record. Contains a list of comma separated predefined key-value pairs.
+Predefined keys are called tokens and can be found in [Token](../ast/types/enum.Token.html)
+If succesfull returns [Record](../ast/types/enum.Record.html) variant containing [CMPND](../ast/types/struct.Cmpnd.html) instance.
+Record layout is given below :
 
 | COLUMNS  | DATA TYPE          | FIELD        | DEFINITION                               |
 |----------|--------------------|--------------|------------------------------------------|
