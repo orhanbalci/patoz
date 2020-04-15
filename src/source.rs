@@ -36,7 +36,7 @@ named!(
 make_line_folder!(source_line_folder, source_line_parser, SourceLine);
 
 named!(
-#[doc=r#"parses source records which is a multiline continuation record. Contains a list of comma separated predefined key-value pairs.
+#[doc=r#"parses source record which is a multiline continuation record. Contains a list of comma separated predefined key-value pairs.
 Predefined keys are called tokens and can be found in [Token](../ast/types/enum.Token.html)
 If succesfull returns [Record](../ast/types/enum.Record.html) variant containing [SOURCE](../ast/types/struct.Source.html) instance.
 Record layout :
