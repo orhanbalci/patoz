@@ -1,3 +1,7 @@
+/*!
+Contains parsers related to [Keywds](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#KEYWDS) records.
+The KEYWDS record contains a set of terms relevant to the entry. 
+*/
 use super::{ast::types::*, primitive::*};
 use nom::{
     character::complete::{line_ending, space0, space1},
@@ -31,7 +35,7 @@ named!(
 make_line_folder!(keywds_line_folder, keywds_line_parser, KeywdsLine);
 
 named!(
-    pub (crate) keywds_parser<Record>,
+    pub keywds_parser<Record>,
     map!(keywds_line_folder, |v: Vec<u8>| keywds_value_parser(
         v.as_slice()
     )

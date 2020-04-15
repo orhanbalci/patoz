@@ -43,7 +43,7 @@ Record layout :
    
 | COLUMNS   | DATA  TYPE     | FIELD         | DEFINITION                               |
 |-----------|----------------|---------------|------------------------------------------|
-| 1 -  6    | Record name    | "SOURCE"      |                                          |
+| 1 -  6    | Record name    | SOURCE        |                                          |
 | 8 - 10    | Continuation   | continuation  | Allows concatenation of multiple records.|
 | 11 - 79   | Specification  | srcName       | Identifies the source of the             |
 |           | List           |               | macromolecule in a  token: value format. |
