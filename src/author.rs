@@ -1,3 +1,7 @@
+/*!
+Contains parsers related to [Author](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#AUTHOR) records.
+The AUTHOR record contains the names of the people responsible for the contents of the entry.
+*/
 use super::{ast::types::*, primitive::*};
 use nom::{
     bytes::complete::{tag, take_while},
@@ -53,20 +57,32 @@ named!(
             str::FromStr::from_str
         ),
         |s: String| {
-            // println!("{}", s);
             Result::Ok::<Author, Err<String>>(Author(String::from_str(s.trim()).unwrap()))
         }
     )
 );
 
+///parses , separated author names. If successfull returns list of
+///[Authors](../ast/types/struct.Author.html)
 pub fn author_list_parser(s: &[u8]) -> IResult<&[u8], Vec<Author>> {
     separated_list(tag(","), author_value_parser)(s)
 }
 
 named!(
-    pub (crate) author_record_parser<Record>,
+#[doc=r#"Parses AUTHOR record which is a multiline continuation record. Contains comma-seperated list of author names. If successfull returns [Record](../ast/types/enum.Record.html) variant containing [AUTHORS](../ast/types/struct.Authors.html) instance.
+
+Record structure :
+
+| COLUMNS | DATA  TYPE   | FIELD        | DEFINITION                                   |
+|---------|--------------|--------------|----------------------------------------------|
+| 1 -  6  | Record name  | AUTHOR       |                                              |
+| 9 - 10  | Continuation | continuation | Allows concatenation of multiple records.    |
+| 11 - 79 | List         | authorList   | List of the author names, separated          |
+|         |              |              | by commas.                                   |
+
+"#],
+    pub author_record_parser<Record>,
     map!(author_line_folder, |v: Vec<u8>| {
-        // println!("{}", str::from_utf8(&v).unwrap());
         author_list_parser(v.as_slice())
             .map(|res| Record::Authors(Authors { authors: res.1 }))
             .expect("Can not parse author record")

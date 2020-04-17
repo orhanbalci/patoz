@@ -1,6 +1,6 @@
 /*!
 Contains parsers related to [Keywds](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#KEYWDS) records.
-The KEYWDS record contains a set of terms relevant to the entry. 
+The KEYWDS record contains a set of terms relevant to the entry.
 */
 use super::{ast::types::*, primitive::*};
 use nom::{
@@ -35,6 +35,19 @@ named!(
 make_line_folder!(keywds_line_folder, keywds_line_parser, KeywdsLine);
 
 named!(
+    #[doc=r#"Parses KEYWDS record which is a multiline continuation record. Contains comma-seperated list of  keywords relevant to pdb entry.If successfull returns [Record](../ast/types/enum.Record.html) variant containing [KEYWDS](../ast/types/struct.Keywds.html) instance.
+
+
+ Record structure :
+
+| COLUMNS | DATA  TYPE   | FIELD        | DEFINITION                                   |
+|---------|--------------|--------------|----------------------------------------------|
+| 1 -  6  | Record name  | KEYWDS       |                                              |
+| 9 - 10  | Continuation | continuation | Allows concatenation of records if necessary.|
+| 11 - 79 | List         | keywds       | Comma-separated list of keywords relevant    |
+|         |              |              | to the entry.                                |
+
+ "#],
     pub keywds_parser<Record>,
     map!(keywds_line_folder, |v: Vec<u8>| keywds_value_parser(
         v.as_slice()
