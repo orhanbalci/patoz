@@ -100,6 +100,15 @@ named!(
 #[doc=r#"
 Parses EXPDTA records which is a continuation type of record which may span multi-lines.
 Record contains list of `;` seperated experimental techniques. If seuccesfull returns [Record](../ast/types/enum.Record.html) variant containing [ExperimentalTechniques](../ast/types/struct.Experimental.html)
+
+Record structure:
+
+| COLUMNS | DATA TYPE     | FIELD        | DEFINITION                                |
+|---------|---------------|--------------|-------------------------------------------|
+| 1 -  6  | Record name   | EXPDTA       |                                           |
+| 9 - 10  | Continuation  | continuation | Allows concatenation of multiple records. |
+| 11 - 79 | SList         | technique    | The experimental technique(s) with        |
+|         |                              | optional comment desc                     |
 "#],
     pub expdata_record_parser<Record>,
     map!(expdata_line_folder, |v: Vec<u8>| {
