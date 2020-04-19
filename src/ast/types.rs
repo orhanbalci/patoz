@@ -8,9 +8,13 @@ pub(crate) struct Continuation<T> {
     pub phantom: PhantomData<T>,
 }
 
+///Holds name of an author utilized by multiple
+///parsers such as author and journal author parsers
 #[derive(Debug, Clone, PartialEq)]
 pub struct Author(pub String);
 
+/// Experimental techniques utilized in obtaining
+/// structure data
 #[derive(Debug, Clone, PartialEq)]
 pub enum ExperimentalTechnique {
     XRayDiffraction,

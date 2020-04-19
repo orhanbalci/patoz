@@ -1,6 +1,6 @@
 #![recursion_limit = "128"]
 
-pub mod ast;
+mod ast;
 pub mod author;
 pub mod caveat;
 pub mod compnd;
@@ -19,3 +19,8 @@ pub mod source;
 pub mod split;
 pub mod sprsde;
 pub mod title;
+
+pub use ast::{
+    pdb_file::*,
+    types::{Author, Authors, ExperimentalTechnique},
+};
