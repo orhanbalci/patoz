@@ -77,14 +77,12 @@ make_line_folder!(
 );
 
 named!(
-    #[doc=r#"Parses AUTH sub-record of JRNL record. AUTH contains the list of authors associated with the cited article or contribution to a larger work. Formatted in a smilar way with main AUTHOR record. If successfull return [Record](../ast/types/enum.Record.html) variant which contains [JournalAuthors](../ast/types/struct.JournalAuthors.html)
-
-*Record Structure:*
+    #[doc=r#"Parses AUTH sub-record of JRNL record. AUTH contains the list of authors associated with the cited article or contribution to a larger work. Formatted in a similar  way with main AUTHOR record. If successfull return [Record](../ast/types/enum.Record.html) variant which contains [JournalAuthors](../ast/types/struct.JournalAuthors.html)
+## Record Structure
 
 | COLUMNS  | DATA  TYPE   | FIELD        | DEFINITION                           |
 |----------|--------------|--------------|--------------------------------------|
 | 1 -  6   | Record name  | JRNL         |                                      |
-| 10       | LString(1)   | 1            |                                      |
 | 13 - 16  | LString(4)   | AUTH         | Appears on all continuation records. |
 | 17 - 18  | Continuation | continuation | Allows  a long list of authors.      |
 | 20 - 79  | List         | authorList   | List of the authors.                 |
@@ -123,7 +121,19 @@ make_line_folder!(
 );
 
 named!(
-    pub (crate) jrnl_title_record_parser<Record>,
+    #[doc=r#"Parses TITLE sub-record of JRNL record. TITLE contains  title of a journal article, chapter, or part of a book. Is a continuation record which may span multi-lines. If successfull return [Record](../ast/types/enum.Record.html) variant which contains [JournalTitle](../ast/types/struct.JournalTitle.html)
+
+## Record Structure
+
+| COLUMNS  | DATA  TYPE    | FIELD           |    DEFINITION                        |
+|----------|---------------|-----------------|--------------------------------------|
+| 1 -  6   | Record name   | JRNL            |                                      |
+| 13 - 16  | LString(4)    | TITL            | Appears on all continuation records. |
+| 17 - 18  | Continuation  | continuation    | Permits long titles.                 |
+| 20 - 79  | LString       | title           | Title of the article.                |
+
+"#],
+    pub jrnl_title_record_parser<Record>,
     map!(jrnl_title_line_folder, |jrnl_title: Vec<u8>| {
         Record::JournalTitle(JournalTitle{ title : String::from(str::from_utf8(jrnl_title.as_slice()).unwrap())})
     })
@@ -150,7 +160,19 @@ named!(
 make_line_folder!(jrnl_edit_line_folder, jrnl_edit_line_parser, JrnlEditLine);
 
 named!(
-    pub (crate) jrnl_edit_record_parser<Record>,
+    #[doc=r#"Parses EDIT sub-record of JRNL record.EDIT appears if editors are associated with a non-journal reference. Formatted in a similar  way with AUTHOR record. If successfull return [Record](../ast/types/enum.Record.html) variant which contains [JournalEditors](../ast/types/struct.JournalEditors.html)
+
+## Record Structure
+
+| COLUMNS  | DATA  TYPE   | FIELD        | DEFINITION                           |
+|----------|--------------|--------------|--------------------------------------|
+| 1 -  6   | Record name  | JRNL         |                                      |
+| 13 - 16  | LString(4)   | EDIT         | Appears on all continuation records. |
+| 17 - 18  | Continuation | continuation | Allows  a long list of authors.      |
+| 20 - 79  | List         | authorList   | List of the authors.                 |
+
+"#],
+    pub jrnl_edit_record_parser<Record>,
     map!(jrnl_edit_line_folder, |jrnl_edit: Vec<u8>| {
         if let Ok((_, res)) = author_list_parser(jrnl_edit.as_slice()) {
             Record::JournalEditors (JournalEditors{ name: res })
