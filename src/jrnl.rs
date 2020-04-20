@@ -1,3 +1,8 @@
+/*!
+Contains parsers related to [Jrnl](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#JRNL) records.
+
+The JRNL record contains the primary literature citation that describes the experiment which resulted in the deposited coordinate set..
+*/
 use super::{ast::types::*, primitive::*};
 use nom::{
     alt,
@@ -34,16 +39,18 @@ struct JrnlRefLine {
 }
 
 named!(
-    pub issn<SerialNumber>,
+    pub (crate) issn<SerialNumber>,
     map_res!(tag!("ISSN"), |_| -> Result<SerialNumber, ()> { Ok(SerialNumber::Issn) })
 );
 
 named!(
-    pub essn<SerialNumber>,
+    pub (crate) essn<SerialNumber>,
     map_res!(tag!("ESSN"), |_| -> Result<SerialNumber, ()> { Ok(SerialNumber::Essn) })
 );
 
-named!(pub serial_number_parser<SerialNumber>, alt!(issn | essn));
+named!(
+#[doc="parses serial number type as [SerialNumber](../ast/types/enum.SerialNumber.html)"],
+    pub serial_number_type_parser<SerialNumber>, alt!(issn | essn));
 
 named!(
     jrnl_author_line_parser<Continuation<JrnlAuthorLine>>,
@@ -70,7 +77,20 @@ make_line_folder!(
 );
 
 named!(
-    pub (crate) jrnl_author_record_parser<Record>,
+    #[doc=r#"Parses AUTH sub-record of JRNL record. AUTH contains the list of authors associated with the cited article or contribution to a larger work. Formatted in a smilar way with main AUTHOR record. If successfull return [Record](../ast/types/enum.Record.html) variant which contains [JournalAuthors](../ast/types/struct.JournalAuthors.html)
+
+*Record Structure:*
+
+| COLUMNS  | DATA  TYPE   | FIELD        | DEFINITION                           |
+|----------|--------------|--------------|--------------------------------------|
+| 1 -  6   | Record name  | JRNL         |                                      |
+| 10       | LString(1)   | 1            |                                      |
+| 13 - 16  | LString(4)   | AUTH         | Appears on all continuation records. |
+| 17 - 18  | Continuation | continuation | Allows  a long list of authors.      |
+| 20 - 79  | List         | authorList   | List of the authors.                 |
+
+"#],
+    pub jrnl_author_record_parser<Record>,
     map!(jrnl_author_line_folder, |jrnl_author: Vec<u8>| {
         author_list_parser(jrnl_author.as_slice())
             .map(|res| Record::JournalAuthors(JournalAuthors{ authors: res.1 }))
@@ -228,7 +248,7 @@ named!(
         jrnl >> space1
             >> tag!("REFN")
             >> space1
-            >> serial_type : opt!(serial_number_parser)
+            >> serial_type : opt!(serial_number_type_parser)
             >> space0
             >> serial : opt!(till_line_ending)
             >> line_ending
