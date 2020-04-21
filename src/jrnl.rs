@@ -77,7 +77,11 @@ make_line_folder!(
 );
 
 named!(
-    #[doc=r#"Parses AUTH sub-record of JRNL record. AUTH contains the list of authors associated with the cited article or contribution to a larger work. Formatted in a similar  way with main AUTHOR record. If successfull return [Record](../ast/types/enum.Record.html) variant which contains [JournalAuthors](../ast/types/struct.JournalAuthors.html)
+    #[doc=r#"Parses AUTH sub-record of JRNL record. AUTH contains the list of authors associated
+    with the cited article or contribution to a larger work. Formatted in a similar way with main
+    AUTHOR record. If successfull return [Record](../ast/types/enum.Record.html) variant which
+    contains [JournalAuthors](../ast/types/struct.JournalAuthors.html)
+
 ## Record Structure
 
 | COLUMNS  | DATA  TYPE   | FIELD        | DEFINITION                           |
@@ -121,7 +125,10 @@ make_line_folder!(
 );
 
 named!(
-    #[doc=r#"Parses TITLE sub-record of JRNL record. TITLE contains  title of a journal article, chapter, or part of a book. Is a continuation record which may span multi-lines. If successfull return [Record](../ast/types/enum.Record.html) variant which contains [JournalTitle](../ast/types/struct.JournalTitle.html)
+    #[doc=r#"Parses TITLE sub-record of JRNL record. TITLE contains  title of a journal article,
+    chapter, or part of a book. Is a continuation record which may span multi-lines. If successfull
+    return [Record](../ast/types/enum.Record.html) variant which contains
+    [JournalTitle](../ast/types/struct.JournalTitle.html)
 
 ## Record Structure
 
@@ -160,7 +167,10 @@ named!(
 make_line_folder!(jrnl_edit_line_folder, jrnl_edit_line_parser, JrnlEditLine);
 
 named!(
-    #[doc=r#"Parses EDIT sub-record of JRNL record.EDIT appears if editors are associated with a non-journal reference. Formatted in a similar  way with AUTHOR record. If successfull return [Record](../ast/types/enum.Record.html) variant which contains [JournalEditors](../ast/types/struct.JournalEditors.html)
+    #[doc=r#"Parses EDIT sub-record of JRNL record. EDIT appears if editors are associated
+    with a non-journal reference. Formatted in a similar  way with AUTHOR record.
+    If successfull return [Record](../ast/types/enum.Record.html) variant which
+    contains [JournalEditors](../ast/types/struct.JournalEditors.html)
 
 ## Record Structure
 
@@ -228,7 +238,32 @@ named!(
 );
 
 named!(
-    pub (crate) jrnl_ref_record_parser<Record>,
+    #[doc=r#"
+Parses REF sub-record of JRNL record. REF is a group of fields that contain either the
+publication status or the name of the publication (and any supplement and/or report information),
+volume, page, and year. If successfull return [Record](../ast/types/enum.Record.html)variant which
+contains [JournalReference](../ast/types/struct.JournalReference.html)
+
+## Record Structure
+
+| COLUMNS | DATA  TYPE     | FIELD          | DEFINITION                                  |
+|---------|----------------|----------------|---------------------------------------------|
+| 1 -  6  | Record name    | JRNL           |                                             |
+| 13 - 16 | LString(3)     | REF            |                                             |
+| 17 - 18 | Continuation   | continuation   | Allows long publication names.              |
+| 20 - 47 | LString        | pubName        | Name  of the publication including section  |
+|         |                |                | or series designation. This is the only     |
+|         |                |                | field of this sub-record which may be       |
+|         |                |                | continued on  successive sub-records.       |
+| 50 - 51 | LString(2)     | V.             | Appears in the first sub-record only.       |
+|         |                |                | and  only if column 55 is non-blank.        |
+| 52 - 55 | String         | volume         | Right-justified blank-filled volume         |
+|         |                |                | sub-record only.                            |
+| 57 - 61 | String         | page           | First page of the article; appears in       |
+|         |                |                | the first sub-record only.                  |
+| 63 - 66 | Integer        | year           | Year of publication; first sub-record only. |
+    "#],
+    pub jrnl_ref_record_parser<Record>,
     map!(jrnl_ref_line_folder, |jrnl_ref : JrnlRefLine| { Record::JournalReference(JournalReference{
         publication_name : jrnl_ref.publication_name,
         volume : jrnl_ref.volume,
@@ -258,14 +293,51 @@ named!(
 make_line_folder!(jrnl_publ_line_folder, jrnl_publ_line_parser, JrnlPublLine);
 
 named!(
-    pub (crate) jrnl_publ_record_parser<Record>,
+    #[doc=r#"
+Parses PUBL sub-record of JRNL record. PUBL contains the name of the publisher and
+place of publication if the reference is to a book or other non-journal publication.
+If successfull returns [Record](../ast/types/enum.Record.html) variant that contains
+[JournalPublication](../ast/types/struct.JournalPublication.html)
+
+## Record Structure
+
+
+
+| COLUMNS  | DATA  TYPE     | FIELD          | DEFINITION                             |
+|----------|----------------|----------------|----------------------------------------|
+| 1 -  6   | Record name    | "JRNL          |                                        |
+| 13 - 16  | LString(4)     | "PUBL"         |                                        |
+| 17 - 18  | Continuation   | continuation   | Allows long publisher and place names. |
+| 20 - 70  | LString        | pub            | City  of publication and name of the   |
+|          |                |                | publisher/institution.                 |
+
+
+    "#],
+    pub  jrnl_publ_record_parser<Record>,
     map!(jrnl_publ_line_folder, |jrnl_publ: Vec<u8>| {
         Record::JournalPublication(JournalPublication{ publication : String::from(str::from_utf8(jrnl_publ.as_slice()).unwrap())})
     })
 );
 
 named!(
-    pub (crate) jrnl_refn_record_parser<Record>,
+    #[doc=r#"
+Parses REFN sub-record of JRNL record. REFN is a group of fields that contain encoded
+references to the citation. No continuation lines are possible. Each piece of coded
+information has a designated field.If successfull returns [Record](../ast/types/enum.Record.html)
+variant that contains [JournalCitation](../ast/types/struct.JournalCitation.html)
+
+## Record Structure
+
+| COLUMNS   | DATA TYPE    | FIELD    | DEFINITION                                 |
+|-----------|--------------|----------|--------------------------------------------|
+| 1 -  6    | Record name  | JRNL     |                                            |
+| 13 - 16   | LString(4)   | REFN     |                                            |
+| 36 - 39   | LString(4)   | ISSN or  | International Standard Serial Number or    |
+|           |              | ESSN     | Electronic Standard Serial Number.         |
+| 41 - 65   | LString      | issn     | ISSN number (final digit may be a          |
+|           |              |          | letter and may contain one or more dashes).|
+    "#],
+    pub jrnl_refn_record_parser<Record>,
     do_parse!(
         jrnl >> space1
             >> tag!("REFN")
@@ -285,7 +357,23 @@ named!(
 );
 
 named!(
-    pub (crate) jrnl_pmid_record_parser<Record>,
+    #[doc=r#"
+Parses PMID sub-record of JRNL record. MID lists the PubMed unique
+accession number of the publication related to the entry. If successfull returns
+[Record](../ast/types/enum.Record.html) variant containing [JournalPubMedId](../ast/types/struct.JournalPubMedId.html)
+
+## Record Structure
+
+| COLUMNS  | DATA  TYPE   | FIELD        | DEFINITION                                  |
+|----------|--------------|--------------|---------------------------------------------|
+| 1 -  6   | Record  name | JRNL         |                                             |
+| 13 - 16  | LString(4)   | PMID         |                                             |
+| 20 – 79  | Integer      | continuation | unique PubMed identifier number assigned to |
+|          |              |              | the publication  describing the experiment. |
+|          |              |              | Allows  for a long PubMed ID number.        |
+
+    "#],
+    pub  jrnl_pmid_record_parser<Record>,
     do_parse!(
         jrnl >> space1
             >> tag!("PMID")
@@ -302,7 +390,7 @@ named!(
 );
 
 named!(
-    pub (crate) jrnl_doi_record_parser<Record>,
+    pub jrnl_doi_record_parser<Record>,
     do_parse!(
         jrnl >> space1
             >> tag!("DOI")
