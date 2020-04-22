@@ -1,3 +1,8 @@
+/*!
+Contains parsers related to [Revdat](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#REVDAT) records.
+
+REVDAT records contain a history of the modifications made to an entry since its release.
+*/
 use super::{ast::types::*, primitive::*};
 use nom::{
     character::complete::{line_ending, space0, space1},
@@ -53,6 +58,31 @@ named!(
 );
 
 named!(
+    #[doc=r#"
+Parses Revdat record which is a multiline continuation record.
+If successfull returns [Record](../ast/types/enum.Record.html) variant containing [Revdats](../ast/types/struct.Revdats.html) instance.
+
+## Record Structure
+
+| COLUMNS  | DATA  TYPE     | FIELD         | DEFINITION                                    |
+|----------|----------------|---------------|-----------------------------------------------|
+| 1 -  6   | Record name    | REVDAT        |                                               |
+| 8 - 10   | Integer        | modNum        | Modification number.                          |
+| 11 - 12  | Continuation   | continuation  | Allows concatenation of multiple records.     |
+| 14 - 22  | Date           | modDate       | Date of modification (or release  for         |
+|          |                |               | new entries)  in DD-MMM-YY format. This is    |
+|          |                |               | not repeated on continued lines.              |
+| 24 - 27  | IDCode         | modId         | ID code of this entry. This is not repeated on|
+|          |                |               | continuation lines.                           |
+| 32       | Integer        | modType       | An integer identifying the type of            |
+|          |                |               | modification. For all  revisions, the         |
+|          |                |               | modification type is listed as 1              |
+| 40 - 45  | LString(6)     | record        | Modification detail.                          |
+| 47 - 52  | LString(6)     | record        | Modification detail.                          |
+| 54 - 59  | LString(6)     | record        | Modification detail.                          |
+| 61 - 66  | LString(6)     | record        | Modification detail.                          |
+
+    "#],
     pub revdat_record_parser<Record>,
     map! (map!(revdat_line_folder, |revdat: Vec<RevdatLine>| {
         revdat

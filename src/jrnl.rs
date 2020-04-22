@@ -390,6 +390,22 @@ accession number of the publication related to the entry. If successfull returns
 );
 
 named!(
+    #[doc=r#"
+Parses DOI sub-record of JRNL record. DOI is the Digital Object Identifier
+for the related electronic publication (“e-pub”), if applicable. If successfull
+returns [Record](../ast/types/enum.Record.html) variant containing
+[JournalDoi](../ast/types/struct.JournalDoi.html)
+
+## Record Structure
+
+| COLUMNS  | DATA  TYPE   | FIELD            | DEFINITION                             |
+|----------|--------------|------------------|----------------------------------------|
+| 1 -  6   | Record  name | JRNL             |                                        |
+| 13 - 16  | LString(4)   | DOI              |                                        |
+| 20 – 79  | LString      | continuation     | Unique DOI assigned to the publication |
+|          |              |                  | describing the experiment.             |
+|          |              |                  | Allows for a long DOI string.          |
+    "#],
     pub jrnl_doi_record_parser<Record>,
     do_parse!(
         jrnl >> space1
