@@ -99,16 +99,61 @@ make_tagger!(titl);
 make_tagger!(edit);
 
 named!(
+    #[doc=r#"
+Parses two digit numbers.
+# Example
+```
+# use rust_protein::primitive::twodigit_integer;
+let a = " 9";
+let b = "9 ";
+let c = "99";
+let empty_remaining  : [u8;0] = [];
+assert_eq!(Ok((&empty_remaining[..],9)), twodigit_integer(a.as_bytes()));
+assert_eq!(Ok((&empty_remaining[..],9)), twodigit_integer(b.as_bytes()));
+assert_eq!(Ok((&empty_remaining[..],99)),twodigit_integer(c.as_bytes()));
+```
+    "#],
     pub twodigit_integer<u32>,
     map_res!(map_res!(take!(2), str::from_utf8), |s : &str| str::FromStr::from_str(s.trim()))
 );
 
 named!(
+    #[doc=r#"
+Parses three digit numbers.
+# Example
+```
+# use rust_protein::primitive::threedigit_integer;
+let a = "  9";
+let b = "9  ";
+let c = "99 ";
+let d = "123";
+let empty_remaining  : [u8;0] = [];
+assert_eq!(Ok((&empty_remaining[..],9)), threedigit_integer(a.as_bytes()));
+assert_eq!(Ok((&empty_remaining[..],9)), threedigit_integer(b.as_bytes()));
+assert_eq!(Ok((&empty_remaining[..],99)),threedigit_integer(c.as_bytes()));
+assert_eq!(Ok((&empty_remaining[..],123)),threedigit_integer(d.as_bytes()));
+```
+    "#],
     pub threedigit_integer<u32>,
     map_res!(map_res!(take!(3), str::from_utf8), |s : &str| str::FromStr::from_str(s.trim()))
 );
 
 named!(
+    #[doc=r#"
+Parses arbitrary digit positive integers. Needs at least one digit.
+# Example
+```
+# use rust_protein::primitive::integer;
+let a = "975";
+let b = "0";
+let c = "1000";
+
+let empty_remaining  : [u8;0] = [];
+assert_eq!(Ok((&empty_remaining[..],975)), integer(a.as_bytes()));
+assert_eq!(Ok((&empty_remaining[..],0)), integer(b.as_bytes()));
+assert_eq!(Ok((&empty_remaining[..],1000)), integer(c.as_bytes()));
+```
+    "#],
     pub integer<u32>,
     map_res!(map_res!(digit1, str::from_utf8), str::FromStr::from_str)
 );
