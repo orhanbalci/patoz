@@ -1,4 +1,4 @@
-# rust-protein
+# Patoz
 Protein Data Bank (pdb) file parser 
 
 ![Build Status](https://github.com/orhanbalci/rust-protein/workflows/CI/badge.svg)

@@ -103,7 +103,7 @@ named!(
 Parses two digit numbers.
 # Example
 ```
-# use rust_protein::primitive::twodigit_integer;
+# use patoz::primitive::twodigit_integer;
 let a = " 9";
 let b = "9 ";
 let c = "99";
@@ -122,7 +122,7 @@ named!(
 Parses three digit numbers.
 # Example
 ```
-# use rust_protein::primitive::threedigit_integer;
+# use patoz::primitive::threedigit_integer;
 let a = "  9";
 let b = "9  ";
 let c = "99 ";
@@ -143,7 +143,7 @@ named!(
 Parses arbitrary digit positive integers. Needs at least one digit.
 # Example
 ```
-# use rust_protein::primitive::integer;
+# use patoz::primitive::integer;
 let a = "975";
 let b = "0";
 let c = "1000";

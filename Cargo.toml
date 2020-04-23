@@ -1,5 +1,5 @@
 [package]
-name = "rust-protein"
+name = "patoz"
 version = "0.1.0"
 authors = ["orhanbalci@gmail.com <orhanbalci@gmail.com>"]
 edition = "2018"
