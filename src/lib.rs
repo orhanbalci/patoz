@@ -20,7 +20,4 @@ pub mod split;
 pub mod sprsde;
 pub mod title;
 
-pub use ast::{
-    pdb_file::*,
-    types::{Author, Authors, ExperimentalTechnique},
-};
+pub use ast::{pdb_file::*, types::*};

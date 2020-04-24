@@ -245,22 +245,23 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
         let expected = read_file(&expected_file_path);
         let expected_val: Value = serde_json::from_str(&expected).unwrap();
         let recs = super::pdb_records_parser(contents.as_bytes()).unwrap().1;
+        let mut pdb_parsed = recs.to_pdb_file();
         //println!("{:?}", recs);
         assert_eq!(
             expected_val["header.classification"],
-            recs.to_pdb_file().header().header().unwrap().classification
+            pdb_parsed.header().header().unwrap().classification
         );
         assert_eq!(
             expected_val["header.id_code"],
-            recs.to_pdb_file().header().header().unwrap().id_code
+            pdb_parsed.header().header().unwrap().id_code
         );
         assert_eq!(
             expected_val["header.keywords"][0],
-            recs.to_pdb_file().header().keywds().unwrap().keywords[0]
+            pdb_parsed.header().keywds().unwrap().keywords[0]
         );
         assert_eq!(
             expected_val["header.title"],
-            recs.to_pdb_file().header().title().unwrap().title
+            pdb_parsed.header().title().unwrap().title
         );
         assert_eq!(
             expected_val["header.experimental"][0]
@@ -268,7 +269,7 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
                 .unwrap()
                 .parse::<ExperimentalTechnique>()
                 .unwrap(),
-            recs.to_pdb_file().header().expdta().unwrap().techniques[0]
+            pdb_parsed.header().expdta().unwrap().techniques[0]
         );
 
         assert_eq!(
@@ -278,7 +279,7 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
                     .unwrap()
                     .to_owned()
             ),
-            recs.to_pdb_file().header().authors().unwrap().authors[0]
+            pdb_parsed.header().authors().unwrap().authors[0]
         );
 
         assert_eq!(
@@ -288,22 +289,17 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
                     .unwrap()
                     .to_owned()
             ),
-            recs.to_pdb_file()
-                .header()
-                .journal()
-                .authors()
-                .unwrap()
-                .authors[0]
+            pdb_parsed.header().journal().authors().unwrap().authors[0]
         );
 
         assert_eq!(
             expected_val["header.journal.title"],
-            recs.to_pdb_file().header().journal().title().unwrap().title
+            pdb_parsed.header().journal().title().unwrap().title
         );
 
         assert_eq!(
             expected_val["header.journal.reference.publication_name"],
-            recs.to_pdb_file()
+            pdb_parsed
                 .header()
                 .journal()
                 .reference()
@@ -313,7 +309,7 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
 
         assert_eq!(
             expected_val["header.journal.reference.volume"],
-            recs.to_pdb_file()
+            pdb_parsed
                 .header()
                 .journal()
                 .reference()
@@ -324,7 +320,7 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
 
         assert_eq!(
             expected_val["header.journal.reference.page"],
-            recs.to_pdb_file()
+            pdb_parsed
                 .header()
                 .journal()
                 .reference()

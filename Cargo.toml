@@ -1,8 +1,13 @@
 [package]
 name = "patoz"
 version = "0.1.0"
-authors = ["orhanbalci@gmail.com <orhanbalci@gmail.com>"]
 edition = "2018"
+authors = ["Orhan Balci <orhanbalci@gmail.com>"]
+description="Protein Data Bank (pdb) File Parser"
+homepage="https://github.com/orhanbalci"
+repository="https://github.com/orhanbalci/patoz.git"
+keywords=["parser","nom", "pdb", "bioinformatics", "science"]
+license="MIT"
 
 [dependencies]
 nom = "5.0.1"

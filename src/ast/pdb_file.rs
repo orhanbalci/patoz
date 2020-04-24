@@ -4,7 +4,7 @@ use std::iter::Iterator;
 macro_rules! impl_record_filter {
     ($fn_name : ident -> $match_type: ident -> $ret_type :ident ) => {
         pub fn $fn_name(&mut self) -> Option<$ret_type> {
-             self.records
+             self.records.iter()
             .find(|s| match s {
                 Record::$match_type(_) => true,
                 _ => false,
@@ -16,6 +16,7 @@ macro_rules! impl_record_filter {
         }
     };
 }
+
 pub struct PdbFile<I> {
     records: I,
 }
@@ -25,26 +26,17 @@ pub trait ToPdbFile {
     fn to_pdb_file(self) -> PdbFile<Self::I>;
 }
 
-impl<'a> ToPdbFile for &'a Vec<Record> {
-    type I = std::slice::Iter<'a, Record>;
+impl ToPdbFile for Vec<Record> {
+    type I = Vec<Record>;
     fn to_pdb_file(self) -> PdbFile<Self::I> {
-        PdbFile {
-            records: self.iter(),
-        }
+        PdbFile { records: self }
     }
 }
 
-impl<'a, I> PdbFile<I>
-where
-    I: Iterator<Item = &'a Record>,
-{
-    pub fn new(records: I) -> Self {
-        PdbFile { records }
-    }
-
-    pub fn header(self) -> PdbHeader<I> {
+impl PdbFile<Vec<Record>> {
+    pub fn header<'a>(&'a mut self) -> PdbHeader<&'a mut Vec<Record>> {
         PdbHeader {
-            records: self.records,
+            records: &mut self.records,
         }
     }
 }
@@ -53,10 +45,7 @@ pub struct PdbHeader<I> {
     records: I,
 }
 
-impl<'a, I> PdbHeader<I>
-where
-    I: Iterator<Item = &'a Record>,
-{
+impl<'a> PdbHeader<&'a mut Vec<Record>> {
     impl_record_filter!(nummdl -> Nummdl -> Nummdl);
     impl_record_filter!(obslte -> Obslte -> Obslte);
     impl_record_filter!(caveat -> Caveat -> Caveat);
@@ -71,21 +60,17 @@ where
     impl_record_filter!(keywds -> Keywds -> Keywds);
     impl_record_filter!(expdta ->  Experimental -> Experimental);
 
-    pub fn journal(self) -> PdbJournal<I> {
+    pub fn journal(&'a mut self) -> PdbJournal<&'a mut Vec<Record>> {
         PdbJournal {
             records: self.records,
         }
     }
 }
-
 pub struct PdbJournal<I> {
     records: I,
 }
 
-impl<'a, I> PdbJournal<I>
-where
-    I: Iterator<Item = &'a Record>,
-{
+impl<'a> PdbJournal<&'a mut Vec<Record>> {
     impl_record_filter!(authors -> JournalAuthors -> JournalAuthors);
     impl_record_filter!(title -> JournalTitle -> JournalTitle);
     impl_record_filter!(editors -> JournalEditors -> JournalEditors);
@@ -106,8 +91,9 @@ mod test {
             }),
             Record::Nummdl(Nummdl { num: 1 }),
         ];
-        let tit = a.to_pdb_file().header().title();
+        let mut parsed_pdb = a.to_pdb_file();
+        let tit = parsed_pdb.header().title();
         assert_eq!(tit.unwrap().title, "a".to_owned());
-        assert_eq!(a.to_pdb_file().header().nummdl().unwrap().num, 1);
+        assert_eq!(parsed_pdb.header().nummdl().unwrap().num, 1);
     }
 }

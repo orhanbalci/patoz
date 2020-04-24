@@ -6,7 +6,8 @@ Protein Data Bank (pdb) file parser
 
 ⚠️ WIP This is a work in progress. Expect breaking changes frequently. Right now use at your own risk
 
-
+# Usage
+# Examples
 # Status
 ## Record Parser Status
 ### Title Section
