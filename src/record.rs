@@ -1,5 +1,5 @@
-use super::ast::types::*;
-use nom::{alt, complete, fold_many0, named};
+use super::ast::{pdb_file::*, types::*};
+use nom::{alt, complete, fold_many0, map, named};
 
 use super::{
     author::author_record_parser,
@@ -52,17 +52,19 @@ named!(
 );
 
 named!(
-    pdb_records_parser<Vec<Record>>,
-    fold_many0!(pdb_record_parser, Vec::new(), |mut acc, r: Record| {
-        acc.push(r);
-        acc
-    })
+    pdb_records_parser<PdbFile<Vec<Record>>>,
+    map!(
+        fold_many0!(pdb_record_parser, Vec::new(), |mut acc, r: Record| {
+            acc.push(r);
+            acc
+        }),
+        |vr: Vec<Record>| vr.to_pdb_file()
+    )
 );
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::ast::pdb_file::*;
     use std::{
         fs::File,
         io::{BufReader, Read},
@@ -159,21 +161,21 @@ mod test {
 
     #[test]
     fn pdb_records_parser() {
-        if let Ok((_, res)) = super::pdb_records_parser(
+        if let Ok((_, mut res)) = super::pdb_records_parser(
             r#"HEADER    HYDROLASE                               20-APR-99   1CJY   
 TITLE     HUMAN CYTOSOLIC PHOSPHOLIPASE A2
 "#
             .as_bytes(),
         ) {
-            if let Record::Header(Header {
+            if let Some(Header {
                 classification: class,
                 ..
-            }) = &res[0]
+            }) = &mut res.header().header()
             {
                 assert_eq!(class, "HYDROLASE");
             }
 
-            if let Record::Title(tit) = &res[1] {
+            if let Some(tit) = &mut res.header().title() {
                 assert_eq!(tit.title, "HUMAN CYTOSOLIC PHOSPHOLIPASE A2");
             }
         } else {
@@ -183,34 +185,32 @@ TITLE     HUMAN CYTOSOLIC PHOSPHOLIPASE A2
 
     #[test]
     fn ejg_header() {
-        if let Ok((_, res)) = super::pdb_records_parser(
-            r#"HEADER    PLANT PROTEIN                           02-MAR-00   1EJG               
-TITLE     CRAMBIN AT ULTRAHIGH RESOLUTION VALENCE ELECTRON DENSITY        
-COMPND    MOL_ID: 1;                                                            
-COMPND   2 MOLECULE: CRAMBIN (PRO22,SER22/LEU25,ILE25);                         
-COMPND   3 CHAIN: A;                                                            
-COMPND   4 FRAGMENT: CRAMBIN                                                    
-SOURCE    MOL_ID: 1;                                                            
-SOURCE   2 ORGANISM_SCIENTIFIC: CRAMBE HISPANICA SUBSP ABYSSINICA;                                             
-SOURCE   3 STRAIN: SUBSP ABYSSINICA                                            
-KEYWDS    VALENCE ELECTRON DENSITY, MULTI-SUBSTATE, MULTIPOLE REFINEMENT, PLANT 
-KEYWDS   2 PROTEIN                                                                                                                 
-AUTHOR    C.JELSCH,M.M.TEETER,V.LAMZIN,V.PICHON-LESME,B.BLESSING,C.LECOMTE      
-JRNL        AUTH   C.JELSCH,M.M.TEETER,V.LAMZIN,V.PICHON-PESME,R.H.BLESSING,    
-JRNL        AUTH 2 C.LECOMTE                                                    
-JRNL        TITL   ACCURATE PROTEIN CRYSTALLOGRAPHY AT ULTRA-HIGH RESOLUTION:   
-JRNL        TITL 2 VALENCE ELECTRON DISTRIBUTION IN CRAMBIN.                    
-JRNL        REF    PROC.NATL.ACAD.SCI.USA        V.  97  3171 2000              
-JRNL        REFN                   ISSN 0027-8424                               
-JRNL        PMID   10737790                                                     
-JRNL        DOI    10.1073/PNAS.97.7.3171 
+        if let Ok((_, mut res)) = super::pdb_records_parser(
+            r#"HEADER    PLANT PROTEIN                           02-MAR-00   1EJG
+TITLE     CRAMBIN AT ULTRAHIGH RESOLUTION VALENCE ELECTRON DENSITY
+COMPND    MOL_ID: 1;
+COMPND   2 MOLECULE: CRAMBIN (PRO22,SER22/LEU25,ILE25);
+COMPND   3 CHAIN: A;
+COMPND   4 FRAGMENT: CRAMBIN
+SOURCE    MOL_ID: 1;
+SOURCE   2 ORGANISM_SCIENTIFIC: CRAMBE HISPANICA SUBSP ABYSSINICA;
+SOURCE   3 STRAIN: SUBSP ABYSSINICA
+KEYWDS    VALENCE ELECTRON DENSITY, MULTI-SUBSTATE, MULTIPOLE REFINEMENT, PLANT
+KEYWDS   2 PROTEIN
+AUTHOR    C.JELSCH,M.M.TEETER,V.LAMZIN,V.PICHON-LESME,B.BLESSING,C.LECOMTE
+JRNL        AUTH   C.JELSCH,M.M.TEETER,V.LAMZIN,V.PICHON-PESME,R.H.BLESSING,
+JRNL        AUTH 2 C.LECOMTE
+JRNL        TITL   ACCURATE PROTEIN CRYSTALLOGRAPHY AT ULTRA-HIGH RESOLUTION:
+JRNL        TITL 2 VALENCE ELECTRON DISTRIBUTION IN CRAMBIN.
+JRNL        REF    PROC.NATL.ACAD.SCI.USA        V.  97  3171 2000
+JRNL        REFN                   ISSN 0027-8424
+JRNL        PMID   10737790
+JRNL        DOI    10.1073/PNAS.97.7.3171
 "#
             .as_bytes(),
         ) {
-            println!("Length {}", res.len());
-            println!("{:?}", res);
-            use crate::ast::pdb_file::*;
-            let pubmedid = res.to_pdb_file().header().journal().pubmedid().unwrap();
+            let pubmedid = &mut res.header().journal().pubmedid().unwrap();
+
             assert_eq!(pubmedid.id, 10737790);
         } else {
             assert!(false)
@@ -244,9 +244,8 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
         let contents = read_file(&test_file_path);
         let expected = read_file(&expected_file_path);
         let expected_val: Value = serde_json::from_str(&expected).unwrap();
-        let recs = super::pdb_records_parser(contents.as_bytes()).unwrap().1;
-        let mut pdb_parsed = recs.to_pdb_file();
-        //println!("{:?}", recs);
+        let mut pdb_parsed = super::pdb_records_parser(contents.as_bytes()).unwrap().1;
+
         assert_eq!(
             expected_val["header.classification"],
             pdb_parsed.header().header().unwrap().classification
