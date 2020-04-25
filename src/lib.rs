@@ -1,3 +1,7 @@
+/*!
+Patoz is a strict, type safe PDB file parser. Converts text PDB file into a
+traversable record struct.
+ */
 #![recursion_limit = "128"]
 
 mod ast;
@@ -12,7 +16,7 @@ pub mod mdltyp;
 pub mod nummdl;
 pub mod obslte;
 pub mod primitive;
-pub mod record;
+mod record;
 pub mod revdat;
 pub mod seqres;
 pub mod source;
@@ -21,3 +25,4 @@ pub mod sprsde;
 pub mod title;
 
 pub use ast::{pdb_file::*, types::*};
+pub use record::parse;

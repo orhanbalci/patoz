@@ -44,6 +44,7 @@ impl FromStr for ExperimentalTechnique {
     }
 }
 
+/// Represents keys of CMPND and SOURCE records
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {
     MoleculeId(u32),
@@ -89,6 +90,7 @@ pub enum Token {
     ExpressionSystemGene(String),
 }
 
+/// Represents a modification made to this pdb entry.
 #[derive(Debug, Clone)]
 pub struct Revdat {
     pub modification_number: u32,
@@ -98,19 +100,27 @@ pub struct Revdat {
     pub modification_detail: Vec<String>,
 }
 
+/// modification type of REVDAT record
 #[derive(Debug, Clone)]
 pub enum ModificationType {
+    /// initial release of the entry. Indicated as 0
+    /// in a REVDAT record
     InitialRelease,
+    /// modifications other than initial release
+    /// Indicated with 1 in a REVDAT record.
     OtherModification,
+    /// modification type other than 0 or 1
     UnknownModification,
 }
 
+/// Serial Number Type of a JRNL REFN record
 #[derive(Debug, Clone, PartialEq)]
 pub enum SerialNumber {
     Issn,
     Essn,
 }
 
+/// contains HEADER recor information
 #[derive(Debug, Clone)]
 pub struct Header {
     pub classification: String,
@@ -128,11 +138,14 @@ impl std::default::Default for Header {
     }
 }
 
+/// result of a TITLE record
 #[derive(Debug, Clone, Default)]
 pub struct Title {
     pub title: String,
 }
 
+/// contains pdb entry ids which removed
+/// this one from PDB
 #[derive(Debug, Clone)]
 pub struct Obslte {
     pub replacement_date: NaiveDate,
@@ -147,17 +160,23 @@ impl std::default::Default for Obslte {
         }
     }
 }
+
+/// if this entry is a part of bigger
+/// structure, this struct holds ids of other
+/// parts of the bigger structure
 #[derive(Debug, Clone, Default)]
 pub struct Split {
     pub id_codes: Vec<String>,
 }
 
+/// fallacies of this entry
 #[derive(Debug, Clone, Default)]
 pub struct Caveat {
     pub id_code: String,
     pub comment: String,
 }
 
+/// pdb entry ids made obsolete by this entry
 #[derive(Debug, Clone)]
 pub struct Sprsde {
     pub sprsde_date: NaiveDate,
@@ -181,50 +200,61 @@ pub struct Seqres {
     pub residues: Vec<String>,
 }
 
+/// model type of the entry
 #[derive(Debug, Clone, Default)]
 pub struct Mdltyp {
     pub structural_annotation: Vec<String>,
 }
 
+/// collection of revisions
 #[derive(Debug, Clone, Default)]
 pub struct Revdats {
     pub revdat: Vec<Revdat>,
 }
 
+/// collection of tokens in a CMPND record
 #[derive(Debug, Clone, Default)]
 pub struct Cmpnd {
     pub tokens: Vec<Token>,
 }
 
+/// collection of tokens in a SOURCE record
 #[derive(Debug, Clone, Default)]
 pub struct Source {
     pub tokens: Vec<Token>,
 }
+
+/// keywords related to the entry
 #[derive(Debug, Clone, Default)]
 pub struct Keywds {
     pub keywords: Vec<String>,
 }
 
+/// author collection
 #[derive(Debug, Clone, Default)]
 pub struct Authors {
     pub authors: Vec<Author>,
 }
 
+/// journal author collection
 #[derive(Debug, Clone, Default)]
 pub struct JournalAuthors {
     pub authors: Vec<Author>,
 }
 
+/// journal title
 #[derive(Debug, Clone, Default)]
 pub struct JournalTitle {
     pub title: String,
 }
 
+/// journal editor collection
 #[derive(Debug, Clone, Default)]
 pub struct JournalEditors {
     pub name: Vec<Author>,
 }
 
+/// journal reference
 #[derive(Debug, Clone, Default)]
 pub struct JournalReference {
     pub publication_name: String,
@@ -233,36 +263,46 @@ pub struct JournalReference {
     pub year: Option<u32>,
 }
 
+/// journal Citation fields
 #[derive(Debug, Clone, Default)]
 pub struct JournalCitation {
     pub serial_type: Option<SerialNumber>,
     pub serial: Option<String>,
 }
 
+/// journal publication fields
 #[derive(Debug, Clone, Default)]
 pub struct JournalPublication {
     pub publication: String,
 }
 
+/// journal PubMed id
 #[derive(Debug, Clone, Default)]
 pub struct JournalPubMedId {
     pub id: u32,
 }
 
+/// digital object identifier of related e-pub
 #[derive(Debug, Clone, Default)]
 pub struct JournalDoi {
     pub id: String,
 }
 
+/// experimanetal techniques used for exploring
+/// structure of this entry
 #[derive(Debug, Clone, Default)]
 pub struct Experimental {
     pub techniques: Vec<ExperimentalTechnique>,
 }
 
+/// number of models in this file
 #[derive(Debug, Clone, Default)]
 pub struct Nummdl {
     pub num: u32,
 }
+
+/// main enum unifying all record parser results.
+/// all sub parsers return a cariant of this
 #[derive(Debug, Clone)]
 pub enum Record {
     Header(Header),

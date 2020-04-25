@@ -1,3 +1,5 @@
+/*! contains lowest level parsers that are used by multiple record parsers
+*/
 use chrono::{
     format::{strftime::StrftimeItems, Parsed},
     NaiveDate,

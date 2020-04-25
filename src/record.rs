@@ -1,5 +1,5 @@
 use super::ast::{pdb_file::*, types::*};
-use nom::{alt, complete, fold_many0, map, named};
+use nom::{alt, complete, fold_many0, map, named, IResult};
 
 use super::{
     author::author_record_parser,
@@ -24,7 +24,7 @@ use super::{
 };
 
 named!(
-    pub pdb_record_parser<Record>,
+    pdb_record_parser<Record>,
     alt!(
         complete!(header_parser)
             | complete!(obslte_record_parser)
@@ -61,6 +61,11 @@ named!(
         |vr: Vec<Record>| vr.to_pdb_file()
     )
 );
+
+/// main parse function
+pub fn parse<T>(s: &str) -> IResult<&[u8], PdbFile<Vec<Record>>> {
+    pdb_records_parser(s.as_bytes())
+}
 
 #[cfg(test)]
 mod test {
