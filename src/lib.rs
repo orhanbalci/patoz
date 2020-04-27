@@ -4,6 +4,8 @@ traversable record struct.
  */
 #![recursion_limit = "128"]
 
+extern crate nom;
+
 mod ast;
 pub mod author;
 pub mod caveat;
