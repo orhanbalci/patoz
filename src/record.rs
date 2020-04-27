@@ -63,7 +63,7 @@ named!(
 );
 
 /// main parse function
-pub fn parse<T>(s: &str) -> IResult<&[u8], PdbFile<Vec<Record>>> {
+pub fn parse(s: &str) -> IResult<&[u8], PdbFile<Vec<Record>>> {
     pdb_records_parser(s.as_bytes())
 }
 

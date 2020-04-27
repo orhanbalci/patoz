@@ -25,4 +25,5 @@ pub mod sprsde;
 pub mod title;
 
 pub use ast::{pdb_file::*, types::*};
+pub use nom::IResult;
 pub use record::parse;
