@@ -6,8 +6,48 @@ Protein Data Bank (pdb) file parser
 
 ⚠️ WIP This is a work in progress. Expect breaking changes frequently. Right now use at your own risk
 
-# Usage
+# Cargo.toml
+```
+patoz = {git = "https//github.com/orhanbalci/patoz"}
+```
 # Examples
+```rust
+
+use std::{
+    fs::File,
+    io::{BufReader, Read},
+    path::PathBuf,
+};
+
+use patoz::parse;
+
+fn main() {
+    let mut current_file_path = PathBuf::from(file!());
+    current_file_path.pop();
+    current_file_path.pop();
+    current_file_path.push("1BYI.pdb");
+    let content = read_file(&current_file_path);
+    if let Ok((_, mut res)) = parse(&content) {
+        println!(
+            "Classification : {:?}",
+            res.header().header().unwrap().classification
+        );
+        println!("Id Code : {:?}", res.header().header().unwrap().id_code);
+        println!("Keywords : {:?}", res.header().keywds().unwrap().keywords);
+    }
+}
+
+fn read_file(path: &PathBuf) -> String {
+    let file = File::open(path).unwrap();
+    let mut buf_reader = BufReader::new(file);
+    let mut contents = String::new();
+    if let Ok(_read_res) = buf_reader.read_to_string(&mut contents) {
+        contents
+    } else {
+        "".to_owned()
+    }
+}
+```
 # Status
 ## Record Parser Status
 ### Title Section
