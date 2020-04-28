@@ -1,16 +1,16 @@
 # Patoz
-Protein Data Bank (pdb) file parser 
+Protein Data Bank (pdb) file parser
 
 ![Build Status](https://github.com/orhanbalci/rust-protein/workflows/CI/badge.svg)
 ![License](https://img.shields.io/github/license/orhanbalci/rust-protein.svg)
 
 ⚠️ WIP This is a work in progress. Expect breaking changes frequently. Right now use at your own risk
 
-# Cargo.toml
+# 📦 Cargo.toml
 ```
 patoz = {git = "https//github.com/orhanbalci/patoz"}
 ```
-# Examples
+# 🔧 Examples
 ```rust
 
 use std::{
@@ -48,7 +48,7 @@ fn read_file(path: &PathBuf) -> String {
     }
 }
 ```
-# Status
+# 📊  Status
 ## Record Parser Status
 ### Title Section
 - [x] [Header](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#HEADER)
