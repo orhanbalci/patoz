@@ -10,6 +10,7 @@ mod ast;
 pub mod author;
 pub mod caveat;
 pub mod compnd;
+pub mod dbref;
 pub mod expdta;
 pub mod header;
 pub mod jrnl;

@@ -76,7 +76,7 @@ fn read_file(path: &PathBuf) -> String {
     - [x] Doi
 - [ ] [Remarks](http://www.wwpdb.org/documentation/file-format-content/format33/remarks.html)
 ### Primary Structure Section
-- [ ] [Dbref](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#DBREF)
+- [x] [Dbref](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#DBREF)
 - [ ] [Dbref1](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#DBREF1)
 - [ ] [Seqadv](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#SEQADV)
 - [x] [Seqres](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#SEQRES)

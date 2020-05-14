@@ -99,6 +99,7 @@ make_tagger!(auth);
 make_tagger!(end);
 make_tagger!(titl);
 make_tagger!(edit);
+make_tagger!(dbref);
 
 named!(
     #[doc=r#"
@@ -138,6 +139,11 @@ assert_eq!(Ok((&empty_remaining[..],123)),threedigit_integer(d.as_bytes()));
     "#],
     pub threedigit_integer<u32>,
     map_res!(map_res!(take!(3), str::from_utf8), |s : &str| str::FromStr::from_str(s.trim()))
+);
+
+named!(
+    pub fourdigit_integer<u32>,
+    map_res!(map_res!(take!(4), str::from_utf8), |s : &str| str::FromStr::from_str(s.trim()))
 );
 
 named!(

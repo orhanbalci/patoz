@@ -301,6 +301,24 @@ pub struct Nummdl {
     pub num: u32,
 }
 
+/// cross references to other sequence databases
+#[derive(Debug, Clone, Default)]
+pub struct Dbref {
+    pub idcode: String,
+    pub chain_id: char,
+    pub seq_begin: u32,
+    pub initial_sequence: char,
+    pub seq_end: u32,
+    pub ending_sequence: char,
+    pub database: String,
+    pub db_accession: String,
+    pub db_idcode: String,
+    pub db_seq_begin: u32,
+    pub idbns_begin: char,
+    pub db_seq_end: u32,
+    pub dbins_end: u32,
+}
+
 /// main enum unifying all record parser results.
 /// all sub parsers return a cariant of this
 #[derive(Debug, Clone)]
@@ -328,4 +346,5 @@ pub enum Record {
     Experimental(Experimental),
     Nummdl(Nummdl),
     Authors(Authors),
+    Dbref(Dbref),
 }

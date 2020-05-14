@@ -10,6 +10,7 @@ keywords = ["parser","nom", "pdb", "bioinformatics", "science"]
 license = "MIT"
 exclude = ["pdb-harvester", "grcov.yml", "pdb_harvester"]
 documentation = "http://docs.rs/patoz/0.1.0"
+readme = "README.md"
 
 [dependencies]
 nom = "5.0.1"
