@@ -307,16 +307,16 @@ pub struct Dbref {
     pub idcode: String,
     pub chain_id: char,
     pub seq_begin: u32,
-    pub initial_sequence: char,
+    pub initial_sequence: Option<char>,
     pub seq_end: u32,
-    pub ending_sequence: char,
+    pub ending_sequence: Option<char>,
     pub database: String,
     pub db_accession: String,
     pub db_idcode: String,
     pub db_seq_begin: u32,
-    pub idbns_begin: char,
+    pub idbns_begin: Option<char>,
     pub db_seq_end: u32,
-    pub dbins_end: u32,
+    pub dbins_end: Option<char>,
 }
 
 /// main enum unifying all record parser results.

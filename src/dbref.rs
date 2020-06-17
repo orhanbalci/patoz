@@ -1,7 +1,7 @@
 use super::{ast::types::*, primitive::*};
 use nom::{
     character::complete::{anychar, space1},
-    do_parse, named,
+    do_parse,  named, opt, tag,
 };
 
 named!(
@@ -9,31 +9,27 @@ named!(
     do_parse!(
         dbref
         >> space1
-        >> idcode : alphanum_word
+        >> idcode : idcode_parser_len
         >> space1
         >> chain_id : anychar
-        >> space1
+        >> tag!(" ")
         >> seq_begin : fourdigit_integer
-        >> space1
-        >> initial_sequence : anychar
-        >> space1 
+        >> initial_sequence : opt!(anychar)
+        >> tag!(" ")
         >> seq_end : fourdigit_integer
-        >> space1
-        >> ending_sequence : anychar
+        >> ending_sequence : opt!(anychar)
         >> space1
         >> database : alphanum_word
         >> space1
         >> db_accession : alphanum_word
         >> space1
-        >> db_idcode : alphanum_word
-        >> space1 
-        >> db_seq_begin : fourdigit_integer
-        >> space1
-        >> idbns_begin : anychar
-        >> space1
-        >> db_seq_end  : fourdigit_integer
-        >> space1
-        >> dbins_end : fourdigit_integer
+        >> db_idcode : db_id_code_parser_len
+        >> tag!(" ")
+        >> db_seq_begin : fivedigit_integer
+        >> idbns_begin : opt!(anychar)
+        >> tag!(" ")
+        >> db_seq_end  : fivedigit_integer
+        >> dbins_end : opt!(anychar)
         >> till_line_ending
         >> (Record::Dbref(
             Dbref{
@@ -54,3 +50,20 @@ named!(
             ))
     )
 );
+
+#[cfg(test)]
+mod test {
+    use super::{super::Record, dbref_record_parser};
+    #[test]
+    pub fn dbref() {
+        if let Ok((_, Record::Dbref(res))) = dbref_record_parser(
+            r#"DBREF  2JHQ A    1   226  UNP    Q9KPK8   UNG_VIBCH        1    226
+"#
+            .as_bytes(),
+        ) {
+            assert_eq!(res.idcode, "2JHQ");
+        } else {
+            assert!(false);
+        }
+    }
+}

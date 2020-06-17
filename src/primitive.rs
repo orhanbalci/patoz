@@ -7,19 +7,17 @@ use chrono::{
 use nom::{
     alt,
     branch::alt,
-    bytes::complete::{tag, take_till, take_while},
+    bytes::complete::{tag, take, take_till, take_while},
     character::{
         complete::{alpha1, alphanumeric1, digit1, multispace1, space0, space1},
         is_alphanumeric, is_digit, is_space,
     },
-    combinator::map_res,
+    combinator::{map, map_res},
     do_parse, fold_many0, map_res,
     multi::separated_list,
     named, separated_list, tag, take, take_str, IResult,
 };
 use std::{result::Result, str, str::FromStr};
-
-#[macro_use]
 
 macro_rules! make_tagger(
     ($fnname:ident) =>(
@@ -147,6 +145,11 @@ named!(
 );
 
 named!(
+    pub fivedigit_integer<u32>,
+    map_res!(map_res!(take!(5), str::from_utf8), |s : &str| str::FromStr::from_str(s.trim()))
+);
+
+named!(
     #[doc=r#"
 Parses arbitrary digit positive integers. Needs at least one digit.
 # Example
@@ -220,12 +223,22 @@ named!(
 );
 
 named!(
+    pub db_id_code_parser<String>,
+    map_res!(
+        map_res!(take_while(|s| {is_alphanumeric(s) ||
+            char::from(s) == '_'
+        }), str::from_utf8),
+        |s : &str| {str::FromStr::from_str(s.trim())}
+    )
+);
+
+named!(
     pub title_parser<String>,
     map_res!(
-        map_res!(take_while(|s| {is_alphanumeric(s) || 
-            is_space(s) || char::from(s) == '(' || 
-            char::from(s) == ')' || 
-            char::from(s) == '.' || 
+        map_res!(take_while(|s| {is_alphanumeric(s) ||
+            is_space(s) || char::from(s) == '(' ||
+            char::from(s) == ')' ||
+            char::from(s) == '.' ||
             char::from(s) == '/' ||
             char::from(s) == '[' ||
             char::from(s) == ']' ||
@@ -319,6 +332,30 @@ pub fn no(s: &[u8]) -> IResult<&[u8], bool> {
 pub fn yes_no_parser(s: &[u8]) -> IResult<&[u8], bool> {
     alt((yes, no))(s)
 }
+
+// pub fn idcode_parser(s: &[u8]) -> IResult<&[u8], String> {
+//     map(take(4u32), |res: &[u8]| {
+//         if let Ok((_, r)) = alphanum_word(res) {
+//             r
+//         } else {
+//             "".to_owned()
+//         }
+//     })(s)
+// }
+
+#[macro_export]
+macro_rules! wrap_len(
+($fn_name : ident, $res_type : ty,  $len : literal, $p:ident) => (
+        pub fn $fn_name(s: &[u8]) -> IResult<&[u8], $res_type> {
+            map(take($len), |res: &[u8]|{
+                if let Ok((_, r)) = $p(res){r} else {Default::default()}
+            })(s)
+        }
+    );
+);
+
+wrap_len!(idcode_parser_len, String, 4u32, alphanum_word);
+wrap_len!(db_id_code_parser_len, String, 13u32, db_id_code_parser);
 
 use super::ast::types::ModificationType;
 
