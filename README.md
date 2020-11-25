@@ -8,7 +8,7 @@ Protein Data Bank (pdb) file parser
 
 # 📦 Cargo.toml
 ```
-patoz = {git = "https//github.com/orhanbalci/patoz"}
+patoz = "0.1.0"
 ```
 # 🔧 Examples
 ```rust
