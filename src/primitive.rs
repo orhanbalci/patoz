@@ -526,4 +526,22 @@ mod test {
         let a = "  7".trim().parse::<u32>();
         assert_eq!(7, a.unwrap());
     }
+
+    #[test]
+    fn two_space() {
+        if let Ok((_, _res)) = super::two_space(b"  ") {
+            assert!(true)
+        } else {
+            assert!(false)
+        }
+    }
+
+    #[test]
+    fn two_space_fail() {
+        if let Err(_e) = super::two_space(b" ") {
+            assert!(true)
+        } else {
+            assert!(false)
+        }
+    }
 }
