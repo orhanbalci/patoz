@@ -11,6 +11,7 @@ pub mod author;
 pub mod caveat;
 pub mod compnd;
 pub mod dbref;
+pub mod dbref1;
 pub mod expdta;
 pub mod header;
 pub mod jrnl;

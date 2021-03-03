@@ -98,6 +98,8 @@ make_tagger!(end);
 make_tagger!(titl);
 make_tagger!(edit);
 make_tagger!(dbref);
+make_tagger!(dbref1);
+make_tagger!(dbref2);
 
 named!(
     #[doc=r#"
@@ -193,6 +195,14 @@ named!(
 );
 
 named!(
+    pub mspace<String>,
+    map_res!(
+        map_res!(space1, str::from_utf8),
+        str::FromStr::from_str
+    )
+);
+
+named!(
     pub alphanum_word_with_spaces_inside<String>,
     map_res!(
         map_res!(take_while(|s| {is_alphanumeric(s) || is_space(s)}), str::from_utf8),
@@ -202,8 +212,8 @@ named!(
 named!(
     pub keywords_parser<String>,
     map_res!(
-        map_res!(take_while(|s| {is_alphanumeric(s) || 
-            is_space(s) || char::from(s) == '-' 
+        map_res!(take_while(|s| {is_alphanumeric(s) ||
+            is_space(s) || char::from(s) == '-'
         }), str::from_utf8),
         |s : &str| {str::FromStr::from_str(s.trim())}
     )
@@ -212,10 +222,10 @@ named!(
 named!(
     pub molecule_name_parser<String>,
     map_res!(
-        map_res!(take_while(|s| {is_alphanumeric(s) || 
-            is_space(s) || char::from(s) == '(' || 
-            char::from(s) == ')' || 
-            char::from(s) == ',' || 
+        map_res!(take_while(|s| {is_alphanumeric(s) ||
+            is_space(s) || char::from(s) == '(' ||
+            char::from(s) == ')' ||
+            char::from(s) == ',' ||
             char::from(s) == '/'
         }), str::from_utf8),
         |s : &str| {str::FromStr::from_str(s.trim())}
@@ -356,6 +366,8 @@ macro_rules! wrap_len(
 
 wrap_len!(idcode_parser_len, String, 4u32, alphanum_word);
 wrap_len!(db_id_code_parser_len, String, 13u32, db_id_code_parser);
+wrap_len!(two_space, String, 2u32, mspace);
+wrap_len!(five_space, String, 5u32, mspace);
 
 use super::ast::types::ModificationType;
 

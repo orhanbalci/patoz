@@ -5,6 +5,9 @@ use super::{
     author::author_record_parser,
     caveat::caveat_record_parser,
     compnd::cmpnd_token_parser,
+    dbref::dbref_record_parser,
+    dbref1::dbref1_record_parser,
+    dbref1::dbref2_record_parser,
     expdta::expdata_record_parser,
     header::header_parser,
     jrnl::{
@@ -48,6 +51,7 @@ named!(
             | complete!(jrnl_publ_record_parser)
             | complete!(jrnl_pmid_record_parser)
             | complete!(jrnl_doi_record_parser)
+            | complete!(dbref_record_parser)
     )
 );
 

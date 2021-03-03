@@ -8,7 +8,7 @@ use nom::{
     do_parse, map, named, take_str,
 };
 
-named!(#[doc=r#"Parses a line of [Header](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#HEADER) record. 
+named!(#[doc=r#"Parses a line of [Header](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#HEADER) record.
 This type of record is neither separated to multi lines nor repeated. There is just single line of unique header record in a pdb file.
 If succesfull returns [Record](../ast/types/enum.Record.html) variant containing [Header](../ast/types/struct.Header.html) instance
 

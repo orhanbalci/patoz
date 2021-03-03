@@ -92,7 +92,7 @@ If successfull returns [Record](../ast/types/enum.Record.html) variant containin
                 let single_modification_parser_result = revdat_inner_parser(input.as_slice());
                 match single_modification_parser_result {
                     Ok((_, mut single_revdat_record)) => {
-                        single_revdat_record.modification_number = r.modification_number;                       
+                        single_revdat_record.modification_number = r.modification_number;
                         single_revdat_record
                     }
                     _ => Revdat {

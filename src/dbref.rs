@@ -1,7 +1,7 @@
 use super::{ast::types::*, primitive::*};
 use nom::{
     character::complete::{anychar, space1},
-    do_parse,  named, opt, tag,
+    do_parse, named, opt, tag,
 };
 
 named!(

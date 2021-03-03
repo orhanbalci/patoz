@@ -319,6 +319,26 @@ pub struct Dbref {
     pub dbins_end: Option<char>,
 }
 
+#[derive(Debug, Clone)]
+pub struct Dbref1 {
+    pub idcode: String,
+    pub chain_id: char,
+    pub seq_begin: u32,
+    pub initial_sequence: Option<char>,
+    pub seq_end: u32,
+    pub ending_sequence: Option<char>,
+    pub database: String,
+    pub db_idcode: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct Dbref2 {
+    pub idcode: String,
+    pub chain_id: char,
+    pub db_accession: String,
+    pub seq_begin: u32,
+    pub seq_end: u32,
+}
 /// main enum unifying all record parser results.
 /// all sub parsers return a cariant of this
 #[derive(Debug, Clone)]
@@ -347,4 +367,6 @@ pub enum Record {
     Nummdl(Nummdl),
     Authors(Authors),
     Dbref(Dbref),
+    Dbref1(Dbref1),
+    Dbref2(Dbref2),
 }

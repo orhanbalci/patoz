@@ -52,7 +52,7 @@ named!(
 );
 
 named!(
-#[doc=r#"Parses sprsde record which is a multiline continuation record. 
+#[doc=r#"Parses sprsde record which is a multiline continuation record.
 If succesfull returns [Record](../ast/types/enum.Record.html) variant containing [SPRSDE](../ast/types/struct.Sprsde.html) instance.
 
 Record layout :

@@ -4,15 +4,16 @@ use std::iter::Iterator;
 macro_rules! impl_record_filter {
     ($fn_name : ident -> $match_type: ident -> $ret_type :ident ) => {
         pub fn $fn_name(&mut self) -> Option<$ret_type> {
-             self.records.iter()
-            .find(|s| match s {
-                Record::$match_type(_) => true,
-                _ => false,
-            })
-            .map(|r| match r {
-                Record::$match_type(a) => a.clone(),
-                _ => $match_type::default(),
-            })
+            self.records
+                .iter()
+                .find(|s| match s {
+                    Record::$match_type(_) => true,
+                    _ => false,
+                })
+                .map(|r| match r {
+                    Record::$match_type(a) => a.clone(),
+                    _ => $match_type::default(),
+                })
         }
     };
 }
