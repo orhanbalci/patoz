@@ -17,7 +17,7 @@ use nom::{
     multi::separated_list,
     named, separated_list, tag, take, take_str, IResult,
 };
-use std::{result::Result, str, str::FromStr};
+use std::{ops::BitAnd, result::Result, str, str::FromStr};
 
 macro_rules! make_tagger(
     ($fnname:ident) =>(
@@ -343,6 +343,23 @@ pub fn yes_no_parser(s: &[u8]) -> IResult<&[u8], bool> {
     alt((yes, no))(s)
 }
 
+pub fn merge_db_ref(def_1: crate::Dbref1, def_2: Dbref2) -> Dbref {
+    Dbref {
+        idcode: def_1.idcode,
+        chain_id: def_1.chain_id,
+        seq_begin: def_1.seq_begin,
+        initial_sequence: def_1.initial_sequence,
+        seq_end: def_1.seq_end,
+        ending_sequence: def_1.ending_sequence,
+        database: def_1.database,
+        db_accession: def_2.db_accession,
+        db_idcode: def_1.db_idcode,
+        db_seq_begin: def_2.db_seq_begin,
+        db_seq_end: def_2.db_seq_end,
+        idbns_begin: None,
+        dbins_end: None,
+    }
+}
 // pub fn idcode_parser(s: &[u8]) -> IResult<&[u8], String> {
 //     map(take(4u32), |res: &[u8]| {
 //         if let Ok((_, r)) = alphanum_word(res) {
@@ -368,6 +385,8 @@ wrap_len!(idcode_parser_len, String, 4u32, alphanum_word);
 wrap_len!(db_id_code_parser_len, String, 13u32, db_id_code_parser);
 wrap_len!(two_space, String, 2u32, mspace);
 wrap_len!(five_space, String, 5u32, mspace);
+
+use crate::{Dbref, Dbref2};
 
 use super::ast::types::ModificationType;
 

@@ -336,8 +336,8 @@ pub struct Dbref2 {
     pub idcode: String,
     pub chain_id: char,
     pub db_accession: String,
-    pub seq_begin: u32,
-    pub seq_end: u32,
+    pub db_seq_begin: u32,
+    pub db_seq_end: u32,
 }
 /// main enum unifying all record parser results.
 /// all sub parsers return a cariant of this
