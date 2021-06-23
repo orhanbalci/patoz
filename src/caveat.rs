@@ -41,10 +41,7 @@ named!(
             >> space0
             >> comment: alphanum_word_with_spaces_inside
             >> space0
-            >> (Record::Caveat(Caveat {
-                id_code,
-                comment,
-            }))
+            >> (Record::Caveat(Caveat { id_code, comment }))
     )
 );
 
