@@ -349,8 +349,7 @@ variant that contains [JournalCitation](../ast/types/struct.JournalCitation.html
             >> (
                 Record::JournalCitation(JournalCitation{
                     serial_type,
-                    serial : if let Some(s) = serial {Some(String::from_str(str::from_utf8(s).unwrap().trim()).unwrap()) }
-                    else {None}
+                    serial : serial.map(|s| String::from_str(str::from_utf8(s).unwrap().trim()).unwrap())
                 })
             )
     )

@@ -35,7 +35,7 @@ impl ToPdbFile for Vec<Record> {
 }
 
 impl PdbFile<Vec<Record>> {
-    pub fn header<'a>(&'a mut self) -> PdbHeader<&'a mut Vec<Record>> {
+    pub fn header(&mut self) -> PdbHeader<&mut Vec<Record>> {
         PdbHeader {
             records: &mut self.records,
         }
