@@ -21,6 +21,7 @@ pub mod nummdl;
 pub mod obslte;
 pub mod primitive;
 mod record;
+pub mod remark;
 pub mod revdat;
 pub mod seqadv;
 pub mod seqres;

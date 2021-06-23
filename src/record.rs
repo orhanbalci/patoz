@@ -18,6 +18,7 @@ use super::{
     mdltyp::mdltyp_record_parser,
     nummdl::nummdl_record_parser,
     obslte::obslte_record_parser,
+    remark::remark_record_parser,
     revdat::revdat_record_parser,
     seqadv::seqadv_record_parser,
     source::source_token_parser,
@@ -54,6 +55,7 @@ named!(
             | complete!(dbref_record_parser)
             | complete!(dbref_partial_parser)
             | complete!(seqadv_record_parser)
+            | complete!(remark_record_parser)
     )
 );
 
@@ -337,6 +339,11 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
                 .unwrap()
                 .page
                 .unwrap()
+        );
+
+        assert_eq!(
+            expected_val["primary.dbref.database"],
+            pdb_parsed.primary().dbreference().unwrap().database
         );
     }
 

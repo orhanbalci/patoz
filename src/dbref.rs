@@ -1,6 +1,6 @@
 use super::{ast::types::*, primitive::*};
 use nom::{
-    character::complete::{anychar, space1},
+    character::complete::{anychar, line_ending, space1},
     do_parse, named, opt, tag,
 };
 
@@ -31,6 +31,7 @@ named!(
         >> db_seq_end  : fivedigit_integer
         >> dbins_end : opt!(anychar)
         >> till_line_ending
+        >> line_ending
         >> (Record::Dbref(
             Dbref{
                 idcode,
@@ -57,7 +58,7 @@ mod test {
     #[test]
     pub fn dbref() {
         if let Ok((_, Record::Dbref(res))) = dbref_record_parser(
-            r#"DBREF  2JHQ A    1   226  UNP    Q9KPK8   UNG_VIBCH        1    226
+            r#"DBREF  2JHQ A    1   226  UNP    Q9KPK8   UNG_VIBCH        1    226  
 "#
             .as_bytes(),
         ) {

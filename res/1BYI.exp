@@ -10,5 +10,6 @@
     "header.journal.reference.publication_name" : "ACTA CRYSTALLOGR.,SECT.D",
     "header.journal.reference.volume" : 55,
     "header.journal.reference.page" : 610,
-    "header.journal.reference.year" : 1999
+    "header.journal.reference.year" : 1999,
+    "primary.dbref.database" : "UNP"
 }

@@ -319,7 +319,7 @@ pub struct Dbref {
     pub dbins_end: Option<char>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Dbref1 {
     pub idcode: String,
     pub chain_id: char,
@@ -331,7 +331,7 @@ pub struct Dbref1 {
     pub db_idcode: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Dbref2 {
     pub idcode: String,
     pub chain_id: char,
@@ -340,7 +340,7 @@ pub struct Dbref2 {
     pub db_seq_end: u32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Seqadv {
     pub idcode: String,
     pub conflicting_residue: String,
@@ -384,4 +384,5 @@ pub enum Record {
     Dbref1(Dbref1),
     Dbref2(Dbref2),
     Seqadv(Seqadv),
+    Remark,
 }

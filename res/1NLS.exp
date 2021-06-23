@@ -10,5 +10,6 @@
     "header.journal.reference.publication_name" : "J.CHEM.SOC.,FARADAY TRANS.",
     "header.journal.reference.volume" : 93,
     "header.journal.reference.page" : 4305,
-    "header.journal.reference.year" : 1997 
+    "header.journal.reference.year" : 1997,
+    "primary.dbref.database" : "UNP"
 }

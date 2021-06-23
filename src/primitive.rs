@@ -101,6 +101,7 @@ make_tagger!(dbref);
 make_tagger!(dbref1);
 make_tagger!(dbref2);
 make_tagger!(seqadv);
+make_tagger!(remark);
 
 named!(
     #[doc=r#"

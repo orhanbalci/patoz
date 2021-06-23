@@ -10,5 +10,6 @@
     "header.journal.reference.publication_name" : "BIOCHEMISTRY",
     "header.journal.reference.volume" : 37,
     "header.journal.reference.page" : 16839,
-    "header.journal.reference.year" : 1988
+    "header.journal.reference.year" : 1988,
+    "primary.dbref.database" : "UNP"
 }

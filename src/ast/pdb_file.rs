@@ -40,6 +40,12 @@ impl PdbFile<Vec<Record>> {
             records: &mut self.records,
         }
     }
+
+    pub fn primary(&mut self) -> PrimaryStructure<&mut Vec<Record>> {
+        PrimaryStructure {
+            records: &mut self.records,
+        }
+    }
 }
 
 pub struct PdbHeader<I> {
@@ -80,6 +86,16 @@ impl<'a> PdbJournal<&'a mut Vec<Record>> {
     impl_record_filter!(publication -> JournalPublication -> JournalPublication);
     impl_record_filter!(pubmedid -> JournalPubMedId -> JournalPubMedId);
     impl_record_filter!(doi -> JournalDoi -> JournalDoi);
+}
+
+pub struct PrimaryStructure<I> {
+    records: I,
+}
+
+impl<'a> PrimaryStructure<&'a mut Vec<Record>> {
+    impl_record_filter!(dbreference -> Dbref -> Dbref);
+    impl_record_filter!(conflicts -> Seqadv -> Seqadv);
+    impl_record_filter!(residues -> Seqres -> Seqres);
 }
 #[cfg(test)]
 mod test {
