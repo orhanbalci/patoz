@@ -1,8 +1,8 @@
 # Patoz
 Protein Data Bank (pdb) file parser
 
-![Build Status](https://github.com/orhanbalci/rust-protein/workflows/CI/badge.svg)
-![License](https://img.shields.io/github/license/orhanbalci/rust-protein.svg)
+![Build Status](https://github.com/orhanbalci/patoz/workflows/CI/badge.svg)
+![License](https://img.shields.io/github/license/orhanbalci/patoz.svg)
 
 ⚠️ WIP This is a work in progress. Expect breaking changes frequently. Right now use at your own risk
 
