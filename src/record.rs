@@ -23,6 +23,7 @@ use super::{
     split::split_record_parser,
     sprsde::sprsde_record_parser,
     title::title_record_parser,
+    seqadv::seqadv_record_parser,
 };
 
 named!(
@@ -52,6 +53,7 @@ named!(
             | complete!(jrnl_doi_record_parser)
             | complete!(dbref_record_parser)
             | complete!(dbref_partial_parser)
+            | complete!(seqadv_record_parser)
     )
 );
 

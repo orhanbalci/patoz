@@ -17,7 +17,7 @@ use nom::{
     multi::separated_list,
     named, separated_list, tag, take, take_str, IResult,
 };
-use std::{ops::BitAnd, result::Result, str, str::FromStr};
+use std::{result::Result, str, str::FromStr};
 
 macro_rules! make_tagger(
     ($fnname:ident) =>(
@@ -100,6 +100,7 @@ make_tagger!(edit);
 make_tagger!(dbref);
 make_tagger!(dbref1);
 make_tagger!(dbref2);
+make_tagger!(seqadv);
 
 named!(
     #[doc=r#"
