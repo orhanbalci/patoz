@@ -341,17 +341,17 @@ pub struct Dbref2 {
 }
 
 #[derive(Debug, Clone)]
-pub struct Seqadv{
+pub struct Seqadv {
     pub idcode: String,
-    pub conflicting_residue : String,
+    pub conflicting_residue: String,
     pub chain_id: char,
-    pub sequence_number : u32,
-    pub insertion_code : Option<char>,
-    pub database : String,
-    pub db_accession : String,
+    pub sequence_number: u32,
+    pub insertion_code: Option<char>,
+    pub database: String,
+    pub db_accession: String,
     pub sequence_db_residue: Option<String>,
     pub sequence_db_sequence_number: Option<u32>,
-    pub conflict : String
+    pub conflict: String,
 }
 /// main enum unifying all record parser results.
 /// all sub parsers return a cariant of this

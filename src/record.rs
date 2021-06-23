@@ -19,11 +19,11 @@ use super::{
     nummdl::nummdl_record_parser,
     obslte::obslte_record_parser,
     revdat::revdat_record_parser,
+    seqadv::seqadv_record_parser,
     source::source_token_parser,
     split::split_record_parser,
     sprsde::sprsde_record_parser,
     title::title_record_parser,
-    seqadv::seqadv_record_parser,
 };
 
 named!(

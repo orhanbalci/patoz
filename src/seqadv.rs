@@ -1,5 +1,8 @@
 use super::{ast::types::*, primitive::*};
-use nom::{character::{complete::{anychar, space1}, }, do_parse, named, opt, tag};
+use nom::{
+    character::complete::{anychar, space1},
+    do_parse, named, opt, tag,
+};
 
 named!(
     pub seqadv_record_parser<Record>,
@@ -31,7 +34,7 @@ named!(
             chain_id,
             sequence_number,
             insertion_code,
-            database, 
+            database,
             db_accession,
             sequence_db_residue,
             sequence_db_sequence_number,

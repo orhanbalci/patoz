@@ -22,12 +22,12 @@ pub mod obslte;
 pub mod primitive;
 mod record;
 pub mod revdat;
+pub mod seqadv;
 pub mod seqres;
 pub mod source;
 pub mod split;
 pub mod sprsde;
 pub mod title;
-pub mod seqadv;
 
 pub use ast::{pdb_file::*, types::*};
 pub use nom::IResult;
