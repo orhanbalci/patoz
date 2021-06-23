@@ -77,8 +77,8 @@ fn read_file(path: &PathBuf) -> String {
 - [ ] [Remarks](http://www.wwpdb.org/documentation/file-format-content/format33/remarks.html)
 ### Primary Structure Section
 - [x] [Dbref](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#DBREF)
-- [ ] [Dbref1](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#DBREF1)
-- [ ] [Seqadv](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#SEQADV)
+- [x] [Dbref1](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#DBREF1)
+- [x] [Seqadv](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#SEQADV)
 - [x] [Seqres](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#SEQRES)
 - [ ] [Modres](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#MODRES)
 ### Heterogen Section
@@ -112,3 +112,11 @@ fn read_file(path: &PathBuf) -> String {
 ### Bookkeeping Section
 - [ ] [Master](http://www.wwpdb.org/documentation/file-format-content/format33/sect11.html#MASTER)
 - [ ] [End](http://www.wwpdb.org/documentation/file-format-content/format33/sect11.html#END)
+
+## 📝 License
+
+Licensed under MIT License ([LICENSE](LICENSE)).
+
+### 🚧 Contributions
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in this project by you, as defined in the MIT license, shall be licensed as above, without any additional terms or conditions.
