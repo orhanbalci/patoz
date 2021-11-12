@@ -80,7 +80,7 @@ fn read_file(path: &PathBuf) -> String {
 - [x] [Dbref1](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#DBREF1)
 - [x] [Seqadv](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#SEQADV)
 - [x] [Seqres](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#SEQRES)
-- [ ] [Modres](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#MODRES)
+- [x] [Modres](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#MODRES)
 ### Heterogen Section
 - [ ] [Het](http://www.wwpdb.org/documentation/file-format-content/format33/sect4.html#HET)
 - [ ] [Formul](http://www.wwpdb.org/documentation/file-format-content/format33/sect4.html#FORMUL)
