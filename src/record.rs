@@ -16,6 +16,7 @@ use super::{
     },
     keywds::keywds_parser,
     mdltyp::mdltyp_record_parser,
+    modres::modres_record_parser,
     nummdl::nummdl_record_parser,
     obslte::obslte_record_parser,
     remark::remark_record_parser,
@@ -56,6 +57,7 @@ named!(
             | complete!(dbref_partial_parser)
             | complete!(seqadv_record_parser)
             | complete!(remark_record_parser)
+            | complete!(modres_record_parser)
     )
 );
 

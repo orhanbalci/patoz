@@ -17,6 +17,7 @@ pub mod header;
 pub mod jrnl;
 pub mod keywds;
 pub mod mdltyp;
+pub mod modres;
 pub mod nummdl;
 pub mod obslte;
 pub mod primitive;

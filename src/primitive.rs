@@ -4,6 +4,8 @@ use chrono::{
     format::{strftime::StrftimeItems, Parsed},
     NaiveDate,
 };
+
+use nom::combinator::recognize;
 use nom::{
     alt,
     branch::alt,
@@ -15,7 +17,9 @@ use nom::{
     combinator::{map, map_res},
     do_parse, fold_many0, map_res,
     multi::separated_list,
-    named, separated_list, tag, take, take_str, IResult,
+    named, separated_list,
+    sequence::tuple,
+    tag, take, take_str, IResult,
 };
 use std::{result::Result, str, str::FromStr};
 
@@ -101,6 +105,7 @@ make_tagger!(dbref);
 make_tagger!(dbref1);
 make_tagger!(dbref2);
 make_tagger!(seqadv);
+make_tagger!(modres);
 make_tagger!(remark);
 
 named!(
@@ -288,6 +293,11 @@ named!(
     do_parse!(w: alphanum_word >> space1 >> (w))
 );
 
+// named!(
+//     pub idcode_parser<String>,
+//     map_res!(map_res!(do_parse!(digit1 >> alphanumeric1 >> ()), str::from_utf8), |s: &str |{str::FromStr::from_str(s)} )
+// );
+
 named!(
     pub idcode_list<Vec<String>>,
     fold_many0!(alphanum_word_space, Vec::new(), |mut acc: Vec<String>,
@@ -383,7 +393,14 @@ macro_rules! wrap_len(
     );
 );
 
-wrap_len!(idcode_parser_len, String, 4u32, alphanum_word);
+pub fn idcode_parser(s: &[u8]) -> IResult<&[u8], String> {
+    map_res(
+        map_res(recognize(tuple((digit1, alphanumeric1))), str::from_utf8),
+        str::FromStr::from_str,
+    )(s)
+}
+
+wrap_len!(idcode_parser_len, String, 4u32, idcode_parser);
 wrap_len!(db_id_code_parser_len, String, 13u32, db_id_code_parser);
 wrap_len!(two_space, String, 2u32, mspace);
 wrap_len!(five_space, String, 5u32, mspace);

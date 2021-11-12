@@ -353,8 +353,21 @@ pub struct Seqadv {
     pub sequence_db_sequence_number: Option<u32>,
     pub conflict: String,
 }
+
+/// residue modification record
+#[derive(Debug, Clone, Default)]
+pub struct Modres {
+    pub idcode: String,
+    pub residue_name: String,
+    pub chain_id: char,
+    pub sequence_number: u32,
+    pub insertion_code: Option<char>,
+    pub standart_residue_name: String,
+    pub comment: String,
+}
+
 /// main enum unifying all record parser results.
-/// all sub parsers return a cariant of this
+/// all sub parsers return a variant of this
 #[derive(Debug, Clone)]
 pub enum Record {
     Header(Header),
@@ -384,5 +397,6 @@ pub enum Record {
     Dbref1(Dbref1),
     Dbref2(Dbref2),
     Seqadv(Seqadv),
+    Modres(Modres),
     Remark,
 }
