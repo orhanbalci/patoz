@@ -12,7 +12,7 @@ homepage = "https://github.com/orhanbalci"
 repository = "https://github.com/orhanbalci/patoz.git"
 keywords = ["parser","nom", "pdb", "bioinformatics", "science"]
 license = "MIT"
-exclude = ["pdb-harvester", "grcov.yml", "pdb_harvester", "patoz-wasm"]
+exclude = ["pdb-harvester", "pdb_harvester", "patoz-wasm"]
 documentation = "http://docs.rs/patoz/0.1.0"
 readme = "README.md"
 
