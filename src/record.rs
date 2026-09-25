@@ -1,7 +1,7 @@
 use crate::{
     ast::{pdb_file::*, types::*},
-    atom, author, caveat, compnd, connectivity, dbref, dbref1, expdta, header, heterogen, jrnl,
-    keywds, master, mdltyp, modres, nummdl, obslte,
+    atom, author, caveat, compnd, connectivity, crystal, dbref, dbref1, expdta, header, heterogen,
+    jrnl, keywds, master, mdltyp, modres, nummdl, obslte,
     primitive::Line,
     revdat, secondary, seqadv, seqres, source, split, sprsde, title,
 };
@@ -41,9 +41,24 @@ fn group_len(lines: &[Line]) -> usize {
         "SEQRES" => continues(&|l| l.cols(12, 12) == first.cols(12, 12)),
         "SITE" | "HETNAM" | "HETSYN" => continues(&|l| l.cols(12, 14) == first.cols(12, 14)),
         "FORMUL" => continues(&|l| l.cols(13, 15) == first.cols(13, 15)),
+        "ORIGX1" | "SCALE1" | "MTRIX1" => transformation_len(lines),
         "DBREF1" if lines.get(1).is_some_and(|l| l.record_name() == "DBREF2") => 2,
         _ => 1,
     }
+}
+
+/// ORIGXn, SCALEn and MTRIXn records come as three lines numbered 1-3,
+/// MTRIX lines of one operation share a serial number.
+fn transformation_len(lines: &[Line]) -> usize {
+    let first = lines[0];
+    let prefix = first.cols(1, 5);
+    let same_operation = |l: &Line| {
+        l.cols(1, 5) == prefix && (prefix != "MTRIX" || l.cols(8, 10) == first.cols(8, 10))
+    };
+    1 + lines[1..3.min(lines.len())]
+        .iter()
+        .take_while(|l| same_operation(l))
+        .count()
 }
 
 fn parse_group(lines: &[Line]) -> Option<Record> {
@@ -70,10 +85,16 @@ fn parse_group(lines: &[Line]) -> Option<Record> {
         "SEQADV" => seqadv::parse(first),
         "SEQRES" => seqres::parse(lines),
         "MODRES" => modres::parse(first),
+        "CRYST1" => crystal::cryst1(first),
+        "ORIGX1" => crystal::origx(lines),
+        "SCALE1" => crystal::scale(lines),
+        "MTRIX1" => crystal::mtrix(lines),
         "MODEL" => atom::model(first),
         "ATOM" => atom::atom(first).map(Record::Atom),
         "HETATM" => atom::atom(first).map(Record::Hetatm),
-        "ANISOU" => atom::anisou(first),
+        "ANISOU" => atom::anisou(first).map(Record::Anisou),
+        "SIGATM" => atom::atom(first).map(Record::Sigatm),
+        "SIGUIJ" => atom::anisou(first).map(Record::Siguij),
         "TER" => atom::ter(first),
         "ENDMDL" => Some(Record::Endmdl),
         "MASTER" => master::parse(first),
@@ -282,6 +303,10 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
         assert_eq!(
             master.num_sheet as usize,
             count(|r| matches!(r, Record::Sheet(_)))
+        );
+        assert_eq!(
+            master.num_xform as usize,
+            3 * count(|r| matches!(r, Record::Origx(_) | Record::Scale(_) | Record::Mtrix(_)))
         );
         assert_eq!(
             master.num_conect as usize,

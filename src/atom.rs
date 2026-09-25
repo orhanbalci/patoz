@@ -43,9 +43,9 @@ pub(crate) fn atom(line: Line) -> Option<Atom> {
     })
 }
 
-/// Parses an ANISOU record.
-pub(crate) fn anisou(line: Line) -> Option<Record> {
-    Some(Record::Anisou(Anisou {
+/// Parses the fields of ANISOU and SIGUIJ records.
+pub(crate) fn anisou(line: Line) -> Option<Anisou> {
+    Some(Anisou {
         serial: line.number(7, 11)?,
         name: line.text(13, 16).to_owned(),
         alt_loc: line.char_at(17),
@@ -61,7 +61,7 @@ pub(crate) fn anisou(line: Line) -> Option<Record> {
         u23: line.number(64, 70)?,
         element: element(line),
         charge: charge(line),
-    }))
+    })
 }
 
 /// Parses a TER record. Fields are optional since old entries often
@@ -141,6 +141,20 @@ mod test {
             (u.u11, u.u22, u.u33, u.u12, u.u13, u.u23),
             (434, 531, 735, 201, 133, -28)
         );
+    }
+
+    #[test]
+    fn sigatm_and_siguij() {
+        let r = single_record(
+            "SIGATM    1  N   SER A   2       0.048   0.063   0.062  0.00  1.58           N  \n",
+        );
+        let Record::Sigatm(s) = r else { panic!() };
+        assert_eq!((s.x, s.temp_factor), (0.048, 1.58));
+        let r = single_record(
+            "SIGUIJ    6  N   HIS A   3      537    655    469    453    397    449       N  \n",
+        );
+        let Record::Siguij(s) = r else { panic!() };
+        assert_eq!(s.u23, 449);
     }
 
     #[test]

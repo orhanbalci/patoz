@@ -13,6 +13,7 @@ mod author;
 mod caveat;
 mod compnd;
 mod connectivity;
+mod crystal;
 mod dbref;
 mod dbref1;
 mod expdta;

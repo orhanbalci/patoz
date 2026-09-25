@@ -90,10 +90,10 @@ Lines of record types that are not supported yet come back as `{ "Unknown": "<li
 ### Miscellaneous Features Section
 - [x] [Site](http://www.wwpdb.org/documentation/file-format-content/format33/sect7.html#SITE)
 ### Crystallographic and Coordinate Transformation Section
-- [ ] [Cryst1](http://www.wwpdb.org/documentation/file-format-content/format33/sect8.html#CRYST1)
-- [ ] [MtrixN](http://www.wwpdb.org/documentation/file-format-content/format33/sect8.html#MTRIXn)
-- [ ] [OrigxN](http://www.wwpdb.org/documentation/file-format-content/format33/sect8.html#ORIGXn)
-- [ ] [ScaleN](http://www.wwpdb.org/documentation/file-format-content/format33/sect8.html#SCALEn)
+- [x] [Cryst1](http://www.wwpdb.org/documentation/file-format-content/format33/sect8.html#CRYST1)
+- [x] [MtrixN](http://www.wwpdb.org/documentation/file-format-content/format33/sect8.html#MTRIXn)
+- [x] [OrigxN](http://www.wwpdb.org/documentation/file-format-content/format33/sect8.html#ORIGXn)
+- [x] [ScaleN](http://www.wwpdb.org/documentation/file-format-content/format33/sect8.html#SCALEn)
 ### Coordinate Section
 - [x] [Model](http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#MODEL)
 - [x] [Atom](http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ATOM)

@@ -639,6 +639,39 @@ pub struct Formul {
     pub formula: String,
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// unit cell parameters, space group and Z value
+pub struct Cryst1 {
+    pub a: f64,
+    pub b: f64,
+    pub c: f64,
+    pub alpha: f64,
+    pub beta: f64,
+    pub gamma: f64,
+    pub space_group: String,
+    pub z: Option<u32>,
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// transformation `x' = matrix * x + vector` given by three ORIGXn,
+/// SCALEn or MTRIXn lines
+pub struct Transformation {
+    pub matrix: [[f64; 3]; 3],
+    pub vector: [f64; 3],
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// non-crystallographic symmetry operation
+pub struct Mtrix {
+    pub serial: u32,
+    pub transformation: Transformation,
+    /// true if coordinates for the copy are already in the entry
+    pub given: bool,
+}
+
 /// main enum unifying all record parser results.
 /// all sub parsers return a variant of this
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
@@ -673,9 +706,23 @@ pub enum Record {
     Seqadv(Seqadv),
     Modres(Modres),
     Remark,
+    Cryst1(Cryst1),
+    /// ORIGX1-3, transformation from orthogonal to submitted coordinates
+    Origx(Transformation),
+    /// SCALE1-3, transformation from orthogonal to fractional coordinates
+    Scale(Transformation),
+    /// MTRIX1-3
+    Mtrix(Mtrix),
     Model(Model),
     Atom(Atom),
     Anisou(Anisou),
+    /// SIGATM, removed from the v3.3 specification but found in older
+    /// entries. Coordinate, occupancy and temperature factor fields hold
+    /// their standard deviations
+    Sigatm(Atom),
+    /// SIGUIJ, removed from the v3.3 specification but found in older
+    /// entries. Temperature factor fields hold their standard deviations
+    Siguij(Anisou),
     Ter(Ter),
     Hetatm(Atom),
     Endmdl,
