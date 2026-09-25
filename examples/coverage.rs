@@ -36,7 +36,7 @@ fn main() {
         100.0 * (total - unrecognized) as f64 / total as f64
     );
     let mut by_count: Vec<_> = unknown.into_iter().collect();
-    by_count.sort_by(|a, b| b.1.cmp(&a.1));
+    by_count.sort_by_key(|a| std::cmp::Reverse(a.1));
     for (name, count) in by_count {
         println!("{:>8}  {}", count, name);
     }
