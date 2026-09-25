@@ -14,7 +14,7 @@ pub(crate) fn parse(lines: &[Line]) -> Option<Record> {
                 modification_type: match first.number(32, 32)? {
                     0 => ModificationType::InitialRelease,
                     1 => ModificationType::OtherModification,
-                    _ => ModificationType::UnknownModification,
+                    other => ModificationType::UnknownModification(other),
                 },
                 modification_detail: revision
                     .iter()
@@ -28,6 +28,36 @@ pub(crate) fn parse(lines: &[Line]) -> Option<Record> {
         })
         .collect::<Option<_>>()?;
     Some(Record::Revdats(Revdats { revdat }))
+}
+
+/// Writes REVDAT lines, four modified record names per line.
+pub(crate) fn write(revdats: &Revdats, out: &mut Vec<String>) {
+    for revdat in &revdats.revdat {
+        let modification_type = match revdat.modification_type {
+            ModificationType::InitialRelease => 0,
+            ModificationType::OtherModification => 1,
+            ModificationType::UnknownModification(other) => other,
+        };
+        let details: Vec<_> = revdat.modification_detail.chunks(4).collect();
+        for (i, details) in details
+            .iter()
+            .enumerate()
+            .chain(details.is_empty().then_some((0, &&[][..])))
+        {
+            let mut line = LineBuilder::new("REVDAT").right(8, 10, revdat.modification_number);
+            line = if i == 0 {
+                line.left(14, &format_date(revdat.modification_date))
+                    .left(24, &revdat.idcode)
+            } else {
+                line.right(11, 12, i + 1)
+            };
+            line = line.right(32, 32, modification_type);
+            for (j, detail) in details.iter().enumerate() {
+                line = line.left(40 + 7 * j, detail);
+            }
+            out.push(line.build());
+        }
+    }
 }
 
 #[cfg(test)]

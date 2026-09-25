@@ -19,6 +19,36 @@ pub(crate) fn parse(line: Line) -> Option<Record> {
     }))
 }
 
+/// Writes a DBREF record, or DBREF1 and DBREF2 when database fields do
+/// not fit DBREF.
+pub(crate) fn write(dbref: &Dbref, out: &mut Vec<String>) {
+    let fits = dbref.db_accession.len() <= 8
+        && dbref.db_idcode.len() <= 12
+        && (-9999..=99999).contains(&dbref.db_seq_begin)
+        && (-9999..=99999).contains(&dbref.db_seq_end);
+    if !fits {
+        crate::dbref1::write(dbref, out);
+        return;
+    }
+    out.push(
+        LineBuilder::new("DBREF")
+            .left(8, &dbref.idcode)
+            .char_at(13, Some(dbref.chain_id))
+            .right(15, 18, dbref.seq_begin)
+            .char_at(19, dbref.initial_sequence)
+            .right(21, 24, dbref.seq_end)
+            .char_at(25, dbref.ending_sequence)
+            .left(27, &dbref.database)
+            .left(34, &dbref.db_accession)
+            .left(43, &dbref.db_idcode)
+            .right(56, 60, dbref.db_seq_begin)
+            .char_at(61, dbref.idbns_begin)
+            .right(63, 67, dbref.db_seq_end)
+            .char_at(68, dbref.dbins_end)
+            .build(),
+    );
+}
+
 #[cfg(test)]
 mod test {
     use crate::{test_util::single_record, Record};

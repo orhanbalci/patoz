@@ -26,6 +26,18 @@ match the specification, are kept as `Record::Unknown`. To see how much of your 
 ```
 cargo run --example coverage -- path/to/*.pdb
 ```
+# ✍️ Writing
+`patoz::write` turns records back into pdb file content, so files can be edited and saved:
+```rust
+let pdb = patoz::parse(&content);
+std::fs::write("out.pdb", patoz::write(&pdb)).unwrap();
+```
+Parsing written content gives back the same records. Checked on 486 files from PDB select, 99.998% of written
+lines are byte identical to the wwPDB originals; the rest differ only in where long text wraps.
+To check your own files:
+```
+cargo run --release --example roundtrip -- path/to/*.pdb
+```
 # 🕸️ WebAssembly
 `patoz-wasm` exposes the parser to JavaScript. Build it with [wasm-pack](https://rustwasm.github.io/wasm-pack/):
 ```

@@ -16,6 +16,26 @@ pub(crate) fn parse(line: Line) -> Option<Record> {
     }))
 }
 
+/// Writes a MASTER record.
+pub(crate) fn write(master: &Master, out: &mut Vec<String>) {
+    out.push(
+        LineBuilder::new("MASTER")
+            .right(11, 15, master.num_remark)
+            .right(16, 20, 0)
+            .right(21, 25, master.num_het)
+            .right(26, 30, master.num_helix)
+            .right(31, 35, master.num_sheet)
+            .right(36, 40, 0)
+            .right(41, 45, master.num_site)
+            .right(46, 50, master.num_xform)
+            .right(51, 55, master.num_coord)
+            .right(56, 60, master.num_ter)
+            .right(61, 65, master.num_conect)
+            .right(66, 70, master.num_seq)
+            .build(),
+    );
+}
+
 #[cfg(test)]
 mod test {
     use crate::{test_util::single_record, Record};

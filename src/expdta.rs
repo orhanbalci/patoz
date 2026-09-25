@@ -10,6 +10,19 @@ pub(crate) fn parse(lines: &[Line]) -> Option<Record> {
     Some(Record::Experimental(Experimental { techniques }))
 }
 
+/// Writes EXPDTA lines.
+pub(crate) fn write(experimental: &Experimental, out: &mut Vec<String>) {
+    let text = experimental
+        .techniques
+        .iter()
+        .map(ExperimentalTechnique::name)
+        .collect::<Vec<_>>()
+        .join("; ");
+    write_wrapped(out, &text, 11, 79, true, Wrap::list(Join::Text, ';'), |n| {
+        continued("EXPDTA", 9, 10, n)
+    });
+}
+
 #[cfg(test)]
 mod test {
     use crate::{test_util::single_record, ExperimentalTechnique, Record};

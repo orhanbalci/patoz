@@ -70,33 +70,301 @@ impl<'a> Line<'a> {
     }
 }
 
-/// Joins the text of continued lines with a space. A line ending with a
-/// hyphen continues its word on the next line so no space is added.
-pub(crate) fn join_continued<'a>(parts: impl IntoIterator<Item = &'a str>) -> String {
-    let mut joined = String::new();
-    for part in parts.into_iter().map(str::trim).filter(|p| !p.is_empty()) {
-        if !joined.is_empty() && !joined.ends_with('-') {
-            joined.push(' ');
-        }
-        joined.push_str(part);
-    }
-    joined
+/// How the text of continued lines is joined back together. The writer
+/// wraps text only where the same rule restores it, see [wrap].
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) enum Join {
+    /// A space between lines, except after a line ending with a hyphen,
+    /// which continues its word on the next line.
+    Text,
+    /// Chemical names (HETNAM, HETSYN). wwPDB wraps these either at a space
+    /// or right after punctuation such as `-` or `)`, so a space is
+    /// restored only between two letters or digits.
+    Chemical,
+    /// Always a space, for text such as formulas where a line may end with
+    /// a charge like `2-`.
+    Word,
 }
 
-/// Joins continued chemical names (HETNAM, HETSYN). wwPDB wraps these
-/// either at a space or right after punctuation such as `-` or `)`, so a
-/// space is restored only between two letters or digits.
-pub(crate) fn join_chemical_name<'a>(parts: impl IntoIterator<Item = &'a str>) -> String {
-    let mut joined = String::new();
-    for part in parts.into_iter().map(str::trim).filter(|p| !p.is_empty()) {
-        let boundary_is_space = joined.ends_with(|c: char| c.is_ascii_alphanumeric())
-            && part.starts_with(|c: char| c.is_ascii_alphanumeric());
-        if boundary_is_space {
-            joined.push(' ');
+impl Join {
+    fn separator(self, left: &str, right: &str) -> &'static str {
+        let alphanumeric = |c: Option<char>| c.is_some_and(|c| c.is_ascii_alphanumeric());
+        let space = match self {
+            Join::Text => !left.ends_with('-'),
+            Join::Chemical => {
+                alphanumeric(left.chars().last()) && alphanumeric(right.chars().next())
+            }
+            Join::Word => true,
+        };
+        if space {
+            " "
+        } else {
+            ""
         }
-        joined.push_str(part);
     }
-    joined
+
+    /// Whether a line may end right after `c` without a space being lost.
+    /// wwPDB breaks chemical names only after these characters.
+    fn breaks_after(self, c: char) -> bool {
+        match self {
+            Join::Chemical => matches!(c, '-' | ')' | ',' | ';'),
+            Join::Text | Join::Word => true,
+        }
+    }
+
+    /// Joins trimmed parts, skipping empty ones.
+    pub fn join<'a>(self, parts: impl IntoIterator<Item = &'a str>) -> String {
+        let mut joined = String::new();
+        for part in parts.into_iter().map(str::trim).filter(|p| !p.is_empty()) {
+            if !joined.is_empty() {
+                joined.push_str(self.separator(&joined, part));
+            }
+            joined.push_str(part);
+        }
+        joined
+    }
+}
+
+/// Joins the text of continued lines, see [Join::Text].
+pub(crate) fn join_continued<'a>(parts: impl IntoIterator<Item = &'a str>) -> String {
+    Join::Text.join(parts)
+}
+
+/// Joins continued chemical names, see [Join::Chemical].
+pub(crate) fn join_chemical_name<'a>(parts: impl IntoIterator<Item = &'a str>) -> String {
+    Join::Chemical.join(parts)
+}
+
+/// How text is wrapped over continued lines.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct Wrap {
+    /// how the parser joins the lines back
+    pub join: Join,
+    /// separator of list items; whitespace around items is not significant
+    /// so lines may also break after a separator
+    pub list_separator: Option<char>,
+    /// Keep words, or list items, whole: split one after a hyphen or
+    /// similar only when it does not fit on a line of its own. Otherwise
+    /// each line is filled as far as possible. wwPDB fills JRNL lines this
+    /// way, and other records greedily.
+    pub whole_units: bool,
+}
+
+impl Wrap {
+    pub const TEXT: Wrap = Wrap {
+        join: Join::Text,
+        list_separator: None,
+        whole_units: false,
+    };
+
+    pub const fn list(join: Join, separator: char) -> Wrap {
+        Wrap {
+            join,
+            list_separator: Some(separator),
+            whole_units: false,
+        }
+    }
+
+    pub const fn whole_units(self) -> Wrap {
+        Wrap {
+            whole_units: true,
+            ..self
+        }
+    }
+}
+
+/// Splits `text` into pieces, the first at most `first_width` and the rest
+/// at most `width` characters long, such that the join rule of `wrapping`
+/// gives back `text`. Text without any break point is cut at the width.
+pub(crate) fn wrap(text: &str, first_width: usize, width: usize, wrapping: Wrap) -> Vec<String> {
+    let Wrap {
+        join,
+        list_separator,
+        whole_units,
+    } = wrapping;
+    let chars: Vec<char> = text.trim().chars().collect();
+    // a break ending the line after `end` characters: the line length, the
+    // start of the next line and whether it is a preferred break
+    let break_at = |rest: &[char], end: usize| -> Option<(usize, usize, bool)> {
+        let left_len = rest[..end]
+            .iter()
+            .rposition(|c| *c != ' ')
+            .map_or(0, |i| i + 1);
+        let right_start = end + rest[end..].iter().take_while(|c| **c == ' ').count();
+        if left_len == 0 || right_start == rest.len() {
+            return None;
+        }
+        let left: String = rest[..left_len].iter().collect();
+        let right: String = rest[right_start..].iter().take(1).collect();
+        let removed = right_start - left_len;
+        let after_separator = list_separator.is_some_and(|s| left.ends_with(s));
+        let restores = removed == join.separator(&left, &right).len()
+            && (removed > 0 || join.breaks_after(left.chars().last().unwrap()));
+        if after_separator && removed <= 1 {
+            Some((left_len, right_start, true))
+        } else if restores {
+            Some((
+                left_len,
+                right_start,
+                list_separator.is_none() && removed > 0,
+            ))
+        } else {
+            None
+        }
+    };
+    let mut pieces = Vec::new();
+    let mut rest = &chars[..];
+    let mut max = first_width;
+    while rest.len() > max {
+        let breaks: Vec<_> = (1..=max).filter_map(|end| break_at(rest, end)).collect();
+        let last_preferred = breaks.iter().rev().find(|b| b.2);
+        let last_preferred = last_preferred.filter(|_| whole_units);
+        let cut = match last_preferred {
+            Some(&(len, start, _)) => {
+                // the unit after a preferred break goes to the next line whole
+                // if it fits there
+                let next_unit = (start + 1..rest.len())
+                    .find(|&end| break_at(rest, end).is_some_and(|b| b.2 && b.0 > start))
+                    .unwrap_or(rest.len())
+                    - start;
+                if next_unit <= width {
+                    (len, start)
+                } else {
+                    breaks.last().map_or((len, start), |b| (b.0, b.1))
+                }
+            }
+            None => breaks.last().map_or((max, max), |b| (b.0, b.1)),
+        };
+        pieces.push(rest[..cut.0].iter().collect());
+        rest = &rest[cut.1..];
+        max = width;
+    }
+    if !rest.is_empty() || pieces.is_empty() {
+        pieces.push(rest.iter().collect());
+    }
+    pieces
+}
+
+/// Builds a line by placing values at the 1-based columns of the
+/// specification. Built lines are padded to 80 columns like wwPDB files.
+pub(crate) struct LineBuilder(Vec<char>);
+
+impl LineBuilder {
+    pub fn new(record_name: &str) -> Self {
+        LineBuilder(Vec::with_capacity(80)).left(1, record_name)
+    }
+
+    /// writes `text` starting at column `from`
+    pub fn left(mut self, from: usize, text: &str) -> Self {
+        let start = from - 1;
+        if self.0.len() < start {
+            self.0.resize(start, ' ');
+        }
+        for (i, c) in text.chars().enumerate() {
+            match self.0.get_mut(start + i) {
+                Some(slot) => *slot = c,
+                None => self.0.push(c),
+            }
+        }
+        self
+    }
+
+    /// writes `value` right aligned in columns `from..=to`
+    pub fn right(self, from: usize, to: usize, value: impl std::fmt::Display) -> Self {
+        let text = value.to_string();
+        let start = (to + 1).saturating_sub(text.chars().count()).max(from);
+        self.left(start, &text)
+    }
+
+    /// writes `value` right aligned in columns `from..=to` if present
+    pub fn right_opt(self, from: usize, to: usize, value: Option<impl std::fmt::Display>) -> Self {
+        match value {
+            Some(v) => self.right(from, to, v),
+            None => self,
+        }
+    }
+
+    /// writes a character at `col`, blank if `None`
+    pub fn char_at(self, col: usize, c: Option<char>) -> Self {
+        self.left(col, &c.unwrap_or(' ').to_string())
+    }
+
+    /// writes a residue in the layout read by [Line::residue]
+    pub fn residue(self, name: usize, chain: usize, seq: usize, residue: &ResidueRef) -> Self {
+        self.right(name, name + 2, &residue.residue_name)
+            .char_at(chain, Some(residue.chain_id))
+            .right(seq, seq + 3, residue.residue_seq)
+            .char_at(seq + 4, residue.insertion_code)
+    }
+
+    /// writes an atom name in the four columns starting at `col`. Names
+    /// start one column later unless they fill all four columns or start
+    /// with a two letter element such as `FE`.
+    pub fn atom_name(self, col: usize, name: &str, element: Option<&str>) -> Self {
+        let two_letter_element = match element {
+            Some(e) => e.len() == 2,
+            None => TWO_LETTER_ELEMENTS.iter().any(|e| name.starts_with(e)) && name.len() <= 2,
+        };
+        if name.len() >= 4 || two_letter_element {
+            self.left(col, name)
+        } else {
+            self.left(col + 1, name)
+        }
+    }
+
+    pub fn build(mut self) -> String {
+        if self.0.len() < 80 {
+            self.0.resize(80, ' ');
+        }
+        self.0.into_iter().collect()
+    }
+}
+
+/// Elements whose symbol is written from the first column of an atom name
+/// when the element column is not available, as in LINK records.
+const TWO_LETTER_ELEMENTS: [&str; 12] = [
+    "FE", "ZN", "MG", "MN", "CU", "CO", "NI", "CL", "BR", "NA", "CD", "HG",
+];
+
+/// Writes `text` over as many lines as needed. `line(n)` builds the start
+/// of line `n` (1-based) and the text is placed at `text_col` up to
+/// `last_col`; continuation lines leave column `text_col` blank if
+/// `indent` is set, as TITLE and similar records do.
+pub(crate) fn write_wrapped(
+    out: &mut Vec<String>,
+    text: &str,
+    text_col: usize,
+    last_col: usize,
+    indent: bool,
+    wrapping: Wrap,
+    line: impl Fn(usize) -> LineBuilder,
+) {
+    let width = last_col + 1 - text_col;
+    let rest_width = if indent { width - 1 } else { width };
+    for (i, piece) in wrap(text, width, rest_width, wrapping).iter().enumerate() {
+        let col = if i > 0 && indent {
+            text_col + 1
+        } else {
+            text_col
+        };
+        out.push(line(i + 1).left(col, piece).build());
+    }
+}
+
+/// Starts line `n` of a continued record, writing the continuation number
+/// right aligned in columns `from..=to` from the second line on.
+pub(crate) fn continued(name: &str, from: usize, to: usize, n: usize) -> LineBuilder {
+    let line = LineBuilder::new(name);
+    if n > 1 {
+        line.right(from, to, n)
+    } else {
+        line
+    }
+}
+
+/// Formats a date as `DD-MMM-YY`.
+pub(crate) fn format_date(date: NaiveDate) -> String {
+    date.format("%d-%b-%y").to_string().to_uppercase()
 }
 
 /// Runs `parser` on the whole of `input`, `None` if it fails or leaves
@@ -233,10 +501,96 @@ mod test {
     }
 
     #[test]
+    fn wrap_restores_text() {
+        let title = "CRAMBIN AT ULTRA-HIGH RESOLUTION: VALENCE ELECTRON DENSITY";
+        // 11 is the longest word, "RESOLUTION:"
+        for width in 11..40 {
+            let pieces = wrap(title, width, width, Wrap::TEXT);
+            assert!(pieces.iter().all(|p| p.chars().count() <= width));
+            assert_eq!(Join::Text.join(pieces.iter().map(String::as_str)), title);
+        }
+        let name = "METHYL CYCLO[(2S)-2-[[(1R)-1-(N-(L-N-(3-METHYLBUTANOYL)VALYL)PHENYLPROPANOATE";
+        // 16 is the longest unbreakable piece, "PHENYLPROPANOATE"
+        for width in 16..40 {
+            let pieces = wrap(
+                name,
+                width,
+                width,
+                Wrap {
+                    join: Join::Chemical,
+                    ..Wrap::TEXT
+                },
+            );
+            assert_eq!(Join::Chemical.join(pieces.iter().map(String::as_str)), name);
+        }
+    }
+
+    #[test]
+    fn wrap_keeps_short_hyphenated_words_whole() {
+        let title = "CRYSTAL STRUCTURES OF MYOGLOBIN-LIGAND COMPLEXES AT NEAR-ATOMIC RESOLUTION.";
+        assert_eq!(
+            wrap(title, 60, 60, Wrap::TEXT.whole_units()),
+            [
+                "CRYSTAL STRUCTURES OF MYOGLOBIN-LIGAND COMPLEXES AT",
+                "NEAR-ATOMIC RESOLUTION."
+            ]
+        );
+    }
+
+    #[test]
+    fn wrap_list_keeps_items_whole() {
+        let authors = "K.S.WILSON,J.J.VAN BEEUMEN,S.CIURLI";
+        assert_eq!(
+            wrap(authors, 20, 20, Wrap::list(Join::Text, ',').whole_units()),
+            ["K.S.WILSON,", "J.J.VAN BEEUMEN,", "S.CIURLI"]
+        );
+    }
+
+    #[test]
+    fn wrap_list_after_separator() {
+        let pieces = wrap(
+            "C.JELSCH,M.M.TEETER,V.LAMZIN",
+            20,
+            20,
+            Wrap::list(Join::Text, ','),
+        );
+        assert_eq!(pieces, ["C.JELSCH,M.M.TEETER,", "V.LAMZIN"]);
+    }
+
+    #[test]
+    fn line_builder() {
+        let line = LineBuilder::new("SEQRES")
+            .right(8, 10, 1)
+            .char_at(12, Some('A'))
+            .right(14, 17, 224)
+            .build();
+        assert_eq!(line.len(), 80);
+        assert_eq!(line.trim_end(), "SEQRES   1 A  224");
+    }
+
+    #[test]
+    fn atom_name_alignment() {
+        let name = |n: &str, e: Option<&str>| {
+            LineBuilder::new("").atom_name(13, n, e).build()[12..16].to_owned()
+        };
+        assert_eq!(name("CA", Some("C")), " CA ");
+        assert_eq!(name("FE", Some("FE")), "FE  ");
+        assert_eq!(name("HG21", Some("H")), "HG21");
+        assert_eq!(name("FE", None), "FE  ");
+        assert_eq!(name("NE2", None), " NE2");
+    }
+
+    #[test]
     fn test_date_parser() {
         let temp = parse_all(date, "12-SEP-09").unwrap();
         assert_eq!(temp.day(), 12);
         assert_eq!(temp.year(), 2009);
+    }
+
+    #[test]
+    fn date_format() {
+        let date = parse_all(date, "15-OCT-98").unwrap();
+        assert_eq!(format_date(date), "15-OCT-98");
     }
 
     #[test]

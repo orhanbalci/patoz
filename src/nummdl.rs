@@ -7,6 +7,15 @@ pub(crate) fn parse(line: Line) -> Option<Record> {
     }))
 }
 
+/// Writes a NUMMDL record.
+pub(crate) fn write(nummdl: &Nummdl, out: &mut Vec<String>) {
+    out.push(
+        LineBuilder::new("NUMMDL")
+            .left(11, &nummdl.num.to_string())
+            .build(),
+    );
+}
+
 #[cfg(test)]
 mod test {
     use crate::{test_util::single_record, Record};

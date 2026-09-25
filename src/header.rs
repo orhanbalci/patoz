@@ -9,6 +9,17 @@ pub(crate) fn parse(line: Line) -> Option<Record> {
     }))
 }
 
+/// Writes a HEADER record.
+pub(crate) fn write(header: &Header, out: &mut Vec<String>) {
+    out.push(
+        LineBuilder::new("HEADER")
+            .left(11, &header.classification)
+            .left(51, &format_date(header.deposition_date))
+            .left(63, &header.id_code)
+            .build(),
+    );
+}
+
 #[cfg(test)]
 mod test {
     use crate::{test_util::single_record, Record};

@@ -18,6 +18,24 @@ pub(crate) fn parse(line: Line) -> Option<Record> {
     }))
 }
 
+/// Writes a SEQADV record.
+pub(crate) fn write(seqadv: &Seqadv, out: &mut Vec<String>) {
+    out.push(
+        LineBuilder::new("SEQADV")
+            .left(8, &seqadv.idcode)
+            .right(13, 15, &seqadv.conflicting_residue)
+            .char_at(17, Some(seqadv.chain_id))
+            .right_opt(19, 22, seqadv.sequence_number)
+            .char_at(23, seqadv.insertion_code)
+            .left(25, &seqadv.database)
+            .left(30, &seqadv.db_accession)
+            .right(40, 42, seqadv.sequence_db_residue.as_deref().unwrap_or(""))
+            .right_opt(44, 48, seqadv.sequence_db_sequence_number)
+            .left(50, &seqadv.conflict)
+            .build(),
+    );
+}
+
 #[cfg(test)]
 mod test {
     use crate::{test_util::single_record, Record};

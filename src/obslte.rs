@@ -9,6 +9,24 @@ pub(crate) fn parse(lines: &[Line]) -> Option<Record> {
     }))
 }
 
+/// Writes OBSLTE lines, nine replacement ids per line.
+pub(crate) fn write(obslte: &Obslte, out: &mut Vec<String>) {
+    let ids: Vec<_> = obslte.replacement_ids.chunks(9).collect();
+    for (i, ids) in ids
+        .iter()
+        .enumerate()
+        .chain(ids.is_empty().then_some((0, &&[][..])))
+    {
+        let mut line = continued("OBSLTE", 9, 10, i + 1)
+            .left(12, &format_date(obslte.replacement_date))
+            .left(22, &obslte.id_code);
+        for (j, id) in ids.iter().enumerate() {
+            line = line.left(32 + 5 * j, id);
+        }
+        out.push(line.build());
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::{test_util::single_record, Record};

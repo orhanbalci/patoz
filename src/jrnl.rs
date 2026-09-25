@@ -2,7 +2,11 @@
 Parses [JRNL](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#JRNL) records. Each sub record (AUTH, TITL,
 EDIT, REF, PUBL, REFN, PMID, DOI) becomes its own [Record].
 */
-use crate::{ast::types::*, author::authors, primitive::*};
+use crate::{
+    ast::types::*,
+    author::{authors, write_authors},
+    primitive::*,
+};
 
 /// Parses continued lines of one JRNL sub record.
 pub(crate) fn parse(lines: &[Line]) -> Option<Record> {
@@ -43,6 +47,76 @@ pub(crate) fn parse(lines: &[Line]) -> Option<Record> {
         }),
         _ => return None,
     })
+}
+
+fn jrnl(sub_record: &str, n: usize) -> LineBuilder {
+    continued("JRNL", 17, 18, n).left(13, sub_record)
+}
+
+/// Writes a JRNL sub record.
+pub(crate) fn write(record: &Record, out: &mut Vec<String>) {
+    match record {
+        Record::JournalAuthors(a) => {
+            write_authors(out, &a.authors, 20, 79, false, true, |n| jrnl("AUTH", n))
+        }
+        Record::JournalEditors(e) => {
+            write_authors(out, &e.name, 20, 79, false, true, |n| jrnl("EDIT", n))
+        }
+        Record::JournalTitle(t) => write_wrapped(
+            out,
+            &t.title,
+            20,
+            79,
+            false,
+            Wrap::TEXT.whole_units(),
+            |n| jrnl("TITL", n),
+        ),
+        Record::JournalPublication(p) => write_wrapped(
+            out,
+            &p.publication,
+            20,
+            79,
+            false,
+            Wrap::TEXT.whole_units(),
+            |n| jrnl("PUBL", n),
+        ),
+        Record::JournalReference(r) => {
+            let start = out.len();
+            write_wrapped(
+                out,
+                &r.publication_name,
+                20,
+                47,
+                false,
+                Wrap::TEXT.whole_units(),
+                |n| jrnl("REF", n),
+            );
+            let mut first = LineBuilder::new("").left(1, &out[start]);
+            if let Some(volume) = r.volume {
+                first = first.left(50, "V.").right(52, 55, volume);
+            }
+            out[start] = first
+                .right_opt(57, 61, r.page)
+                .right_opt(63, 66, r.year)
+                .build();
+        }
+        Record::JournalCitation(c) => {
+            let serial_type = match c.serial_type {
+                Some(SerialNumber::Issn) => "ISSN",
+                Some(SerialNumber::Essn) => "ESSN",
+                None => "",
+            };
+            out.push(
+                jrnl("REFN", 1)
+                    .left(36, serial_type)
+                    .left(41, c.serial.as_deref().unwrap_or(""))
+                    .build(),
+            );
+        }
+        Record::JournalPubMedId(p) => out.push(jrnl("PMID", 1).left(20, &p.id.to_string()).build()),
+        Record::JournalDoi(d) => out.push(jrnl("DOI", 1).left(20, &d.id).build()),
+        _ => {}
+    }
 }
 
 #[cfg(test)]

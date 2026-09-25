@@ -7,6 +7,11 @@ pub(crate) fn parse(lines: &[Line]) -> Option<Record> {
     }))
 }
 
+/// Writes SOURCE lines.
+pub(crate) fn write(source: &Source, out: &mut Vec<String>) {
+    crate::compnd::write_tokens("SOURCE", &source.tokens, 79, out);
+}
+
 #[cfg(test)]
 mod test {
     use crate::{test_util::single_record, Record, Token};

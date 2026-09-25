@@ -20,6 +20,31 @@ pub(crate) fn parse(dbref1: Line, dbref2: Line) -> Option<Record> {
     }))
 }
 
+/// Writes a [Dbref] as DBREF1 and DBREF2 lines.
+pub(crate) fn write(dbref: &Dbref, out: &mut Vec<String>) {
+    out.push(
+        LineBuilder::new("DBREF1")
+            .left(8, &dbref.idcode)
+            .char_at(13, Some(dbref.chain_id))
+            .right(15, 18, dbref.seq_begin)
+            .char_at(19, dbref.initial_sequence)
+            .right(21, 24, dbref.seq_end)
+            .char_at(25, dbref.ending_sequence)
+            .left(27, &dbref.database)
+            .left(48, &dbref.db_idcode)
+            .build(),
+    );
+    out.push(
+        LineBuilder::new("DBREF2")
+            .left(8, &dbref.idcode)
+            .char_at(13, Some(dbref.chain_id))
+            .left(19, &dbref.db_accession)
+            .right(46, 55, dbref.db_seq_begin)
+            .right(58, 67, dbref.db_seq_end)
+            .build(),
+    );
+}
+
 #[cfg(test)]
 mod test {
     use crate::{test_util::single_record, Record};

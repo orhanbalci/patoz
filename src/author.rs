@@ -13,6 +13,34 @@ pub(crate) fn parse(lines: &[Line]) -> Option<Record> {
     }))
 }
 
+/// Writes an author list in columns `text_col..=last_col` of continued
+/// lines started by `line`.
+pub(crate) fn write_authors(
+    out: &mut Vec<String>,
+    authors: &[Author],
+    text_col: usize,
+    last_col: usize,
+    indent: bool,
+    whole_units: bool,
+    line: impl Fn(usize) -> LineBuilder,
+) {
+    let text = authors
+        .iter()
+        .map(|a| a.0.as_str())
+        .collect::<Vec<_>>()
+        .join(",");
+    let mut wrapping = Wrap::list(Join::Text, ',');
+    wrapping.whole_units = whole_units;
+    write_wrapped(out, &text, text_col, last_col, indent, wrapping, line);
+}
+
+/// Writes AUTHOR lines.
+pub(crate) fn write(authors: &Authors, out: &mut Vec<String>) {
+    write_authors(out, &authors.authors, 11, 79, true, false, |n| {
+        continued("AUTHOR", 9, 10, n)
+    });
+}
+
 #[cfg(test)]
 mod test {
     use crate::{test_util::single_record, Author, Record};

@@ -83,6 +83,81 @@ pub(crate) fn model(line: Line) -> Option<Record> {
     }))
 }
 
+fn format_charge(charge: Option<i8>) -> String {
+    match charge {
+        Some(c) if c < 0 => format!("{}-", -c),
+        Some(c) => format!("{}+", c),
+        None => String::new(),
+    }
+}
+
+/// Writes an ATOM, HETATM or SIGATM record.
+pub(crate) fn write_atom(name: &str, atom: &Atom, out: &mut Vec<String>) {
+    out.push(
+        LineBuilder::new(name)
+            .right(7, 11, atom.serial)
+            .atom_name(13, &atom.name, atom.element.as_deref())
+            .char_at(17, atom.alt_loc)
+            .right(18, 20, &atom.residue_name)
+            .char_at(22, Some(atom.chain_id))
+            .right(23, 26, atom.residue_seq)
+            .char_at(27, atom.insertion_code)
+            .right(31, 38, format!("{:.3}", atom.x))
+            .right(39, 46, format!("{:.3}", atom.y))
+            .right(47, 54, format!("{:.3}", atom.z))
+            .right(55, 60, format!("{:.2}", atom.occupancy))
+            .right(61, 66, format!("{:.2}", atom.temp_factor))
+            .right(77, 78, atom.element.as_deref().unwrap_or(""))
+            .left(79, &format_charge(atom.charge))
+            .build(),
+    );
+}
+
+/// Writes an ANISOU or SIGUIJ record.
+pub(crate) fn write_anisou(name: &str, anisou: &Anisou, out: &mut Vec<String>) {
+    out.push(
+        LineBuilder::new(name)
+            .right(7, 11, anisou.serial)
+            .atom_name(13, &anisou.name, anisou.element.as_deref())
+            .char_at(17, anisou.alt_loc)
+            .right(18, 20, &anisou.residue_name)
+            .char_at(22, Some(anisou.chain_id))
+            .right(23, 26, anisou.residue_seq)
+            .char_at(27, anisou.insertion_code)
+            .right(29, 35, anisou.u11)
+            .right(36, 42, anisou.u22)
+            .right(43, 49, anisou.u33)
+            .right(50, 56, anisou.u12)
+            .right(57, 63, anisou.u13)
+            .right(64, 70, anisou.u23)
+            .right(77, 78, anisou.element.as_deref().unwrap_or(""))
+            .left(79, &format_charge(anisou.charge))
+            .build(),
+    );
+}
+
+/// Writes a TER record.
+pub(crate) fn write_ter(ter: &Ter, out: &mut Vec<String>) {
+    out.push(
+        LineBuilder::new("TER")
+            .right_opt(7, 11, ter.serial)
+            .right(18, 20, &ter.residue_name)
+            .char_at(22, Some(ter.chain_id))
+            .right_opt(23, 26, ter.residue_seq)
+            .char_at(27, ter.insertion_code)
+            .build(),
+    );
+}
+
+/// Writes a MODEL record.
+pub(crate) fn write_model(model: &Model, out: &mut Vec<String>) {
+    out.push(
+        LineBuilder::new("MODEL")
+            .right(11, 14, model.serial)
+            .build(),
+    );
+}
+
 #[cfg(test)]
 mod test {
     use crate::{parse, test_util::single_record, Record};

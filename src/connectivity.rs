@@ -59,6 +59,75 @@ pub(crate) fn conect(line: Line) -> Option<Record> {
     }))
 }
 
+fn symmetry_and_length(
+    line: LineBuilder,
+    symmetry1: &str,
+    symmetry2: &str,
+    length: Option<f64>,
+) -> LineBuilder {
+    line.right(60, 65, symmetry1)
+        .right(67, 72, symmetry2)
+        .right_opt(74, 78, length.map(|l| format!("{:.2}", l)))
+}
+
+/// Writes an SSBOND record.
+pub(crate) fn write_ssbond(ssbond: &Ssbond, out: &mut Vec<String>) {
+    let line = LineBuilder::new("SSBOND")
+        .right(8, 10, ssbond.serial)
+        .residue(12, 16, 18, &ssbond.residue1)
+        .residue(26, 30, 32, &ssbond.residue2);
+    out.push(
+        symmetry_and_length(line, &ssbond.symmetry1, &ssbond.symmetry2, ssbond.length).build(),
+    );
+}
+
+/// Writes a LINK record. `element` looks up the element of an atom by
+/// residue and atom name to align atom names as ATOM records do.
+pub(crate) fn write_link<'a>(
+    link: &Link,
+    element: impl Fn(&str, &str) -> Option<&'a str>,
+    out: &mut Vec<String>,
+) {
+    let line = LineBuilder::new("LINK")
+        .atom_name(
+            13,
+            &link.name1,
+            element(&link.residue1.residue_name, &link.name1),
+        )
+        .char_at(17, link.alt_loc1)
+        .residue(18, 22, 23, &link.residue1)
+        .atom_name(
+            43,
+            &link.name2,
+            element(&link.residue2.residue_name, &link.name2),
+        )
+        .char_at(47, link.alt_loc2)
+        .residue(48, 52, 53, &link.residue2);
+    out.push(symmetry_and_length(line, &link.symmetry1, &link.symmetry2, link.length).build());
+}
+
+/// Writes a CISPEP record.
+pub(crate) fn write_cispep(cispep: &Cispep, out: &mut Vec<String>) {
+    out.push(
+        LineBuilder::new("CISPEP")
+            .right(8, 10, cispep.serial)
+            .residue(12, 16, 18, &cispep.residue1)
+            .residue(26, 30, 32, &cispep.residue2)
+            .right(44, 46, cispep.model)
+            .right_opt(54, 59, cispep.angle.map(|a| format!("{:.2}", a)))
+            .build(),
+    );
+}
+
+/// Writes a CONECT record.
+pub(crate) fn write_conect(conect: &Conect, out: &mut Vec<String>) {
+    let mut line = LineBuilder::new("CONECT").right(7, 11, conect.serial);
+    for (i, bonded) in conect.bonded.iter().enumerate() {
+        line = line.right(12 + 5 * i, 16 + 5 * i, bonded);
+    }
+    out.push(line.build());
+}
+
 #[cfg(test)]
 mod test {
     use crate::{test_util::single_record, Record, ResidueRef};

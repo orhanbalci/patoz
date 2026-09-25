@@ -7,6 +7,17 @@ pub(crate) fn parse(lines: &[Line]) -> Option<Record> {
     }))
 }
 
+/// Writes SPLIT lines, fourteen id codes per line.
+pub(crate) fn write(split: &Split, out: &mut Vec<String>) {
+    for (i, ids) in split.id_codes.chunks(14).enumerate() {
+        let mut line = continued("SPLIT", 9, 10, i + 1);
+        for (j, id) in ids.iter().enumerate() {
+            line = line.left(12 + 5 * j, id);
+        }
+        out.push(line.build());
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::{test_util::single_record, Record};

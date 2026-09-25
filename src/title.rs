@@ -7,6 +7,13 @@ pub(crate) fn parse(lines: &[Line]) -> Option<Record> {
     }))
 }
 
+/// Writes TITLE lines.
+pub(crate) fn write(title: &Title, out: &mut Vec<String>) {
+    write_wrapped(out, &title.title, 11, 80, true, Wrap::TEXT, |n| {
+        continued("TITLE", 9, 10, n)
+    });
+}
+
 #[cfg(test)]
 mod test {
     use crate::{test_util::single_record, Record};

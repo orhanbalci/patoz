@@ -49,6 +49,72 @@ pub(crate) fn formul(lines: &[Line]) -> Option<Record> {
     }))
 }
 
+/// Writes a HET record.
+pub(crate) fn write_het(het: &Het, out: &mut Vec<String>) {
+    out.push(
+        LineBuilder::new("HET")
+            .residue(8, 13, 14, &het.residue)
+            .right(21, 25, het.num_het_atoms)
+            .left(31, &het.text)
+            .build(),
+    );
+}
+
+/// Writes HETNAM lines.
+pub(crate) fn write_hetnam(hetnam: &Hetnam, out: &mut Vec<String>) {
+    write_wrapped(
+        out,
+        &hetnam.name,
+        16,
+        70,
+        true,
+        Wrap {
+            join: Join::Chemical,
+            ..Wrap::TEXT
+        },
+        |n| continued("HETNAM", 9, 10, n).right(12, 14, &hetnam.het_id),
+    );
+}
+
+/// Writes HETSYN lines.
+pub(crate) fn write_hetsyn(hetsyn: &Hetsyn, out: &mut Vec<String>) {
+    let text = hetsyn.synonyms.join("; ");
+    write_wrapped(
+        out,
+        &text,
+        16,
+        70,
+        true,
+        Wrap::list(Join::Chemical, ';'),
+        |n| continued("HETSYN", 9, 10, n).right(12, 14, &hetsyn.het_id),
+    );
+}
+
+/// Writes FORMUL lines.
+pub(crate) fn write_formul(formul: &Formul, out: &mut Vec<String>) {
+    for (i, piece) in wrap(
+        &formul.formula,
+        51,
+        51,
+        Wrap {
+            join: Join::Word,
+            ..Wrap::TEXT
+        },
+    )
+    .iter()
+    .enumerate()
+    {
+        out.push(
+            continued("FORMUL", 17, 18, i + 1)
+                .right(9, 10, formul.component)
+                .right(13, 15, &formul.het_id)
+                .char_at(19, formul.water.then_some('*'))
+                .left(20, piece)
+                .build(),
+        );
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::{parse, test_util::single_record, Record};

@@ -8,6 +8,13 @@ pub(crate) fn parse(lines: &[Line]) -> Option<Record> {
     }))
 }
 
+/// Writes CAVEAT lines.
+pub(crate) fn write(caveat: &Caveat, out: &mut Vec<String>) {
+    write_wrapped(out, &caveat.comment, 20, 79, false, Wrap::TEXT, |n| {
+        continued("CAVEAT", 9, 10, n).left(12, &caveat.id_code)
+    });
+}
+
 #[cfg(test)]
 mod test {
     use crate::{test_util::single_record, Record};

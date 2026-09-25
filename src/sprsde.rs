@@ -9,6 +9,24 @@ pub(crate) fn parse(lines: &[Line]) -> Option<Record> {
     }))
 }
 
+/// Writes SPRSDE lines, nine superseded ids per line.
+pub(crate) fn write(sprsde: &Sprsde, out: &mut Vec<String>) {
+    let ids: Vec<_> = sprsde.superseeded.chunks(9).collect();
+    for (i, ids) in ids
+        .iter()
+        .enumerate()
+        .chain(ids.is_empty().then_some((0, &&[][..])))
+    {
+        let mut line = continued("SPRSDE", 9, 10, i + 1)
+            .left(12, &format_date(sprsde.sprsde_date))
+            .left(22, &sprsde.id_code);
+        for (j, id) in ids.iter().enumerate() {
+            line = line.left(32 + 5 * j, id);
+        }
+        out.push(line.build());
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::{test_util::single_record, Record};

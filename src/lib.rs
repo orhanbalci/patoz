@@ -39,7 +39,7 @@ mod sprsde;
 mod title;
 
 pub use ast::{pdb_file::*, types::*};
-pub use record::parse;
+pub use record::{parse, write};
 
 #[cfg(test)]
 mod test_util {

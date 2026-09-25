@@ -2,7 +2,7 @@ use crate::{
     ast::{pdb_file::*, types::*},
     atom, author, caveat, compnd, connectivity, crystal, dbref, dbref1, expdta, header, heterogen,
     jrnl, keywds, master, mdltyp, modres, nummdl, obslte,
-    primitive::Line,
+    primitive::{Line, LineBuilder},
     remark, revdat, secondary, seqadv, seqres, source, split, sprsde, title,
 };
 
@@ -112,6 +112,91 @@ fn parse_group(lines: &[Line]) -> Option<Record> {
         "CONECT" => connectivity::conect(first),
         "END" => Some(Record::End),
         _ => None,
+    }
+}
+
+/// Writes records as pdb file content. Lines are padded to 80 columns
+/// except [Record::Unknown] lines, which are written verbatim.
+pub fn write(pdb: &PdbFile<Vec<Record>>) -> String {
+    // elements by residue and atom name, to align atom names of LINK records
+    let mut elements = std::collections::HashMap::new();
+    for record in pdb.records() {
+        if let Record::Atom(a) | Record::Hetatm(a) = record {
+            if let Some(element) = &a.element {
+                elements.insert((a.residue_name.as_str(), a.name.as_str()), element.as_str());
+            }
+        }
+    }
+    let element = |residue: &str, name: &str| elements.get(&(residue, name)).copied();
+    let mut out = Vec::new();
+    for record in pdb.records() {
+        match record {
+            Record::Link(link) => connectivity::write_link(link, element, &mut out),
+            _ => write_record(record, &mut out),
+        }
+    }
+    let mut content = out.join("\n");
+    content.push('\n');
+    content
+}
+
+fn write_record(record: &Record, out: &mut Vec<String>) {
+    match record {
+        Record::Header(r) => header::write(r, out),
+        Record::Title(r) => title::write(r, out),
+        Record::Obslte(r) => obslte::write(r, out),
+        Record::Split(r) => split::write(r, out),
+        Record::Caveat(r) => caveat::write(r, out),
+        Record::Sprsde(r) => sprsde::write(r, out),
+        Record::Seqres(r) => seqres::write(r, out),
+        Record::Mdltyp(r) => mdltyp::write(r, out),
+        Record::Revdats(r) => revdat::write(r, out),
+        Record::Cmpnd(r) => compnd::write(r, out),
+        Record::Source(r) => source::write(r, out),
+        Record::Keywds(r) => keywds::write(r, out),
+        Record::JournalAuthors(_)
+        | Record::JournalTitle(_)
+        | Record::JournalEditors(_)
+        | Record::JournalReference(_)
+        | Record::JournalCitation(_)
+        | Record::JournalPublication(_)
+        | Record::JournalPubMedId(_)
+        | Record::JournalDoi(_) => jrnl::write(record, out),
+        Record::Experimental(r) => expdta::write(r, out),
+        Record::Nummdl(r) => nummdl::write(r, out),
+        Record::Authors(r) => author::write(r, out),
+        Record::Dbref(r) => dbref::write(r, out),
+        // DBREF1 and DBREF2 lines are parsed into a single Dbref
+        Record::Dbref1(_) | Record::Dbref2(_) => {}
+        Record::Seqadv(r) => seqadv::write(r, out),
+        Record::Modres(r) => modres::write(r, out),
+        Record::Remark(r) => remark::write(r, out),
+        Record::Het(r) => heterogen::write_het(r, out),
+        Record::Hetnam(r) => heterogen::write_hetnam(r, out),
+        Record::Hetsyn(r) => heterogen::write_hetsyn(r, out),
+        Record::Formul(r) => heterogen::write_formul(r, out),
+        Record::Helix(r) => secondary::write_helix(r, out),
+        Record::Sheet(r) => secondary::write_sheet(r, out),
+        Record::Site(r) => secondary::write_site(r, out),
+        Record::Ssbond(r) => connectivity::write_ssbond(r, out),
+        Record::Link(r) => connectivity::write_link(r, |_, _| None, out),
+        Record::Cispep(r) => connectivity::write_cispep(r, out),
+        Record::Conect(r) => connectivity::write_conect(r, out),
+        Record::Cryst1(r) => crystal::write_cryst1(r, out),
+        Record::Origx(r) => crystal::write_transformation("ORIGX", r, |l| l, out),
+        Record::Scale(r) => crystal::write_transformation("SCALE", r, |l| l, out),
+        Record::Mtrix(r) => crystal::write_mtrix(r, out),
+        Record::Model(r) => atom::write_model(r, out),
+        Record::Atom(r) => atom::write_atom("ATOM", r, out),
+        Record::Hetatm(r) => atom::write_atom("HETATM", r, out),
+        Record::Sigatm(r) => atom::write_atom("SIGATM", r, out),
+        Record::Anisou(r) => atom::write_anisou("ANISOU", r, out),
+        Record::Siguij(r) => atom::write_anisou("SIGUIJ", r, out),
+        Record::Ter(r) => atom::write_ter(r, out),
+        Record::Endmdl => out.push(LineBuilder::new("ENDMDL").build()),
+        Record::Master(r) => master::write(r, out),
+        Record::End => out.push(LineBuilder::new("END").build()),
+        Record::Unknown(line) => out.push(line.clone()),
     }
 }
 
@@ -322,6 +407,37 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
             })
             .sum();
         assert_eq!(master.num_remark as usize, remark_lines);
+    }
+
+    #[test]
+    fn write_round_trip() {
+        for entry in ["1BXO", "1NLS", "1BYI"] {
+            let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("res")
+                .join(format!("{}.pdb", entry));
+            let content = std::fs::read_to_string(path).unwrap();
+            let pdb = parse(&content);
+            let written = write(&pdb);
+            assert_eq!(parse(&written).records(), pdb.records(), "{}", entry);
+            // fixed column records come out byte identical
+            let coordinates = |text: &str| -> Vec<String> {
+                text.lines()
+                    .filter(|l| l.starts_with("ATOM") || l.starts_with("HETATM"))
+                    .map(|l| format!("{:<80}", l))
+                    .collect()
+            };
+            assert_eq!(coordinates(&written), coordinates(&content), "{}", entry);
+        }
+    }
+
+    #[test]
+    fn write_pads_lines_and_keeps_unknown_lines() {
+        let pdb =
+            parse("HEADER    PLANT PROTEIN                           02-MAR-00   1EJG\nXYZ 1\n");
+        let written = write(&pdb);
+        let lines: Vec<_> = written.lines().collect();
+        assert_eq!(lines[0].len(), 80);
+        assert_eq!(lines[1], "XYZ 1");
     }
 
     #[test]

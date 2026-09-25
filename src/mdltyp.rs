@@ -8,6 +8,14 @@ pub(crate) fn parse(lines: &[Line]) -> Option<Record> {
     }))
 }
 
+/// Writes MDLTYP lines.
+pub(crate) fn write(mdltyp: &Mdltyp, out: &mut Vec<String>) {
+    let text = mdltyp.structural_annotation.join(" ; ");
+    write_wrapped(out, &text, 11, 80, true, Wrap::list(Join::Text, ';'), |n| {
+        continued("MDLTYP", 9, 10, n)
+    });
+}
+
 #[cfg(test)]
 mod test {
     use crate::{test_util::single_record, Record};

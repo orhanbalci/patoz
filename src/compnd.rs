@@ -92,6 +92,89 @@ pub(crate) fn parse(lines: &[Line]) -> Option<Record> {
     }))
 }
 
+fn token_text(token: &Token) -> String {
+    let list = |items: &[String]| items.join(", ");
+    let numbers = |items: &[u32]| {
+        items
+            .iter()
+            .map(u32::to_string)
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+    let yes_no = |b: bool| if b { "YES" } else { "NO" }.to_owned();
+    let (key, value) = match token {
+        Token::MoleculeId(id) => ("MOL_ID", id.to_string()),
+        Token::Molecule(v) => ("MOLECULE", v.clone()),
+        Token::Chain { identifiers } => ("CHAIN", list(identifiers)),
+        Token::Fragment(v) => ("FRAGMENT", v.clone()),
+        Token::Synonym { synonyms } => ("SYNONYM", list(synonyms)),
+        Token::Ec { commission_numbers } => ("EC", list(commission_numbers)),
+        Token::Engineered(b) => ("ENGINEERED", yes_no(*b)),
+        Token::Mutation(b) => ("MUTATION", yes_no(*b)),
+        Token::OtherDetails(v) => ("OTHER_DETAILS", v.clone()),
+        Token::Synthetic(v) => ("SYNTHETIC", v.clone()),
+        Token::OrganismScientific(v) => ("ORGANISM_SCIENTIFIC", v.clone()),
+        Token::OrganismCommon { organisms } => ("ORGANISM_COMMON", list(organisms)),
+        Token::OrganismTaxId { id } => ("ORGANISM_TAXID", numbers(id)),
+        Token::Strain(v) => ("STRAIN", v.clone()),
+        Token::Variant(v) => ("VARIANT", v.clone()),
+        Token::CellLine(v) => ("CELL_LINE", v.clone()),
+        Token::Atcc(v) => ("ATCC", v.to_string()),
+        Token::Organ(v) => ("ORGAN", v.clone()),
+        Token::Tissue(v) => ("TISSUE", v.clone()),
+        Token::Cell(v) => ("CELL", v.clone()),
+        Token::Organelle(v) => ("ORGANELLE", v.clone()),
+        Token::Secretion(v) => ("SECRETION", v.clone()),
+        Token::CellularLocation(v) => ("CELLULAR_LOCATION", v.clone()),
+        Token::Plasmid(v) => ("PLASMID", v.clone()),
+        Token::Gene { gene } => ("GENE", list(gene)),
+        Token::ExpressionSystem(v) => ("EXPRESSION_SYSTEM", v.clone()),
+        Token::ExpressionSystemCommon { systems } => ("EXPRESSION_SYSTEM_COMMON", list(systems)),
+        Token::ExpressionSystemTaxId { id } => ("EXPRESSION_SYSTEM_TAXID", numbers(id)),
+        Token::ExpressionSystemStrain(v) => ("EXPRESSION_SYSTEM_STRAIN", v.clone()),
+        Token::ExpressionSystemVariant(v) => ("EXPRESSION_SYSTEM_VARIANT", v.clone()),
+        Token::ExpressionSystemCellLine(v) => ("EXPRESSION_SYSTEM_CELL_LINE", v.clone()),
+        Token::ExpressionSystemAtcc(v) => ("EXPRESSION_SYSTEM_ATCC_NUMBER", v.to_string()),
+        Token::ExpressionSystemOrgan(v) => ("EXPRESSION_SYSTEM_ORGAN", v.clone()),
+        Token::ExpressionSystemTissue(v) => ("EXPRESSION_SYSTEM_TISSUE", v.clone()),
+        Token::ExpressionSystemCell(v) => ("EXPRESSION_SYSTEM_CELL", v.clone()),
+        Token::ExpressionSystemOrganelle(v) => ("EXPRESSION_SYSTEM_ORGANELLE", v.clone()),
+        Token::ExpressionSystemCellularLocation(v) => {
+            ("EXPRESSION_SYSTEM_CELLULAR_LOCATION", v.clone())
+        }
+        Token::ExpressionSystemVectorType(v) => ("EXPRESSION_SYSTEM_VECTOR_TYPE", v.clone()),
+        Token::ExpressionSystemVector(v) => ("EXPRESSION_SYSTEM_VECTOR", v.clone()),
+        Token::ExpressionSystemPlasmid(v) => ("EXPRESSION_SYSTEM_PLASMID", v.clone()),
+        Token::ExpressionSystemGene(v) => ("EXPRESSION_SYSTEM_GENE", v.clone()),
+        Token::Other { key, value } => (key.as_str(), value.clone()),
+    };
+    format!("{}: {}", key, value)
+}
+
+/// Writes a specification list as COMPND or SOURCE lines, starting each
+/// token on a new line as wwPDB does.
+pub(crate) fn write_tokens(name: &str, tokens: &[Token], last_col: usize, out: &mut Vec<String>) {
+    let width = last_col - 11;
+    let mut n = 0;
+    for (i, token) in tokens.iter().enumerate() {
+        let mut text = token_text(token);
+        if i + 1 < tokens.len() {
+            text.push(';');
+        }
+        let first_width = if n == 0 { width + 1 } else { width };
+        for piece in wrap(&text, first_width, width, Wrap::TEXT) {
+            n += 1;
+            let col = if n == 1 { 11 } else { 12 };
+            out.push(continued(name, 8, 10, n).left(col, &piece).build());
+        }
+    }
+}
+
+/// Writes COMPND lines.
+pub(crate) fn write(cmpnd: &Cmpnd, out: &mut Vec<String>) {
+    write_tokens("COMPND", &cmpnd.tokens, 80, out);
+}
+
 #[cfg(test)]
 mod test {
     use crate::{test_util::single_record, Record, Token};

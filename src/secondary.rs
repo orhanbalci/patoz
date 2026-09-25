@@ -56,6 +56,55 @@ pub(crate) fn site(lines: &[Line]) -> Option<Record> {
     }))
 }
 
+/// Writes a HELIX record.
+pub(crate) fn write_helix(helix: &Helix, out: &mut Vec<String>) {
+    out.push(
+        LineBuilder::new("HELIX")
+            .right(8, 10, helix.serial)
+            .right(12, 14, &helix.helix_id)
+            .residue(16, 20, 22, &helix.start)
+            .residue(28, 32, 34, &helix.end)
+            .right_opt(39, 40, helix.class)
+            .left(41, &helix.comment)
+            .right_opt(72, 76, helix.length)
+            .build(),
+    );
+}
+
+/// Writes a SHEET record.
+pub(crate) fn write_sheet(sheet: &Sheet, out: &mut Vec<String>) {
+    let mut line = LineBuilder::new("SHEET")
+        .right(8, 10, sheet.strand)
+        .right(12, 14, &sheet.sheet_id)
+        .right(15, 16, sheet.num_strands)
+        .residue(18, 22, 23, &sheet.start)
+        .residue(29, 33, 34, &sheet.end)
+        .right(39, 40, sheet.sense);
+    if let Some(r) = &sheet.registration {
+        line = line
+            .atom_name(42, &r.current_atom, None)
+            .residue(46, 50, 51, &r.current)
+            .atom_name(57, &r.previous_atom, None)
+            .residue(61, 65, 66, &r.previous);
+    }
+    out.push(line.build());
+}
+
+/// Writes SITE lines, four residues per line.
+pub(crate) fn write_site(site: &Site, out: &mut Vec<String>) {
+    let columns = [(19, 23, 24), (30, 34, 35), (41, 45, 46), (52, 56, 57)];
+    for (i, residues) in site.residues.chunks(4).enumerate() {
+        let mut line = LineBuilder::new("SITE")
+            .right(8, 10, i + 1)
+            .right(12, 14, &site.site_id)
+            .right(16, 17, site.num_res);
+        for (residue, (name, chain, seq)) in residues.iter().zip(columns) {
+            line = line.residue(name, chain, seq, residue);
+        }
+        out.push(line.build());
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::{parse, test_util::single_record, Record, ResidueRef};

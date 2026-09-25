@@ -13,6 +13,21 @@ pub(crate) fn parse(line: Line) -> Option<Record> {
     }))
 }
 
+/// Writes a MODRES record.
+pub(crate) fn write(modres: &Modres, out: &mut Vec<String>) {
+    out.push(
+        LineBuilder::new("MODRES")
+            .left(8, &modres.idcode)
+            .right(13, 15, &modres.residue_name)
+            .char_at(17, Some(modres.chain_id))
+            .right(19, 22, modres.sequence_number)
+            .char_at(23, modres.insertion_code)
+            .right(25, 27, &modres.standart_residue_name)
+            .left(30, &modres.comment)
+            .build(),
+    );
+}
+
 #[cfg(test)]
 mod test {
     use crate::{test_util::single_record, Record};

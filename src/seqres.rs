@@ -14,6 +14,20 @@ pub(crate) fn parse(lines: &[Line]) -> Option<Record> {
     }))
 }
 
+/// Writes SEQRES lines of a chain, thirteen residues per line.
+pub(crate) fn write(seqres: &Seqres, out: &mut Vec<String>) {
+    for (i, residues) in seqres.residues.chunks(13).enumerate() {
+        let mut line = LineBuilder::new("SEQRES")
+            .right(8, 10, i + 1)
+            .char_at(12, seqres.chain_id)
+            .right(14, 17, seqres.num_res);
+        for (j, residue) in residues.iter().enumerate() {
+            line = line.right(20 + 4 * j, 22 + 4 * j, residue);
+        }
+        out.push(line.build());
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::{parse, Record};

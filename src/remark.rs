@@ -112,6 +112,21 @@ pub(crate) fn biological_assemblies(remark: &Remark) -> Option<Vec<BiologicalAss
     rows.is_empty().then_some(assemblies)
 }
 
+/// Writes REMARK lines.
+pub(crate) fn write(remark: &Remark, out: &mut Vec<String>) {
+    for text in &remark.lines {
+        let line = LineBuilder::new("REMARK").right(8, 10, remark.number);
+        out.push(
+            if text.is_empty() {
+                line
+            } else {
+                line.left(12, text)
+            }
+            .build(),
+        );
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
