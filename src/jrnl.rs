@@ -7,7 +7,7 @@ use super::{ast::types::*, primitive::*};
 use nom::{
     alt,
     character::complete::{line_ending, space0, space1},
-    do_parse, fold_many1, map, map_res, named, opt, tag, take_str,
+    do_parse, fold_many1, map, map_opt, map_res, named, opt, tag, take_str,
 };
 
 use crate::author::author_list_parser;
@@ -93,10 +93,10 @@ named!(
 
 "#],
     pub jrnl_author_record_parser<Record>,
-    map!(jrnl_author_line_folder, |jrnl_author: Vec<u8>| {
+    map_opt!(jrnl_author_line_folder, |jrnl_author: Vec<u8>| {
         author_list_parser(jrnl_author.as_slice())
             .map(|res| Record::JournalAuthors(JournalAuthors{ authors: res.1 }))
-            .expect("Can not parse journal author record")
+            .ok()
     })
 );
 

@@ -17,7 +17,7 @@ use nom::{
     alt,
     bytes::complete::tag,
     character::complete::{line_ending, space0, space1},
-    do_parse, fold_many1, map,
+    do_parse, fold_many1, map_opt,
     multi::separated_list,
     named, opt, tag, IResult,
 };
@@ -111,9 +111,9 @@ Record structure:
 |         |                              | optional comment desc                     |
 "#],
     pub expdata_record_parser<Record>,
-    map!(expdata_line_folder, |v: Vec<u8>| {
+    map_opt!(expdata_line_folder, |v: Vec<u8>| {
         experimental_technique_list_parser(v.as_slice())
             .map(|res| Record::Experimental(Experimental { techniques: res.1 }))
-            .expect("Can not parse expdta records")
+            .ok()
     })
 );

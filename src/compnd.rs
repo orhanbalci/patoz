@@ -8,7 +8,7 @@ use nom::{
     alt,
     bytes::complete::tag,
     character::complete::{line_ending, space0, space1},
-    do_parse, fold_many1, map,
+    do_parse, fold_many1, map_opt,
     multi::separated_list,
     named, opt, IResult,
 };
@@ -476,11 +476,11 @@ Record layout is given below :
 "#],
 
     pub cmpnd_token_parser<Record>,
-    map!(
+    map_opt!(
         cmpnd_line_folder,
         |v: Vec<u8>|  tokens_parser(v.as_slice())
                         .map(|res| Record::Cmpnd(Cmpnd{ tokens : res.1}))
-                        .expect("Could not parse tokens")
+                        .ok()
     )
 );
 

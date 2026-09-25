@@ -5,7 +5,7 @@ The KEYWDS record contains a set of terms relevant to the entry.
 use super::{ast::types::*, primitive::*};
 use nom::{
     character::complete::{line_ending, space0, space1},
-    do_parse, fold_many1, map, named, opt,
+    do_parse, fold_many1, map_opt, named, opt,
 };
 
 use crate::make_line_folder;
@@ -49,9 +49,9 @@ named!(
 
  "#],
     pub keywds_parser<Record>,
-    map!(keywds_line_folder, |v: Vec<u8>| keywds_value_parser(
+    map_opt!(keywds_line_folder, |v: Vec<u8>| keywds_value_parser(
         v.as_slice()
     )
     .map(|res| Record::Keywds (Keywds{ keywords: res.1 }))
-    .expect("Can not parse keywds record"))
+    .ok())
 );

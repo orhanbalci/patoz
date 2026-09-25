@@ -5,7 +5,7 @@ The SOURCE record specifies the biological or chemical source of each molecule i
 use super::{ast::types::*, primitive::*};
 use nom::{
     character::complete::{line_ending, space0, space1},
-    do_parse, fold_many1, map, named, opt,
+    do_parse, fold_many1, map_opt, named, opt,
 };
 
 use super::compnd::tokens_parser;
@@ -49,9 +49,9 @@ Record layout :
 |           | List           |               | macromolecule in a  token: value format. |
     "#],
     pub source_token_parser<Record>,
-    map!(
+    map_opt!(
         source_line_folder,
-        |v: Vec<u8>| tokens_parser(v.as_slice()).map(|res| Record::Source(Source{tokens : res.1})).expect("Can not parse source record")
+        |v: Vec<u8>| tokens_parser(v.as_slice()).map(|res| Record::Source(Source{tokens : res.1})).ok()
     )
 );
 

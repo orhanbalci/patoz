@@ -5,7 +5,7 @@ records. Obslte record indicates that this entry is removed from PDB and replace
 use super::{ast::types::*, primitive::*};
 use nom::{
     character::complete::{line_ending, space0, space1},
-    do_parse, fold_many1, map, named, opt, take,
+    do_parse, fold_many1, map_opt, named, opt, take,
 };
 
 use crate::make_line_folder;
@@ -71,16 +71,7 @@ Record structure :
 | 72 - 75    | IDcode        | rIdCode       | ID code of entry that replaced this one. |
 "#],
     pub obslte_record_parser<Record>,
-    map!(obslte_line_folder, |obslte: Vec<u8>| {
-        println!("{}", str::from_utf8(obslte.as_slice()).unwrap());
-        if let Ok((_, res)) = obslte_parser(obslte.as_slice()) {
-            res
-        } else {
-            println!("Obslte parser error");
-            Record::Obslte(Obslte {
-                replacement_date: chrono::NaiveDate::MIN,
-                replacement_ids: Vec::new(),
-            })
-        }
+    map_opt!(obslte_line_folder, |obslte: Vec<u8>| {
+        obslte_parser(obslte.as_slice()).ok().map(|(_, res)| res)
     })
 );

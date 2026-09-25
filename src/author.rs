@@ -9,7 +9,7 @@ use nom::{
         complete::{line_ending, space0, space1},
         is_alphanumeric, is_space,
     },
-    do_parse, fold_many1, map, map_res,
+    do_parse, fold_many1, map_opt, map_res,
     multi::separated_list,
     named, opt, Err, IResult,
 };
@@ -82,9 +82,9 @@ Record structure :
 
 "#],
     pub author_record_parser<Record>,
-    map!(author_line_folder, |v: Vec<u8>| {
+    map_opt!(author_line_folder, |v: Vec<u8>| {
         author_list_parser(v.as_slice())
             .map(|res| Record::Authors(Authors { authors: res.1 }))
-            .expect("Can not parse author record")
+            .ok()
     })
 );
