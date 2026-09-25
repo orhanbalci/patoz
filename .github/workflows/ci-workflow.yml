@@ -45,6 +45,26 @@ jobs:
         with:
           command: test
 
+  wasm:
+    name: Wasm Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v1
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+          override: true
+
+      - name: Build wasm bindings
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: -p patoz-wasm --target wasm32-unknown-unknown
+
   fmt:
     name: Rustfmt
     runs-on: ubuntu-latest

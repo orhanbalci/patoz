@@ -48,6 +48,22 @@ fn read_file(path: &PathBuf) -> String {
     }
 }
 ```
+# 🕸️ WebAssembly
+`patoz-wasm` exposes the parser to JavaScript. Build it with [wasm-pack](https://rustwasm.github.io/wasm-pack/):
+```
+wasm-pack build patoz-wasm --target web
+```
+```js
+import init, { parse } from "./pkg/patoz_wasm.js";
+
+await init();
+const { records, firstUnparsedLine } = parse(pdbText);
+const header = records.find((r) => r.Header)?.Header;
+console.log(header.classification, header.id_code);
+```
+Each record is an object keyed by its record type, e.g. `{ "Keywds": { "keywords": [...] } }`.
+`firstUnparsedLine` is the line where parsing stopped (records not supported yet), or `null` if the whole file was parsed.
+
 # 📊  Status
 ## Record Parser Status
 ### Title Section

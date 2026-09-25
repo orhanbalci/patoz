@@ -10,11 +10,13 @@ pub(crate) struct Continuation<T> {
 
 ///Holds name of an author utilized by multiple
 ///parsers such as author and journal author parsers
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, PartialEq)]
 pub struct Author(pub String);
 
 /// Experimental techniques utilized in obtaining
 /// structure data
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, PartialEq)]
 pub enum ExperimentalTechnique {
     XRayDiffraction,
@@ -45,6 +47,7 @@ impl FromStr for ExperimentalTechnique {
 }
 
 /// Represents keys of CMPND and SOURCE records
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {
     MoleculeId(u32),
@@ -91,6 +94,7 @@ pub enum Token {
 }
 
 /// Represents a modification made to this pdb entry.
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone)]
 pub struct Revdat {
     pub modification_number: u32,
@@ -101,6 +105,7 @@ pub struct Revdat {
 }
 
 /// modification type of REVDAT record
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone)]
 pub enum ModificationType {
     /// initial release of the entry. Indicated as 0
@@ -114,6 +119,7 @@ pub enum ModificationType {
 }
 
 /// Serial Number Type of a JRNL REFN record
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, PartialEq)]
 pub enum SerialNumber {
     Issn,
@@ -121,6 +127,7 @@ pub enum SerialNumber {
 }
 
 /// contains HEADER recor information
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone)]
 pub struct Header {
     pub classification: String,
@@ -139,6 +146,7 @@ impl std::default::Default for Header {
 }
 
 /// result of a TITLE record
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct Title {
     pub title: String,
@@ -146,6 +154,7 @@ pub struct Title {
 
 /// contains pdb entry ids which removed
 /// this one from PDB
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone)]
 pub struct Obslte {
     pub replacement_date: NaiveDate,
@@ -164,12 +173,14 @@ impl std::default::Default for Obslte {
 /// if this entry is a part of bigger
 /// structure, this struct holds ids of other
 /// parts of the bigger structure
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct Split {
     pub id_codes: Vec<String>,
 }
 
 /// fallacies of this entry
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct Caveat {
     pub id_code: String,
@@ -177,6 +188,7 @@ pub struct Caveat {
 }
 
 /// pdb entry ids made obsolete by this entry
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone)]
 pub struct Sprsde {
     pub sprsde_date: NaiveDate,
@@ -194,6 +206,7 @@ impl std::default::Default for Sprsde {
     }
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct Seqres {
     pub chain_id: Option<char>,
@@ -201,60 +214,70 @@ pub struct Seqres {
 }
 
 /// model type of the entry
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct Mdltyp {
     pub structural_annotation: Vec<String>,
 }
 
 /// collection of revisions
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct Revdats {
     pub revdat: Vec<Revdat>,
 }
 
 /// collection of tokens in a CMPND record
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct Cmpnd {
     pub tokens: Vec<Token>,
 }
 
 /// collection of tokens in a SOURCE record
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct Source {
     pub tokens: Vec<Token>,
 }
 
 /// keywords related to the entry
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct Keywds {
     pub keywords: Vec<String>,
 }
 
 /// author collection
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct Authors {
     pub authors: Vec<Author>,
 }
 
 /// journal author collection
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct JournalAuthors {
     pub authors: Vec<Author>,
 }
 
 /// journal title
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct JournalTitle {
     pub title: String,
 }
 
 /// journal editor collection
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct JournalEditors {
     pub name: Vec<Author>,
 }
 
 /// journal reference
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct JournalReference {
     pub publication_name: String,
@@ -264,6 +287,7 @@ pub struct JournalReference {
 }
 
 /// journal Citation fields
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct JournalCitation {
     pub serial_type: Option<SerialNumber>,
@@ -271,18 +295,21 @@ pub struct JournalCitation {
 }
 
 /// journal publication fields
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct JournalPublication {
     pub publication: String,
 }
 
 /// journal PubMed id
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct JournalPubMedId {
     pub id: u32,
 }
 
 /// digital object identifier of related e-pub
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct JournalDoi {
     pub id: String,
@@ -290,18 +317,21 @@ pub struct JournalDoi {
 
 /// experimanetal techniques used for exploring
 /// structure of this entry
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct Experimental {
     pub techniques: Vec<ExperimentalTechnique>,
 }
 
 /// number of models in this file
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct Nummdl {
     pub num: u32,
 }
 
 /// cross references to other sequence databases
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct Dbref {
     pub idcode: String,
@@ -319,6 +349,7 @@ pub struct Dbref {
     pub dbins_end: Option<char>,
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct Dbref1 {
     pub idcode: String,
@@ -331,6 +362,7 @@ pub struct Dbref1 {
     pub db_idcode: String,
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct Dbref2 {
     pub idcode: String,
@@ -340,6 +372,7 @@ pub struct Dbref2 {
     pub db_seq_end: u32,
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct Seqadv {
     pub idcode: String,
@@ -355,6 +388,7 @@ pub struct Seqadv {
 }
 
 /// residue modification record
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, Default)]
 pub struct Modres {
     pub idcode: String,
@@ -368,6 +402,7 @@ pub struct Modres {
 
 /// main enum unifying all record parser results.
 /// all sub parsers return a variant of this
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone)]
 pub enum Record {
     Header(Header),

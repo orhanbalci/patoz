@@ -1,3 +1,7 @@
+[workspace]
+members = [".", "patoz-wasm"]
+exclude = ["pdb-harvester"]
+
 [package]
 name = "patoz"
 version = "0.1.1-alpha.0"
@@ -8,7 +12,7 @@ homepage = "https://github.com/orhanbalci"
 repository = "https://github.com/orhanbalci/patoz.git"
 keywords = ["parser","nom", "pdb", "bioinformatics", "science"]
 license = "MIT"
-exclude = ["pdb-harvester", "grcov.yml", "pdb_harvester"]
+exclude = ["pdb-harvester", "grcov.yml", "pdb_harvester", "patoz-wasm"]
 documentation = "http://docs.rs/patoz/0.1.0"
 readme = "README.md"
 
@@ -16,6 +20,11 @@ readme = "README.md"
 nom = "5.0.1"
 chrono = "0.4"
 itertools = "0.8"
+serde = { version = "1.0", features = ["derive"], optional = true }
+
+[features]
+# Derives serde::Serialize for all record types
+serde = ["dep:serde", "chrono/serde"]
 
 [dev-dependencies]
 serde_json="1.0"
