@@ -478,6 +478,27 @@ pub fn till_line_ending(s: &[u8]) -> IResult<&[u8], &[u8]> {
 
 named!(pub residue_parser<String>, map_res!(alt!(take_str!(3) | take_str!(2) | take_str!(1)), str::FromStr::from_str));
 
+/// Consumes one line including its terminator and returns the line without
+/// the terminator. Fails only on empty input.
+pub fn line(s: &[u8]) -> IResult<&[u8], &[u8]> {
+    if s.is_empty() {
+        return Err(nom::Err::Error((s, nom::error::ErrorKind::Eof)));
+    }
+    let end = s.iter().position(|&b| b == b'\n').unwrap_or(s.len());
+    let rest = &s[(end + 1).min(s.len())..];
+    let l = &s[..end];
+    Ok((rest, l.strip_suffix(b"\r").unwrap_or(l)))
+}
+
+/// Returns the text in 1-based inclusive columns `from..=to` of a line, as
+/// the PDB format specification numbers them. Columns past the end of a
+/// short line are treated as blank.
+pub fn columns(line: &[u8], from: usize, to: usize) -> &str {
+    let start = (from - 1).min(line.len());
+    let end = to.min(line.len());
+    str::from_utf8(&line[start..end]).unwrap_or("")
+}
+
 pub fn residue_list_parser(s: &[u8]) -> IResult<&[u8], Vec<String>> {
     separated_list(multispace1, residue_parser)(s)
 }

@@ -1,81 +1,107 @@
 use super::{ast::types::*, primitive::*};
-use nom::{
-    character::complete::{anychar, space1},
-    do_parse, many0, map, named, opt,
-};
+use nom::IResult;
 
-use itertools::Itertools;
-
-#[allow(dead_code)]
-pub struct SeqresLine {
-    serial_number: u32,
+struct SeqresLine {
     chain_id: Option<char>,
     num_res: u32,
     residues: Vec<String>,
 }
-named!(#[doc=r#"Parses a line of [SEQRES](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#SEQRES) record.
 
-|COLUMNS    |   DATA TYPE     | FIELD      |  DEFINITION                                           |
-|-----------|-----------------|------------|-------------------------------------------------------|
-|1 -  6     |    Record name  |  SEQRES    |                                                       |
-|8 - 10     |    Integer      |  serNum    |   Serial number of the SEQRES record for  the         |
-|           |                 |            |   current  chain. Starts at 1 and increments          |
-|           |                 |            |   by one  each line. Reset to 1 for each chain.       |
-|12         |    Character    |  chainID   |   Chain identifier. This may be any single            |
-|           |                 |            |   legal  character, including a blank which is        |
-|           |                 |            |   is  used if there is only one chain.                |
-|14 - 17    |    Integer      |  numRes    |   Number of residues in the chain.                    |
-|           |                 |            |   This  value is repeated on every record.            |
-|20 - 22    |    Residue name |  resName   |   Residue name.                                       |
-|24 - 26    |    Residue name |  resName   |   Residue name.                                       |
-|28 - 30    |    Residue name |  resName   |   Residue name.                                       |
-|32 - 34    |    Residue name |  resName   |   Residue name.                                       |
-|36 - 38    |    Residue name |  resName   |   Residue name.                                       |
-|40 - 42    |    Residue name |  resName   |   Residue name.                                       |
-|44 - 46    |    Residue name |  resName   |   Residue name.                                       |
-|48 - 50    |    Residue name |  resName   |   Residue name.                                       |
-|52 - 54    |    Residue name |  resName   |   Residue name.                                       |
-|56 - 58    |    Residue name |  resName   |   Residue name.                                       |
-|60 - 62    |    Residue name |  resName   |   Residue name.                                       |
-|64 - 66    |    Residue name |  resName   |   Residue name.                                       |
-|68 - 70    |    Residue name |  resName   |   Residue name.                                       |
-"#],
-    pub seqres_line_parser<SeqresLine>,
-    do_parse!(
-        seqres
-            >> space1
-            >> serial_number: integer
-            >> space1
-            >> chain_id: opt!(anychar)
-            >> space1
-            >> num_res: integer
-            >> residues: residue_list_parser
-            >> (SeqresLine {
-                serial_number,
-                chain_id,
-                num_res,
-                residues,
-            })
-    )
-);
+/// Parses a single line of
+/// [SEQRES](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#SEQRES)
+/// record by its fixed columns.
+///
+/// |COLUMNS    |   DATA TYPE     | FIELD      |  DEFINITION                                   |
+/// |-----------|-----------------|------------|-----------------------------------------------|
+/// |1 -  6     |    Record name  |  SEQRES    |                                               |
+/// |8 - 10     |    Integer      |  serNum    |   Serial number of the SEQRES record for the  |
+/// |           |                 |            |   current chain. Reset to 1 for each chain.   |
+/// |12         |    Character    |  chainID   |   Chain identifier. Blank if single chain.    |
+/// |14 - 17    |    Integer      |  numRes    |   Number of residues in the chain.            |
+/// |20 - 70    |    Residue name |  resName   |   Up to 13 residue names, 4 columns apart.    |
+fn seqres_line_parser(s: &[u8]) -> IResult<&[u8], SeqresLine> {
+    let (rest, l) = line(s)?;
+    let fail = || nom::Err::Error((s, nom::error::ErrorKind::Tag));
+    if !l.starts_with(b"SEQRES") {
+        return Err(fail());
+    }
+    let num_res = columns(l, 14, 17).trim().parse().map_err(|_| fail())?;
+    let chain_id = columns(l, 12, 12).chars().next().filter(|c| *c != ' ');
+    let residues = columns(l, 20, 70)
+        .split_whitespace()
+        .map(str::to_owned)
+        .collect();
+    Ok((
+        rest,
+        SeqresLine {
+            chain_id,
+            num_res,
+            residues,
+        },
+    ))
+}
 
-named!(seqres_parser<Vec<SeqresLine>>, many0!(seqres_line_parser));
+/// Parses consecutive SEQRES lines of one chain into a single record.
+pub fn seqres_record_parser(s: &[u8]) -> IResult<&[u8], Record> {
+    let (mut rest, first) = seqres_line_parser(s)?;
+    let mut seqres = Seqres {
+        chain_id: first.chain_id,
+        num_res: first.num_res,
+        residues: first.residues,
+    };
+    while let Ok((next_rest, next)) = seqres_line_parser(rest) {
+        if next.chain_id != seqres.chain_id {
+            break;
+        }
+        seqres.residues.extend(next.residues);
+        rest = next_rest;
+    }
+    Ok((rest, Record::Seqres(seqres)))
+}
 
-named!(
-    seqres_record_parser<Vec<Record>>,
-    map!(seqres_parser, |seqres: Vec<SeqresLine>| {
-        seqres
-            .into_iter()
-            .group_by(|a| a.chain_id)
-            .into_iter()
-            .map(|(k, v)| {
-                Record::Seqres(Seqres {
-                    chain_id: k,
-                    residues: v.fold(Vec::new(), |v: Vec<String>, sr: SeqresLine| {
-                        v.into_iter().chain(sr.residues).collect()
-                    }),
-                })
-            })
-            .collect::<Vec<_>>()
-    })
-);
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    const TWO_CHAINS: &[u8] =
+        b"SEQRES   1 A   15  ALA ASP THR ILE VAL ALA VAL GLU LEU ASP THR TYR PRO
+SEQRES   2 A   15  SER GLY
+SEQRES   1 B    2  DA  DT
+END
+";
+
+    #[test]
+    fn groups_lines_per_chain() {
+        let (rest, a) = seqres_record_parser(TWO_CHAINS).unwrap();
+        let (rest, b) = seqres_record_parser(rest).unwrap();
+        assert_eq!(rest, b"END\n");
+        match (a, b) {
+            (Record::Seqres(a), Record::Seqres(b)) => {
+                assert_eq!(a.chain_id, Some('A'));
+                assert_eq!(a.num_res, 15);
+                assert_eq!(a.residues.len(), 15);
+                assert_eq!(a.residues[13..], ["SER", "GLY"]);
+                assert_eq!(b.chain_id, Some('B'));
+                assert_eq!(b.residues, ["DA", "DT"]);
+            }
+            _ => panic!(),
+        }
+    }
+
+    #[test]
+    fn blank_chain_id() {
+        let (_, r) = seqres_record_parser(b"SEQRES   1      2  GLY ALA").unwrap();
+        match r {
+            Record::Seqres(s) => {
+                assert_eq!(s.chain_id, None);
+                assert_eq!(s.residues, ["GLY", "ALA"]);
+            }
+            _ => panic!(),
+        }
+    }
+
+    #[test]
+    fn rejects_other_records() {
+        assert!(seqres_record_parser(b"SEQADV 1BXO\n").is_err());
+    }
+}

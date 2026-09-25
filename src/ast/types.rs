@@ -212,6 +212,7 @@ impl std::default::Default for Sprsde {
 #[derive(Debug, Clone, Default)]
 pub struct Seqres {
     pub chain_id: Option<char>,
+    pub num_res: u32,
     pub residues: Vec<String>,
 }
 
@@ -436,4 +437,6 @@ pub enum Record {
     Seqadv(Seqadv),
     Modres(Modres),
     Remark,
+    /// a line no record parser recognized, kept verbatim
+    Unknown(String),
 }

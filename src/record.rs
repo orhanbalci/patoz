@@ -19,9 +19,11 @@ use super::{
     modres::modres_record_parser,
     nummdl::nummdl_record_parser,
     obslte::obslte_record_parser,
+    primitive::line,
     remark::remark_record_parser,
     revdat::revdat_record_parser,
     seqadv::seqadv_record_parser,
+    seqres::seqres_record_parser,
     source::source_token_parser,
     split::split_record_parser,
     sprsde::sprsde_record_parser,
@@ -58,8 +60,20 @@ named!(
             | complete!(seqadv_record_parser)
             | complete!(remark_record_parser)
             | complete!(modres_record_parser)
+            | complete!(seqres_record_parser)
+            | complete!(unknown_record_parser)
     )
 );
+
+/// Fallback for lines no record parser recognizes so parsing never stops
+/// early. Must stay the last alternative.
+fn unknown_record_parser(s: &[u8]) -> IResult<&[u8], Record> {
+    let (rest, l) = line(s)?;
+    Ok((
+        rest,
+        Record::Unknown(String::from_utf8_lossy(l).into_owned()),
+    ))
+}
 
 named!(
     pdb_records_parser<PdbFile<Vec<Record>>>,

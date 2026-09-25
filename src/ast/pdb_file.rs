@@ -101,6 +101,17 @@ impl PrimaryStructure<&mut Vec<Record>> {
     impl_record_filter!(dbreference -> Dbref -> Dbref);
     impl_record_filter!(conflicts -> Seqadv -> Seqadv);
     impl_record_filter!(residues -> Seqres -> Seqres);
+
+    /// residue sequences of all chains
+    pub fn sequences(&self) -> Vec<Seqres> {
+        self.records
+            .iter()
+            .filter_map(|r| match r {
+                Record::Seqres(s) => Some(s.clone()),
+                _ => None,
+            })
+            .collect()
+    }
 }
 #[cfg(test)]
 mod test {

@@ -57,12 +57,12 @@ wasm-pack build patoz-wasm --target web
 import init, { parse } from "./pkg/patoz_wasm.js";
 
 await init();
-const { records, firstUnparsedLine } = parse(pdbText);
+const { records } = parse(pdbText);
 const header = records.find((r) => r.Header)?.Header;
 console.log(header.classification, header.id_code);
 ```
 Each record is an object keyed by its record type, e.g. `{ "Keywds": { "keywords": [...] } }`.
-`firstUnparsedLine` is the line where parsing stopped (records not supported yet), or `null` if the whole file was parsed.
+Lines of record types that are not supported yet come back as `{ "Unknown": "<line>" }`.
 
 # 📊  Status
 ## Record Parser Status
