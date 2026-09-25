@@ -25,7 +25,7 @@ named!(
             >> space0
             >> line_ending
             >> (Continuation::<TitleLine> {
-                continuation: if let Some(cc) = cont { cc } else { 0 },
+                continuation: cont.unwrap_or(0),
                 remaining: tit,
                 phantom: PhantomData,
             })

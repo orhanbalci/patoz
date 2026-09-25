@@ -453,7 +453,7 @@ named!(
             >> rest: till_line_ending
             >> line_ending
             >> (Continuation::<CmpndLine> {
-                continuation: if let Some(cc) = cont { cc } else { 0 },
+                continuation: cont.unwrap_or(0),
                 remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
                 phantom: PhantomData,
             })
@@ -493,7 +493,7 @@ mod test {
         if let Ok((_, Token::MoleculeId(res))) = super::mol_id_parser("MOL_ID:  1".as_bytes()) {
             assert_eq!(res, 1);
         } else {
-            assert!(false);
+            panic!();
         }
     }
 
@@ -504,7 +504,7 @@ mod test {
         {
             assert_eq!(name, "HEMOGLOBIN ALPHA CHAIN");
         } else {
-            assert!(false);
+            panic!();
         }
     }
 

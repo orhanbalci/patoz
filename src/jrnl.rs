@@ -63,7 +63,7 @@ named!(
             >> rest: till_line_ending
             >> line_ending
             >> (Continuation::<JrnlAuthorLine> {
-                continuation: if let Some(cc) = cont { cc } else { 0 },
+                continuation: cont.unwrap_or(0),
                 remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
                 phantom: PhantomData,
             })
@@ -111,7 +111,7 @@ named!(
             >> rest: till_line_ending
             >> line_ending
             >> (Continuation::<JrnlTitleLine> {
-                continuation: if let Some(cc) = cont { cc } else { 0 },
+                continuation: cont.unwrap_or(0),
                 remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
                 phantom: PhantomData,
             })
@@ -157,7 +157,7 @@ named!(
             >> rest: till_line_ending
             >> line_ending
             >> (Continuation::<JrnlEditLine> {
-                continuation: if let Some(cc) = cont { cc } else { 0 },
+                continuation: cont.unwrap_or(0),
                 remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
                 phantom: PhantomData,
             })
@@ -211,7 +211,7 @@ named!(
             >> space0
             >> line_ending
             >> (JrnlRefLine {
-                continuation: if let Some(cc) = cont { cc } else { 0 },
+                continuation: cont.unwrap_or(0),
                 publication_name: publication_name.trim().to_owned(),
                 volume,
                 page,
@@ -283,7 +283,7 @@ named!(
             >> rest: till_line_ending
             >> line_ending
             >> (Continuation::<JrnlPublLine> {
-                continuation: if let Some(cc) = cont { cc } else { 0 },
+                continuation: cont.unwrap_or(0),
                 remaining: String::from_str(str::from_utf8(rest).unwrap().trim()).unwrap(),
                 phantom: PhantomData,
             })
@@ -446,7 +446,7 @@ mod test {
             }
             Err(e) => {
                 println!("{:?}", e);
-                assert!(false);
+                panic!();
             }
         }
     }
@@ -471,7 +471,7 @@ JRNL        TITL 2 1.74 A RESOLUTION
             }
             Err(e) => {
                 println!("{:?}", e);
-                assert!(false);
+                panic!();
             }
         }
     }

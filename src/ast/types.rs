@@ -3,6 +3,8 @@ use std::{marker::PhantomData, str::FromStr};
 
 #[derive(Debug)]
 pub(crate) struct Continuation<T> {
+    // TODO use to validate continuation line order
+    #[allow(dead_code)]
     pub continuation: u32,
     pub remaining: String,
     pub phantom: PhantomData<T>,
@@ -139,7 +141,7 @@ impl std::default::Default for Header {
     fn default() -> Self {
         Header {
             classification: String::default(),
-            deposition_date: NaiveDate::from_ymd(1900, 1, 1),
+            deposition_date: NaiveDate::from_ymd_opt(1900, 1, 1).unwrap(),
             id_code: String::default(),
         }
     }
@@ -164,7 +166,7 @@ pub struct Obslte {
 impl std::default::Default for Obslte {
     fn default() -> Self {
         Obslte {
-            replacement_date: NaiveDate::from_ymd(1900, 1, 1),
+            replacement_date: NaiveDate::from_ymd_opt(1900, 1, 1).unwrap(),
             replacement_ids: Vec::new(),
         }
     }
@@ -199,7 +201,7 @@ pub struct Sprsde {
 impl std::default::Default for Sprsde {
     fn default() -> Self {
         Sprsde {
-            sprsde_date: NaiveDate::from_ymd(1900, 1, 1),
+            sprsde_date: NaiveDate::from_ymd_opt(1900, 1, 1).unwrap(),
             superseeded: Vec::new(),
             id_code: String::default(),
         }

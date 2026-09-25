@@ -5,7 +5,6 @@ use chrono::{
     NaiveDate,
 };
 
-use nom::combinator::recognize;
 use nom::{
     alt,
     branch::alt,
@@ -14,7 +13,7 @@ use nom::{
         complete::{alpha1, alphanumeric1, digit1, multispace1, space0, space1},
         is_alphanumeric, is_digit, is_space,
     },
-    combinator::{map, map_res},
+    combinator::{map, map_res, recognize},
     do_parse, fold_many0, map_opt, map_res,
     multi::separated_list,
     named, separated_list,
@@ -513,23 +512,19 @@ mod test {
 
     #[test]
     fn test_yes_parser() {
-        if let Ok((_, res)) = yes("YES".as_bytes()) {
-            assert_eq!(res, true);
-        }
+        let (_, res) = yes("YES".as_bytes()).unwrap();
+        assert!(res);
     }
 
     #[test]
     fn test_no_parser() {
-        if let Ok((_, res)) = no("NO".as_bytes()) {
-            assert_eq!(res, false);
-        }
+        let (_, res) = no("NO".as_bytes()).unwrap();
+        assert!(!res);
     }
 
     #[test]
     fn test_token_mol_id_parser() {
-        if let Ok((_, _res)) = mol_id("MOL_ID:".as_bytes()) {
-            assert!(true);
-        }
+        assert!(mol_id("MOL_ID:".as_bytes()).is_ok());
     }
 
     #[test]
@@ -537,10 +532,9 @@ mod test {
         let res = residue_list_parser("GLY ILE VAL".as_bytes());
         match res {
             Ok((_, r)) => {
-                assert_eq!(r[0], "GLY");
-                assert!(true);
+                assert_eq!(r, vec!["GLY", "ILE", "VAL"]);
             }
-            Err(_err) => assert!(false),
+            Err(_err) => panic!(),
         }
     }
 
@@ -553,7 +547,7 @@ mod test {
             }
             Err(e) => {
                 println!("{:?}", e);
-                assert!(false);
+                panic!();
             }
         }
     }
@@ -574,7 +568,7 @@ mod test {
             }
             Err(e) => {
                 println!("{:?}", e);
-                assert!(false);
+                panic!();
             }
         }
     }
@@ -584,7 +578,7 @@ mod test {
         if let Ok((_, res)) = super::threedigit_integer(b"  7") {
             assert_eq!(7, res)
         } else {
-            assert!(false)
+            panic!()
         }
     }
 
@@ -596,19 +590,11 @@ mod test {
 
     #[test]
     fn two_space() {
-        if let Ok((_, _res)) = super::two_space(b"  ") {
-            assert!(true)
-        } else {
-            assert!(false)
-        }
+        assert!(super::two_space(b"  ").is_ok());
     }
 
     #[test]
     fn two_space_fail() {
-        if let Err(_e) = super::two_space(b" ") {
-            assert!(true)
-        } else {
-            assert!(false)
-        }
+        assert!(super::two_space(b" ").is_err());
     }
 }

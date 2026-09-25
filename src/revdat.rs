@@ -32,7 +32,7 @@ named!(
             >> line_ending
             >> (RevdatLine {
                 modification_number,
-                continuation: if let Some(cc) = cont { cc } else { 0 },
+                continuation: cont.unwrap_or(0),
                 rest: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
             })
     )
@@ -97,7 +97,7 @@ If successfull returns [Record](../ast/types/enum.Record.html) variant containin
                     }
                     _ => Revdat {
                         modification_number: 0,
-                        modification_date: chrono::naive::MIN_DATE,
+                        modification_date: chrono::NaiveDate::MIN,
                         idcode: String::new(),
                         modification_type: ModificationType::InitialRelease,
                         modification_detail: Vec::new(),
@@ -145,9 +145,6 @@ REVDAT   1   14-OCT-98 1BXO    0
 "#
                 .as_bytes(),
         );
-        match res {
-            Ok((_, _rest)) => assert!(true),
-            Err(_err) => assert!(false),
-        }
+        assert!(res.is_ok());
     }
 }

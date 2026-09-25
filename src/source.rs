@@ -26,7 +26,7 @@ named!(
             >> rest: till_line_ending
             >> line_ending
             >> (Continuation::<SourceLine> {
-                continuation: if let Some(cc) = cont { cc } else { 0 },
+                continuation: cont.unwrap_or(0),
                 remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
                 phantom: PhantomData,
             })
@@ -60,13 +60,9 @@ mod test {
 
     #[test]
     fn source() {
-        if let Ok((_, _res)) = super::source_token_parser(br#"SOURCE    MOL_ID: 1;                                                            
+        assert!(super::source_token_parser(br#"SOURCE    MOL_ID: 1;                                                            
 SOURCE   2 ORGANISM_SCIENTIFIC: CRAMBE HISPANICA SUBSP ABYSSINICA;                                             
 SOURCE   3 STRAIN: SUBSP ABYSSINICA  
-"#){
-assert!(true)
-        }else{
-            assert!(false)
-        }
+"#).is_ok());
     }
 }

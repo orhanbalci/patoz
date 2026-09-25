@@ -64,7 +64,7 @@ mod test {
         ) {
             assert_eq!(res.idcode, "2JHQ");
         } else {
-            assert!(false);
+            panic!();
         }
     }
 }

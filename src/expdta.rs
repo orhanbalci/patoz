@@ -87,7 +87,7 @@ named!(
             >> rest: till_line_ending
             >> line_ending
             >> (Continuation::<ExpdataLine> {
-                continuation: if let Some(cc) = cont { cc } else { 0 },
+                continuation: cont.unwrap_or(0),
                 remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
                 phantom: PhantomData,
             })

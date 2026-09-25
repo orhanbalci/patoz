@@ -24,7 +24,7 @@ named!(
             >> rest: till_line_ending
             >> line_ending
             >> (Continuation::<ObslteLine> {
-                continuation: if let Some(cc) = cont { cc } else { 0 },
+                continuation: cont.unwrap_or(0),
                 remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
                 phantom: PhantomData,
             })
@@ -78,7 +78,7 @@ Record structure :
         } else {
             println!("Obslte parser error");
             Record::Obslte(Obslte {
-                replacement_date: chrono::naive::MIN_DATE,
+                replacement_date: chrono::NaiveDate::MIN,
                 replacement_ids: Vec::new(),
             })
         }

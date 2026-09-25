@@ -100,7 +100,7 @@ mod test {
         {
             assert_eq!(class, "PHOTOSYNTHESIS")
         } else {
-            assert!(false);
+            panic!();
         }
     }
 
@@ -118,7 +118,7 @@ mod test {
         {
             assert_eq!(class, "TRANSFERASE/TRANSFERASE")
         } else {
-            assert!(false);
+            panic!();
         }
     }
 
@@ -135,7 +135,7 @@ mod test {
         {
             assert_eq!(reps[0], "1MBP");
         } else {
-            assert!(false)
+            panic!()
         }
     }
 
@@ -155,7 +155,7 @@ mod test {
                 "RHIZOPUSPEPSIN COMPLEXED WITH REDUCED PEPTIDE INHIBITOR"
             )
         } else {
-            assert!(false)
+            panic!()
         }
     }
 
@@ -170,7 +170,7 @@ mod test {
         if let Record::Split(split) = splt {
             assert_eq!(split.id_codes[0], "1VOQ")
         } else {
-            assert!(false)
+            panic!()
         }
     }
 
@@ -194,7 +194,7 @@ TITLE     HUMAN CYTOSOLIC PHOSPHOLIPASE A2
                 assert_eq!(tit.title, "HUMAN CYTOSOLIC PHOSPHOLIPASE A2");
             }
         } else {
-            assert!(false);
+            panic!();
         }
     }
 
@@ -228,7 +228,7 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
 
             assert_eq!(pubmedid.id, 10737790);
         } else {
-            assert!(false)
+            panic!()
         }
     }
 

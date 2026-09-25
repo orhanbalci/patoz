@@ -90,7 +90,7 @@ DBREF2 1ABC A     MES00005880000                     61         322
         ) {
             assert_eq!(res.idcode, "1ABC");
         } else {
-            assert!(false);
+            panic!();
         }
     }
 }

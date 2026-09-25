@@ -82,7 +82,7 @@ pub struct PdbJournal<I> {
     records: I,
 }
 
-impl<'a> PdbJournal<&'a mut Vec<Record>> {
+impl PdbJournal<&mut Vec<Record>> {
     impl_record_filter!(authors -> JournalAuthors -> JournalAuthors);
     impl_record_filter!(title -> JournalTitle -> JournalTitle);
     impl_record_filter!(editors -> JournalEditors -> JournalEditors);
@@ -97,7 +97,7 @@ pub struct PrimaryStructure<I> {
     records: I,
 }
 
-impl<'a> PrimaryStructure<&'a mut Vec<Record>> {
+impl PrimaryStructure<&mut Vec<Record>> {
     impl_record_filter!(dbreference -> Dbref -> Dbref);
     impl_record_filter!(conflicts -> Seqadv -> Seqadv);
     impl_record_filter!(residues -> Seqres -> Seqres);
