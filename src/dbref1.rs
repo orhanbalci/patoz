@@ -6,16 +6,16 @@ pub(crate) fn parse(dbref1: Line, dbref2: Line) -> Option<Record> {
     Some(Record::Dbref(Dbref {
         idcode: dbref1.text(8, 11).to_owned(),
         chain_id: dbref1.char_at(13).unwrap_or(' '),
-        seq_begin: dbref1.int(15, 18)?,
+        seq_begin: dbref1.number(15, 18)?,
         initial_sequence: dbref1.char_at(19),
-        seq_end: dbref1.int(21, 24)?,
+        seq_end: dbref1.number(21, 24)?,
         ending_sequence: dbref1.char_at(25),
         database: dbref1.text(27, 32).to_owned(),
         db_idcode: dbref1.text(48, 67).to_owned(),
         db_accession: dbref2.text(19, 40).to_owned(),
-        db_seq_begin: dbref2.int(46, 55)?,
+        db_seq_begin: dbref2.number(46, 55)?,
         idbns_begin: None,
-        db_seq_end: dbref2.int(58, 67)?,
+        db_seq_end: dbref2.number(58, 67)?,
         dbins_end: None,
     }))
 }

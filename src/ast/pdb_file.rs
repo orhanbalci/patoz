@@ -51,6 +51,51 @@ impl PdbFile<Vec<Record>> {
             records: &mut self.records,
         }
     }
+
+    pub fn coordinates(&self) -> Coordinates<'_> {
+        Coordinates {
+            records: &self.records,
+        }
+    }
+
+    /// record counts declared in the MASTER record
+    pub fn master(&self) -> Option<&Master> {
+        self.records.iter().find_map(|r| match r {
+            Record::Master(m) => Some(m),
+            _ => None,
+        })
+    }
+}
+
+/// coordinate section records of all models in file order
+pub struct Coordinates<'a> {
+    records: &'a [Record],
+}
+
+impl<'a> Coordinates<'a> {
+    /// atoms of ATOM records
+    pub fn atoms(&self) -> impl Iterator<Item = &'a Atom> {
+        self.records.iter().filter_map(|r| match r {
+            Record::Atom(a) => Some(a),
+            _ => None,
+        })
+    }
+
+    /// atoms of HETATM records
+    pub fn hetero_atoms(&self) -> impl Iterator<Item = &'a Atom> {
+        self.records.iter().filter_map(|r| match r {
+            Record::Hetatm(a) => Some(a),
+            _ => None,
+        })
+    }
+
+    /// anisotropic temperature factors of ANISOU records
+    pub fn anisou(&self) -> impl Iterator<Item = &'a Anisou> {
+        self.records.iter().filter_map(|r| match r {
+            Record::Anisou(a) => Some(a),
+            _ => None,
+        })
+    }
 }
 
 pub struct PdbHeader<I> {

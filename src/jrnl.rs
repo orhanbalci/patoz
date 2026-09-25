@@ -18,9 +18,9 @@ pub(crate) fn parse(lines: &[Line]) -> Option<Record> {
         }),
         "REF" => Record::JournalReference(JournalReference {
             publication_name: join_continued(lines.iter().map(|l| l.cols(20, 47))),
-            volume: first.int(52, 55),
-            page: first.int(57, 61),
-            year: first.int(63, 66),
+            volume: first.number(52, 55),
+            page: first.number(57, 61),
+            year: first.number(63, 66),
         }),
         "PUBL" => Record::JournalPublication(JournalPublication {
             publication: text(),
@@ -36,7 +36,7 @@ pub(crate) fn parse(lines: &[Line]) -> Option<Record> {
                 .map(str::to_owned),
         }),
         "PMID" => Record::JournalPubMedId(JournalPubMedId {
-            id: first.int(20, 79)?,
+            id: first.number(20, 79)?,
         }),
         "DOI" => Record::JournalDoi(JournalDoi {
             id: first.text(20, 79).to_owned(),

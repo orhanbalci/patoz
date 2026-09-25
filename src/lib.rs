@@ -8,6 +8,7 @@ assert_eq!(pdb.header().header().unwrap().id_code, "1EJG");
 ```
  */
 mod ast;
+mod atom;
 mod author;
 mod caveat;
 mod compnd;
@@ -17,6 +18,7 @@ mod expdta;
 mod header;
 mod jrnl;
 mod keywds;
+mod master;
 mod mdltyp;
 mod modres;
 mod nummdl;

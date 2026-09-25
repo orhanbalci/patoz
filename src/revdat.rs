@@ -8,10 +8,10 @@ pub(crate) fn parse(lines: &[Line]) -> Option<Record> {
         .map(|revision| {
             let first = revision[0];
             Some(Revdat {
-                modification_number: first.int(8, 10)?,
+                modification_number: first.number(8, 10)?,
                 modification_date: parse_all(date, first.text(14, 22))?,
                 idcode: first.text(24, 27).to_owned(),
-                modification_type: match first.int(32, 32)? {
+                modification_type: match first.number(32, 32)? {
                     0 => ModificationType::InitialRelease,
                     1 => ModificationType::OtherModification,
                     _ => ModificationType::UnknownModification,

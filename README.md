@@ -95,17 +95,17 @@ Lines of record types that are not supported yet come back as `{ "Unknown": "<li
 - [ ] [OrigxN](http://www.wwpdb.org/documentation/file-format-content/format33/sect8.html#ORIGXn)
 - [ ] [ScaleN](http://www.wwpdb.org/documentation/file-format-content/format33/sect8.html#SCALEn)
 ### Coordinate Section
-- [ ] [Model](http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#MODEL)
-- [ ] [Atom](http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ATOM)
-- [ ] [Anisou](http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ANISOU)
-- [ ] [Ter](http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#TER)
-- [ ] [Hetatm](http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#HETATM)
-- [ ] [Endmdl](http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ENDMDL)
+- [x] [Model](http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#MODEL)
+- [x] [Atom](http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ATOM)
+- [x] [Anisou](http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ANISOU)
+- [x] [Ter](http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#TER)
+- [x] [Hetatm](http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#HETATM)
+- [x] [Endmdl](http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ENDMDL)
 ### Connectivity Section
 - [ ] [Conect](http://www.wwpdb.org/documentation/file-format-content/format33/sect10.html#CONECT)
 ### Bookkeeping Section
-- [ ] [Master](http://www.wwpdb.org/documentation/file-format-content/format33/sect11.html#MASTER)
-- [ ] [End](http://www.wwpdb.org/documentation/file-format-content/format33/sect11.html#END)
+- [x] [Master](http://www.wwpdb.org/documentation/file-format-content/format33/sect11.html#MASTER)
+- [x] [End](http://www.wwpdb.org/documentation/file-format-content/format33/sect11.html#END)
 
 ## 📝 License
 

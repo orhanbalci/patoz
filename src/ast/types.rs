@@ -418,6 +418,82 @@ pub struct Modres {
     pub comment: String,
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// an atom of an ATOM or HETATM record
+pub struct Atom {
+    pub serial: u32,
+    pub name: String,
+    pub alt_loc: Option<char>,
+    pub residue_name: String,
+    pub chain_id: char,
+    pub residue_seq: i32,
+    pub insertion_code: Option<char>,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub occupancy: f64,
+    pub temp_factor: f64,
+    pub element: Option<String>,
+    pub charge: Option<i8>,
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// anisotropic temperature factors of an atom, scaled by 10^4
+pub struct Anisou {
+    pub serial: u32,
+    pub name: String,
+    pub alt_loc: Option<char>,
+    pub residue_name: String,
+    pub chain_id: char,
+    pub residue_seq: i32,
+    pub insertion_code: Option<char>,
+    pub u11: i32,
+    pub u22: i32,
+    pub u33: i32,
+    pub u12: i32,
+    pub u13: i32,
+    pub u23: i32,
+    pub element: Option<String>,
+    pub charge: Option<i8>,
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// end of a chain. Old entries may leave all fields blank
+pub struct Ter {
+    pub serial: Option<u32>,
+    pub residue_name: String,
+    pub chain_id: char,
+    pub residue_seq: Option<i32>,
+    pub insertion_code: Option<char>,
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// start of a model in a multi model entry
+pub struct Model {
+    pub serial: u32,
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// record counts of the file, used as a checksum
+pub struct Master {
+    pub num_remark: u32,
+    pub num_het: u32,
+    pub num_helix: u32,
+    pub num_sheet: u32,
+    pub num_site: u32,
+    pub num_xform: u32,
+    /// number of ATOM and HETATM records
+    pub num_coord: u32,
+    pub num_ter: u32,
+    pub num_conect: u32,
+    pub num_seq: u32,
+}
+
 /// main enum unifying all record parser results.
 /// all sub parsers return a variant of this
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
@@ -452,6 +528,14 @@ pub enum Record {
     Seqadv(Seqadv),
     Modres(Modres),
     Remark,
+    Model(Model),
+    Atom(Atom),
+    Anisou(Anisou),
+    Ter(Ter),
+    Hetatm(Atom),
+    Endmdl,
+    Master(Master),
+    End,
     /// a line no record parser recognized, kept verbatim
     Unknown(String),
 }

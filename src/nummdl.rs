@@ -3,7 +3,7 @@ use crate::{ast::types::*, primitive::*};
 /// Parses a [NUMMDL](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#NUMMDL) record.
 pub(crate) fn parse(line: Line) -> Option<Record> {
     Some(Record::Nummdl(Nummdl {
-        num: line.int(11, 14)?,
+        num: line.number(11, 14)?,
     }))
 }
 

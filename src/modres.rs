@@ -6,7 +6,7 @@ pub(crate) fn parse(line: Line) -> Option<Record> {
         idcode: line.text(8, 11).to_owned(),
         residue_name: line.text(13, 15).to_owned(),
         chain_id: line.char_at(17).unwrap_or(' '),
-        sequence_number: line.int(19, 22)?,
+        sequence_number: line.number(19, 22)?,
         insertion_code: line.char_at(23),
         standart_residue_name: line.text(25, 27).to_owned(),
         comment: line.text(30, 80).to_owned(),

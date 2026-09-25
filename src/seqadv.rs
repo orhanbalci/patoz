@@ -6,14 +6,14 @@ pub(crate) fn parse(line: Line) -> Option<Record> {
         idcode: line.text(8, 11).to_owned(),
         conflicting_residue: line.text(13, 15).to_owned(),
         chain_id: line.char_at(17).unwrap_or(' '),
-        sequence_number: line.int(19, 22),
+        sequence_number: line.number(19, 22),
         insertion_code: line.char_at(23),
         database: line.text(25, 28).to_owned(),
         db_accession: line.text(30, 38).to_owned(),
         sequence_db_residue: Some(line.text(40, 42))
             .filter(|r| !r.is_empty())
             .map(str::to_owned),
-        sequence_db_sequence_number: line.int(44, 48),
+        sequence_db_sequence_number: line.number(44, 48),
         conflict: line.text(50, 70).to_owned(),
     }))
 }

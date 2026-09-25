@@ -5,7 +5,7 @@ use crate::{ast::types::*, primitive::*};
 pub(crate) fn parse(lines: &[Line]) -> Option<Record> {
     Some(Record::Seqres(Seqres {
         chain_id: lines[0].char_at(12),
-        num_res: lines[0].int(14, 17)?,
+        num_res: lines[0].number(14, 17)?,
         residues: lines
             .iter()
             .flat_map(|l| l.cols(20, 70).split_whitespace())

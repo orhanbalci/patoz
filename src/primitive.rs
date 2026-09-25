@@ -44,7 +44,7 @@ impl<'a> Line<'a> {
     }
 
     /// number in columns `from..=to`, `None` if blank or not a number
-    pub fn int<T: FromStr>(&self, from: usize, to: usize) -> Option<T> {
+    pub fn number<T: FromStr>(&self, from: usize, to: usize) -> Option<T> {
         self.text(from, to).parse().ok()
     }
 
@@ -173,7 +173,7 @@ mod test {
         assert_eq!(line.text(11, 50), "PLANT");
         assert_eq!(line.cols(60, 66), "");
         assert_eq!(line.char_at(7), None);
-        assert_eq!(line.int::<u32>(11, 15), None);
+        assert_eq!(line.number::<u32>(11, 15), None);
     }
 
     #[test]

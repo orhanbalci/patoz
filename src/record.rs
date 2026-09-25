@@ -1,7 +1,7 @@
 use crate::{
     ast::{pdb_file::*, types::*},
-    author, caveat, compnd, dbref, dbref1, expdta, header, jrnl, keywds, mdltyp, modres, nummdl,
-    obslte,
+    atom, author, caveat, compnd, dbref, dbref1, expdta, header, jrnl, keywds, master, mdltyp,
+    modres, nummdl, obslte,
     primitive::Line,
     revdat, seqadv, seqres, source, split, sprsde, title,
 };
@@ -68,6 +68,14 @@ fn parse_group(lines: &[Line]) -> Option<Record> {
         "SEQADV" => seqadv::parse(first),
         "SEQRES" => seqres::parse(lines),
         "MODRES" => modres::parse(first),
+        "MODEL" => atom::model(first),
+        "ATOM" => atom::atom(first).map(Record::Atom),
+        "HETATM" => atom::atom(first).map(Record::Hetatm),
+        "ANISOU" => atom::anisou(first),
+        "TER" => atom::ter(first),
+        "ENDMDL" => Some(Record::Endmdl),
+        "MASTER" => master::parse(first),
+        "END" => Some(Record::End),
         _ => None,
     }
 }
@@ -210,6 +218,57 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
             expected_val["primary.dbref.database"],
             pdb_parsed.primary().dbreference().unwrap().database
         );
+    }
+
+    /// MASTER numCoord is every ATOM and HETATM record in older files, as the
+    /// specification says. Current wwPDB files count non-hydrogen atoms of
+    /// the first model once, whatever their alternate locations.
+    fn assert_master_counts(pdb_entry: &str) {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("res")
+            .join(format!("{}.pdb", pdb_entry));
+        let pdb = parse(&std::fs::read_to_string(path).unwrap());
+        let master = pdb.master().unwrap();
+        let coordinates = pdb.coordinates();
+        let mut seen = std::collections::HashSet::new();
+        let num_coord = coordinates
+            .atoms()
+            .chain(coordinates.hetero_atoms())
+            .filter(|a| !matches!(a.element.as_deref(), Some("H") | Some("D")))
+            .filter(|a| {
+                seen.insert((
+                    &a.name,
+                    &a.residue_name,
+                    a.chain_id,
+                    a.residue_seq,
+                    a.insertion_code,
+                ))
+            })
+            .count();
+        let count = |f: fn(&Record) -> bool| pdb.records().iter().filter(|r| f(r)).count();
+        let all_coord = count(|r| matches!(r, Record::Atom(_) | Record::Hetatm(_)));
+        assert!(
+            [num_coord, all_coord].contains(&(master.num_coord as usize)),
+            "numCoord {} matches neither {} nor {}",
+            master.num_coord,
+            num_coord,
+            all_coord
+        );
+        assert_eq!(
+            master.num_ter as usize,
+            count(|r| matches!(r, Record::Ter(_)))
+        );
+        assert_eq!(
+            master.num_remark as usize,
+            count(|r| matches!(r, Record::Remark))
+        );
+    }
+
+    #[test]
+    fn master_counts() {
+        for entry in ["1BXO", "1NLS", "1BYI"] {
+            assert_master_counts(entry);
+        }
     }
 
     #[test]
