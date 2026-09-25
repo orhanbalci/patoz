@@ -17,6 +17,7 @@ mod dbref;
 mod dbref1;
 mod expdta;
 mod header;
+mod heterogen;
 mod jrnl;
 mod keywds;
 mod master;

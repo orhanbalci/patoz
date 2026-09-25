@@ -76,10 +76,10 @@ Lines of record types that are not supported yet come back as `{ "Unknown": "<li
 - [x] [Seqres](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#SEQRES)
 - [x] [Modres](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#MODRES)
 ### Heterogen Section
-- [ ] [Het](http://www.wwpdb.org/documentation/file-format-content/format33/sect4.html#HET)
-- [ ] [Formul](http://www.wwpdb.org/documentation/file-format-content/format33/sect4.html#FORMUL)
-- [ ] [Hetnam](http://www.wwpdb.org/documentation/file-format-content/format33/sect4.html#HETNAM)
-- [ ] [Hetsyn](http://www.wwpdb.org/documentation/file-format-content/format33/sect4.html#HETSYN)
+- [x] [Het](http://www.wwpdb.org/documentation/file-format-content/format33/sect4.html#HET)
+- [x] [Formul](http://www.wwpdb.org/documentation/file-format-content/format33/sect4.html#FORMUL)
+- [x] [Hetnam](http://www.wwpdb.org/documentation/file-format-content/format33/sect4.html#HETNAM)
+- [x] [Hetsyn](http://www.wwpdb.org/documentation/file-format-content/format33/sect4.html#HETSYN)
 ### Secondary Structure Section
 - [x] [Helix](http://www.wwpdb.org/documentation/file-format-content/format33/sect5.html#HELIX)
 - [x] [Sheet](http://www.wwpdb.org/documentation/file-format-content/format33/sect5.html#SHEET)

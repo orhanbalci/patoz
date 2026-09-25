@@ -602,6 +602,43 @@ pub struct Site {
     pub residues: Vec<ResidueRef>,
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// a non-standard residue (heterogen) in the entry
+pub struct Het {
+    /// residue name is the het id
+    pub residue: ResidueRef,
+    pub num_het_atoms: u32,
+    pub text: String,
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// chemical name of a heterogen
+pub struct Hetnam {
+    pub het_id: String,
+    pub name: String,
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// synonyms of a heterogen's chemical name
+pub struct Hetsyn {
+    pub het_id: String,
+    pub synonyms: Vec<String>,
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// chemical formula of a heterogen
+pub struct Formul {
+    pub component: u32,
+    pub het_id: String,
+    /// marked with `*` in the file, used for water
+    pub water: bool,
+    pub formula: String,
+}
+
 /// main enum unifying all record parser results.
 /// all sub parsers return a variant of this
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
@@ -642,6 +679,10 @@ pub enum Record {
     Ter(Ter),
     Hetatm(Atom),
     Endmdl,
+    Het(Het),
+    Hetnam(Hetnam),
+    Hetsyn(Hetsyn),
+    Formul(Formul),
     Helix(Helix),
     Sheet(Sheet),
     Ssbond(Ssbond),

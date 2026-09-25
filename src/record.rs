@@ -1,7 +1,7 @@
 use crate::{
     ast::{pdb_file::*, types::*},
-    atom, author, caveat, compnd, connectivity, dbref, dbref1, expdta, header, jrnl, keywds,
-    master, mdltyp, modres, nummdl, obslte,
+    atom, author, caveat, compnd, connectivity, dbref, dbref1, expdta, header, heterogen, jrnl,
+    keywds, master, mdltyp, modres, nummdl, obslte,
     primitive::Line,
     revdat, secondary, seqadv, seqres, source, split, sprsde, title,
 };
@@ -39,7 +39,8 @@ fn group_len(lines: &[Line]) -> usize {
         | "MDLTYP" | "AUTHOR" | "SPRSDE" | "REVDAT" => continues(&|_| true),
         "JRNL" => continues(&|l| l.cols(13, 16) == first.cols(13, 16)),
         "SEQRES" => continues(&|l| l.cols(12, 12) == first.cols(12, 12)),
-        "SITE" => continues(&|l| l.cols(12, 14) == first.cols(12, 14)),
+        "SITE" | "HETNAM" | "HETSYN" => continues(&|l| l.cols(12, 14) == first.cols(12, 14)),
+        "FORMUL" => continues(&|l| l.cols(13, 15) == first.cols(13, 15)),
         "DBREF1" if lines.get(1).is_some_and(|l| l.record_name() == "DBREF2") => 2,
         _ => 1,
     }
@@ -76,6 +77,10 @@ fn parse_group(lines: &[Line]) -> Option<Record> {
         "TER" => atom::ter(first),
         "ENDMDL" => Some(Record::Endmdl),
         "MASTER" => master::parse(first),
+        "HET" => heterogen::het(first),
+        "HETNAM" => heterogen::hetnam(lines),
+        "HETSYN" => heterogen::hetsyn(lines),
+        "FORMUL" => heterogen::formul(lines),
         "HELIX" => secondary::helix(first),
         "SHEET" => secondary::sheet(first),
         "SITE" => secondary::site(lines),
@@ -265,6 +270,10 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
         assert_eq!(
             master.num_ter as usize,
             count(|r| matches!(r, Record::Ter(_)))
+        );
+        assert_eq!(
+            master.num_het as usize,
+            count(|r| matches!(r, Record::Het(_)))
         );
         assert_eq!(
             master.num_helix as usize,

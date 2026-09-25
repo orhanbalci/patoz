@@ -83,6 +83,22 @@ pub(crate) fn join_continued<'a>(parts: impl IntoIterator<Item = &'a str>) -> St
     joined
 }
 
+/// Joins continued chemical names (HETNAM, HETSYN). wwPDB wraps these
+/// either at a space or right after punctuation such as `-` or `)`, so a
+/// space is restored only between two letters or digits.
+pub(crate) fn join_chemical_name<'a>(parts: impl IntoIterator<Item = &'a str>) -> String {
+    let mut joined = String::new();
+    for part in parts.into_iter().map(str::trim).filter(|p| !p.is_empty()) {
+        let boundary_is_space = joined.ends_with(|c: char| c.is_ascii_alphanumeric())
+            && part.starts_with(|c: char| c.is_ascii_alphanumeric());
+        if boundary_is_space {
+            joined.push(' ');
+        }
+        joined.push_str(part);
+    }
+    joined
+}
+
 /// Runs `parser` on the whole of `input`, `None` if it fails or leaves
 /// anything unparsed.
 pub(crate) fn parse_all<'a, O>(
@@ -201,6 +217,19 @@ mod test {
     fn join_continued_lines() {
         assert_eq!(join_continued(["A B ", " C", ""]), "A B C");
         assert_eq!(join_continued(["N-(3-", "DIMETHOXY"]), "N-(3-DIMETHOXY");
+    }
+
+    #[test]
+    fn join_chemical_name_parts() {
+        assert_eq!(
+            join_chemical_name(["ADENINE-DINUCLEOTIDE", "PHOSPHATE"]),
+            "ADENINE-DINUCLEOTIDE PHOSPHATE"
+        );
+        assert_eq!(
+            join_chemical_name(["(3-AMINOMETHYL)", "PHENYL"]),
+            "(3-AMINOMETHYL)PHENYL"
+        );
+        assert_eq!(join_chemical_name(["5,5-", "DIMETHYL"]), "5,5-DIMETHYL");
     }
 
     #[test]
