@@ -15,7 +15,7 @@ use nom::{
         is_alphanumeric, is_digit, is_space,
     },
     combinator::{map, map_res},
-    do_parse, fold_many0, map_res,
+    do_parse, fold_many0, map_opt, map_res,
     multi::separated_list,
     named, separated_list,
     sequence::tuple,
@@ -271,20 +271,33 @@ named!(
     map_res!(ascii_word, |s: String| -> Result<u32, ()> {
         let mut parsed = Parsed::new();
         chrono::format::parse(&mut parsed, s.as_str(), StrftimeItems::new("%b"))
-            .expect("Can not parse month");
-        Result::Ok(parsed.month.unwrap())
+            .map_err(|_| ())?;
+        parsed.month.ok_or(())
     })
 );
 
+/// PDB dates carry two digit years. PDB archive started in 1971 so years
+/// from 71 onwards belong to 20th century, earlier ones to 21st century.
+fn four_digit_year(year: u32) -> i32 {
+    match year {
+        0..=70 => 2000 + year as i32,
+        71..=99 => 1900 + year as i32,
+        _ => year as i32,
+    }
+}
+
 named!(
     pub date_parser<NaiveDate>,
-    do_parse!(
-        dayp: integer
-            >> tag!("-")
-            >> monthp: month_parser
-            >> tag!("-")
-            >> yearp: integer
-            >> (NaiveDate::from_ymd(yearp as i32, monthp, dayp))
+    map_opt!(
+        do_parse!(
+            dayp: integer
+                >> tag!("-")
+                >> monthp: month_parser
+                >> tag!("-")
+                >> yearp: integer
+                >> ((yearp, monthp, dayp))
+        ),
+        |(yearp, monthp, dayp)| NaiveDate::from_ymd_opt(four_digit_year(yearp), monthp, dayp)
     )
 );
 
@@ -479,7 +492,23 @@ mod test {
     fn test_date_parser() {
         let temp: NaiveDate = date_parser("12-SEP-09".as_bytes()).unwrap().1;
         assert_eq!(temp.day(), 12);
-        assert_eq!(temp.year(), 9);
+        assert_eq!(temp.year(), 2009);
+    }
+
+    #[test]
+    fn test_date_parser_twentieth_century() {
+        let temp: NaiveDate = date_parser("15-OCT-98".as_bytes()).unwrap().1;
+        assert_eq!(temp, NaiveDate::from_ymd_opt(1998, 10, 15).unwrap());
+    }
+
+    #[test]
+    fn test_date_parser_invalid_date() {
+        assert!(date_parser("31-FEB-99".as_bytes()).is_err());
+    }
+
+    #[test]
+    fn test_date_parser_invalid_month() {
+        assert!(date_parser("12-XYZ-09".as_bytes()).is_err());
     }
 
     #[test]
