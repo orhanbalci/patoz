@@ -67,7 +67,13 @@ const header = records.find((r) => r.Header)?.Header;
 console.log(header.classification, header.id_code);
 ```
 Each record is an object keyed by its record type, e.g. `{ "Keywds": { "keywords": [...] } }`.
-Lines of record types that are not supported yet come back as `{ "Unknown": "<line>" }`.
+Lines the parser does not understand come back as `{ "Unknown": "<line>" }`.
+
+`structure(pdbText)` returns the structure model instead of records:
+```js
+const { entities, models } = structure(pdbText);
+const atoms = models[0].chains.flatMap((c) => c.residues).flatMap((r) => r.atoms);
+```
 
 # 📊  Status
 ## Record Parser Status

@@ -22,3 +22,13 @@ pub fn parse(content: &str) -> Result<JsValue, JsError> {
         .serialize(&serde_wasm_bindgen::Serializer::json_compatible())
         .map_err(|e| JsError::new(&e.to_string()))
 }
+
+/// Parses pdb file content into a format independent structure: metadata,
+/// entities, and models of chains, residues and atoms.
+#[wasm_bindgen]
+pub fn structure(content: &str) -> Result<JsValue, JsError> {
+    patoz::parse(content)
+        .structure()
+        .serialize(&serde_wasm_bindgen::Serializer::json_compatible())
+        .map_err(|e| JsError::new(&e.to_string()))
+}

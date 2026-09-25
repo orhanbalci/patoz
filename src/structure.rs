@@ -49,6 +49,7 @@ pub struct Entity {
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[cfg_attr(feature = "serde", serde(tag = "type"))]
 #[derive(Debug, Clone, PartialEq)]
 pub enum EntityKind {
     /// a polymer with the residue names of its full sequence
