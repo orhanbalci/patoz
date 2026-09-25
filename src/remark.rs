@@ -127,6 +127,64 @@ pub(crate) fn write(remark: &Remark, out: &mut Vec<String>) {
     }
 }
 
+/// REMARK 2 stating `resolution`, or that it is not applicable.
+pub(crate) fn resolution_remark(resolution: Option<f64>) -> Record {
+    let text = match resolution {
+        Some(r) => format!("RESOLUTION. {:>7.2} ANGSTROMS.", r),
+        None => "RESOLUTION. NOT APPLICABLE.".to_owned(),
+    };
+    Record::Remark(Remark {
+        number: 2,
+        lines: vec![String::new(), text],
+    })
+}
+
+/// REMARK 350 describing `assemblies` in the layout read by
+/// [biological_assemblies].
+pub(crate) fn assemblies_remark(assemblies: &[BiologicalAssembly]) -> Record {
+    let mut lines = Vec::new();
+    for assembly in assemblies {
+        lines.push(format!("BIOMOLECULE: {}", assembly.id));
+        if let Some(unit) = &assembly.author_determined_unit {
+            lines.push(format!("AUTHOR DETERMINED BIOLOGICAL UNIT: {}", unit));
+        }
+        if let Some(unit) = &assembly.software_determined_unit {
+            lines.push(format!(
+                "SOFTWARE DETERMINED QUATERNARY STRUCTURE: {}",
+                unit
+            ));
+        }
+        for part in &assembly.parts {
+            let chains = part.chains.join(", ");
+            let first = "APPLY THE FOLLOWING TO CHAINS: ";
+            let rest = "                   AND CHAINS: ";
+            let wrapping = Wrap::list(Join::Text, ',');
+            for (i, piece) in wrap(&chains, 69 - first.len(), 69 - rest.len(), wrapping)
+                .iter()
+                .enumerate()
+            {
+                lines.push(format!("{}{}", if i == 0 { first } else { rest }, piece));
+            }
+            for (serial, operation) in part.operations.iter().enumerate() {
+                for n in 0..3 {
+                    // columns relative to column 12 of the REMARK line
+                    let [a, b, c] = operation.matrix[n];
+                    let line = LineBuilder::new("")
+                        .left(3, &format!("BIOMT{}", n + 1))
+                        .right(9, 12, serial + 1)
+                        .right(13, 22, format!("{:.6}", a))
+                        .right(23, 32, format!("{:.6}", b))
+                        .right(33, 42, format!("{:.6}", c))
+                        .right(48, 57, format!("{:.5}", operation.vector[n]))
+                        .build();
+                    lines.push(line.trim_end().to_owned());
+                }
+            }
+        }
+    }
+    Record::Remark(Remark { number: 350, lines })
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -219,6 +277,32 @@ REMARK 350   BIOMT3   1  0.000000  0.000000  1.000000        0.00000
         assert_eq!(first.parts[0].operations[1].matrix[0], [-1.0, 0.0, 0.0]);
         assert_eq!(first.parts[0].operations[1].vector, [132.5, 0.0, 0.0]);
         assert_eq!(assemblies[1].parts[0].chains, ["O"]);
+    }
+
+    #[test]
+    fn written_remarks_read_back() {
+        let resolution_record = resolution_remark(Some(1.74));
+        let Record::Remark(r) = &resolution_record else {
+            panic!()
+        };
+        assert_eq!(r.lines[1], "RESOLUTION.    1.74 ANGSTROMS.");
+        assert_eq!(resolution(r), Some(Some(1.74)));
+
+        let r = remark(
+            "REMARK 350 BIOMOLECULE: 1
+REMARK 350 AUTHOR DETERMINED BIOLOGICAL UNIT: DIMERIC
+REMARK 350 APPLY THE FOLLOWING TO CHAINS: A, B, C, D, E, F, G, H, I, J, K, L, M, N,
+REMARK 350                    AND CHAINS: O
+REMARK 350   BIOMT1   1  1.000000  0.000000  0.000000        0.00000
+REMARK 350   BIOMT2   1  0.000000  1.000000  0.000000        0.00000
+REMARK 350   BIOMT3   1  0.000000  0.000000  1.000000        0.00000
+",
+        );
+        let assemblies = biological_assemblies(&r).unwrap();
+        let Record::Remark(written) = assemblies_remark(&assemblies) else {
+            panic!()
+        };
+        assert_eq!(written.lines, r.lines);
     }
 
     #[test]

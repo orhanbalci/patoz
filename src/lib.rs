@@ -36,6 +36,7 @@ mod seqres;
 mod source;
 mod split;
 mod sprsde;
+pub mod structure;
 mod title;
 
 pub use ast::{pdb_file::*, types::*};

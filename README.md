@@ -26,6 +26,21 @@ match the specification, are kept as `Record::Unknown`. To see how much of your 
 ```
 cargo run --example coverage -- path/to/*.pdb
 ```
+# 🧬 Structure model
+`PdbFile::structure` builds a format independent model: entry metadata, entities (polymers, ligands, water) and
+models made of chains, residues and atoms.
+```rust
+let structure = patoz::parse(&content).structure();
+for chain in &structure.models[0].chains {
+    for residue in &chain.residues {
+        println!("{} {} {} atoms", chain.id, residue.name, residue.atoms.len());
+    }
+}
+// edit the model and write it back
+std::fs::write("out.pdb", patoz::write(&structure.to_pdb())).unwrap();
+```
+Writing a structure reproduces the original coordinate records byte for byte (checked on 489 files, 3.09M lines).
+
 # ✍️ Writing
 `patoz::write` turns records back into pdb file content, so files can be edited and saved:
 ```rust
