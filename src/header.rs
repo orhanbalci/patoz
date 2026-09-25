@@ -1,42 +1,25 @@
-/*!
-Contains parsers related to [Header](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#HEADER)
-records. Header record gives information about identity of this pdb file.
-*/
-use super::{ast::types::*, primitive::*};
-use nom::{
-    character::complete::{line_ending, multispace1, space0},
-    do_parse, map, named, take_str,
-};
+use crate::{ast::types::*, primitive::*};
 
-named!(#[doc=r#"Parses a line of [Header](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#HEADER) record.
-This type of record is neither separated to multi lines nor repeated. There is just single line of unique header record in a pdb file.
-If succesfull returns [Record](../ast/types/enum.Record.html) variant containing [Header](../ast/types/struct.Header.html) instance
+/// Parses a [HEADER](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#HEADER) record.
+pub(crate) fn parse(line: Line) -> Option<Record> {
+    Some(Record::Header(Header {
+        classification: line.text(11, 50).to_owned(),
+        deposition_date: parse_all(date, line.text(51, 59))?,
+        id_code: line.text(63, 66).to_owned(),
+    }))
+}
 
-Record structure :
+#[cfg(test)]
+mod test {
+    use crate::{test_util::single_record, Record};
 
-| COLUMNS      | DATA  TYPE   | FIELD          | DEFINITION                                |
-|--------------|--------------|----------------|-------------------------------------------|
-| 1 -  6       | Record name  | HEADER         |                                           |
-| 11 - 50      | String(40)   | classification | Classifies the molecule(s).               |
-| 51 - 59      | Date         | depDate        | Deposition date. This is the date the     |
-|              |              |                | coordinates  were received at the PDB.    |
-| 63 - 66      | IDcode       | idCode         | This identifier is unique within the PDB. |
-"#],
-
-    pub header_parser<Record>,
-    do_parse!(
-        header
-            >> multispace1
-            >> classification_p: map!(take_str!(40), str::trim)
-            >> deposition_date_p: date_parser
-            >> multispace1
-            >> id_code_p: take_str!(4)
-            >> space0
-            >> line_ending
-            >> (Record::Header (Header{
-                classification: classification_p.to_string(),
-                deposition_date: deposition_date_p,
-                id_code: id_code_p.to_string()
-            }))
-    )
-);
+    #[test]
+    fn header() {
+        let r =
+            single_record("HEADER    TRANSFERASE/TRANSFERASE                 28-MAR-07   2UXK \n");
+        let Record::Header(h) = r else { panic!() };
+        assert_eq!(h.classification, "TRANSFERASE/TRANSFERASE");
+        assert_eq!(h.deposition_date.to_string(), "2007-03-28");
+        assert_eq!(h.id_code, "2UXK");
+    }
+}

@@ -1,583 +1,145 @@
 /*!
-Contains parsers related to [Compnd](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#COMPND) records.
-The COMPND record describes the macromolecular contents of an entry. Also contains tokens parsers which are utilized  from
-other records such as SOURCE records
+Parses [COMPND](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#COMPND) records and the specification list
+tokens shared with SOURCE records.
 */
-use super::{ast::types::*, primitive::*};
-use nom::{
-    alt,
-    bytes::complete::tag,
-    character::complete::{line_ending, space0, space1},
-    do_parse, fold_many1, map_opt,
-    multi::separated_list,
-    named, opt, IResult,
-};
+use crate::{ast::types::*, primitive::*};
 
-use crate::{make_line_folder, make_token_parser};
-
-use std::{marker::PhantomData, str, str::FromStr};
-
-#[allow(dead_code)]
-struct CmpndLine;
-
-make_token_parser!(
-    r#"Parses tokens of the form "MOL_ID:  2". Returns [Token::MoleculeId](../ast/types/enum.Token.html)"#,
-    mol_id_parser,
-    mol_id,
-    integer,
-    a,
-    Token::MoleculeId(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "MOLECULE:  HEMOGLOBIN BETA CHAIN". Returns [Token::Molecule](../ast/types/enum.Token.html)"#,
-    molecule_parser,
-    molecule,
-    molecule_name_parser,
-    a,
-    Token::Molecule(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "CHAIN: B,  D". Returns [Token::Chain](../ast/types/enum.Token.html)"#,
-    chain_parser,
-    chain,
-    chain_value_parser,
-    a,
-    Token::Chain { identifiers: a }
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "FRAGMENT: XYZ". Returns [Token::Fragment](../ast/types/enum.Token.html)"#,
-    fragment_parser,
-    fragment,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::Fragment(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "SYNONYM:  CCMV". Returns [Token::Synonym](../ast/types/enum.Token.html)"#,
-    synonym_parser,
-    synonym,
-    chain_value_parser,
-    a,
-    Token::Synonym { synonyms: a }
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "EC:  3.2.1.14, 3.2.1.17". Returns [Token::Ec](../ast/types/enum.Token.html)"#,
-    ec_parser,
-    ec,
-    ec_value_parser,
-    a,
-    Token::Ec {
-        commission_numbers: a
+fn yes_no(value: &str) -> Option<bool> {
+    match value {
+        "YES" => Some(true),
+        "NO" => Some(false),
+        _ => None,
     }
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "ENGINEERED: YES". Returns [Token::Engineered](../ast/types/enum.Token.html)"#,
-    engineered_parser,
-    engineered,
-    yes_no_parser,
-    a,
-    Token::Engineered(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "MUTATION:  YES". Returns [Token::Mutation](../ast/types/enum.Token.html)"#,
-    mutation_parser,
-    mutation,
-    yes_no_parser,
-    a,
-    Token::Mutation(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "OTHER_DETAILS: PLANT ENDOCHITINASE/LYSOZYME". Returns [Token::OtherDetails](../ast/types/enum.Token.html)"#,
-    other_details_parser,
-    other_details,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::OtherDetails(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "SYNTHETIC: XYZ". Returns [Token::Synthetic](../ast/types/enum.Token.html)"#,
-    synthetic_parser,
-    synthetic,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::Synthetic(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "ORGANISM_SCIENTIFIC: AVIAN SARCOMA VIRUS". Returns [Token::OrganismScientific](../ast/types/enum.Token.html)"#,
-    organism_scientific_parser,
-    organism_scientific,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::OrganismScientific(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "ORGANISM_COMMON: CHICKEN". Returns [Token::OrganismCommon](../ast/types/enum.Token.html)"#,
-    organism_common_parser,
-    organism_common,
-    chain_value_parser,
-    a,
-    Token::OrganismCommon { organisms: a }
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "ORGANISM_TAXID: 9031". Returns [Token::OrganismTaxId](../ast/types/enum.Token.html)"#,
-    organism_tax_id_parser,
-    organism_taxid,
-    integer_list,
-    a,
-    Token::OrganismTaxId { id: a }
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "STRAIN:  SCHMIDT-RUPPIN B". Returns [Token::Strain](../ast/types/enum.Token.html)"#,
-    strain_parser,
-    strain,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::Strain(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "VARIANT: XYZ". Returns [Token::Variant](../ast/types/enum.Token.html)"#,
-    variant_parser,
-    variant,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::Variant(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "CELL_LINE: XYZ". Returns [Token::CellLine](../ast/types/enum.Token.html)"#,
-    cell_line_parser,
-    cell_line,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::CellLine(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "ATCC: XYZ". Returns [Token::Atcc](../ast/types/enum.Token.html)"#,
-    atcc_parser,
-    atcc,
-    integer_with_spaces,
-    a,
-    Token::Atcc(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "ORGAN: HEART". Returns [Token::Organ](../ast/types/enum.Token.html)"#,
-    organ_parser,
-    organ,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::Organ(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "TISSUE: MUSCLE". Returns [Token::Tissue](../ast/types/enum.Token.html)"#,
-    tissue_parser,
-    tissue,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::Tissue(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "CELL: XYZ". Returns [Token::Cell](../ast/types/enum.Token.html)"#,
-    cell_parser,
-    cell,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::Cell(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "ORGANELLE: XYZ". Returns [Token::Organelle](../ast/types/enum.Token.html)"#,
-    organelle_parser,
-    organelle,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::Organelle(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "SECRATION: XYZ". Returns [Token::Secration](../ast/types/enum.Token.html)"#,
-    secretion_parser,
-    secretion,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::Secretion(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "CELLULAR_LOCATION: CYTOSOL". Returns [Token::CellularLocation](../ast/types/enum.Token.html)"#,
-    cellular_location_parser,
-    cellular_location,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::CellularLocation(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "PLASMID: XYZ". Returns [Token::Plasmid](../ast/types/enum.Token.html)"#,
-    plasmid_parser,
-    plasmid,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::Plasmid(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "GENE: XYZ". Returns [Token::Gene](../ast/types/enum.Token.html)"#,
-    gene_parser,
-    gene,
-    chain_value_parser,
-    a,
-    Token::Gene { gene: a }
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "EXPRESSION_SYSTEM: ESCHERICHIA COLI". Returns [Token::ExpressionSystem](../ast/types/enum.Token.html)"#,
-    expression_system_parser,
-    expression_system,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::ExpressionSystem(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "EXPRESSION_SYSTEM_COMMON: ESCHERICHIA COLI". Returns [Token::ExpressionSystemCommon](../ast/types/enum.Token.html)"#,
-    expression_system_common_parser,
-    expression_system_common,
-    chain_value_parser,
-    a,
-    Token::ExpressionSystemCommon { systems: a }
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "EXPRESSION_SYSTEM_TAXID: 1234". Returns [Token::ExpressionSystemTaxId](../ast/types/enum.Token.html)"#,
-    expression_system_tax_id_parser,
-    expression_system_tax_id,
-    integer_list,
-    a,
-    Token::ExpressionSystemTaxId { id: a }
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "EXPRESSION_SYSTEM_STRAIN: B171". Returns [Token::ExpressionSystemStrain](../ast/types/enum.Token.html)"#,
-    expression_system_strain_parser,
-    expression_system_strain,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::ExpressionSystemStrain(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "EXPRESSION_SYSTEM_VARIANT: B171". Returns [Token::ExpressionSystemVariant](../ast/types/enum.Token.html)"#,
-    expression_system_variant_parser,
-    expression_system_variant,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::ExpressionSystemVariant(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "EXPRESSION_SYSTEM_CELL_LINE: B171". Returns [Token::ExpressionSystemCellLine](../ast/types/enum.Token.html)"#,
-    expression_system_cell_line_parser,
-    expression_system_cell_line,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::ExpressionSystemCellLine(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "EXPRESSION_SYSTEM_ATCC_NUMBER: 7777". Returns [Token::ExpressionSystemAtcc](../ast/types/enum.Token.html)"#,
-    expression_system_atcc_number_parser,
-    expression_system_atcc_number,
-    integer_with_spaces,
-    a,
-    Token::ExpressionSystemAtcc(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "EXPRESSION_SYSTEM_ORGAN: HEART". Returns [Token::ExpressionSystemOrgan](../ast/types/enum.Token.html)"#,
-    expression_system_organ_parser,
-    expression_system_organ,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::ExpressionSystemOrgan(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "EXPRESSION_SYSTEM_TISSUE: XYZ". Returns [Token::ExpressionSystemTissue](../ast/types/enum.Token.html)"#,
-    expression_system_tissue_parser,
-    expression_system_tissue,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::ExpressionSystemTissue(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "EXPRESSION_SYSTEM_TISSUE: XYZ". Returns [Token::ExpressionSystemTissue](../ast/types/enum.Token.html)"#,
-    expression_system_cell_parser,
-    expression_system_cell,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::ExpressionSystemCell(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "EXPRESSION_SYSTEM_ORGANELLE: XYZ". Returns [Token::ExpressionSystemOrganelle](../ast/types/enum.Token.html)"#,
-    expression_system_organelle_parser,
-    expression_system_organelle,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::ExpressionSystemOrganelle(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "EXPRESSION_SYSTEM_CELLULAR_LOCATION: XYZ". Returns [Token::ExpressionSystemCellularLocation](../ast/types/enum.Token.html)"#,
-    expression_system_cellular_location_parser,
-    expression_system_cellular_location,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::ExpressionSystemCellularLocation(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "EXPRESSION_SYSTEM_VECTOR_TYPE: XYZ". Returns [Token::ExpressionSystemVectorType](../ast/types/enum.Token.html)"#,
-    expression_system_vector_type_parser,
-    expression_system_vector_type,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::ExpressionSystemVectorType(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "EXPRESSION_SYSTEM_VECTOR: XYZ". Returns [Token::ExpressionSystemVector](../ast/types/enum.Token.html)"#,
-    expression_system_vector_parser,
-    expression_system_vector,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::ExpressionSystemVector(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "EXPRESSION_SYSTEM_PLASMID: XYZ". Returns [Token::ExpressionSystemPlasmid](../ast/types/enum.Token.html)"#,
-    expression_system_plasmid_parser,
-    expression_system_plasmid,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::ExpressionSystemPlasmid(a)
-);
-
-make_token_parser!(
-    r#"Parses tokens of the form "EXPRESSION_SYSTEM_GENE: XYZ". Returns [Token::ExpressionSystemGene](../ast/types/enum.Token.html)"#,
-    expression_system_gene_parser,
-    expression_system_gene,
-    alphanum_word_with_spaces_inside,
-    a,
-    Token::ExpressionSystemGene(a)
-);
-
-named!(
-    token_parser<Token>,
-    alt!(
-        molecule_parser
-            | mol_id_parser
-            | chain_parser
-            | fragment_parser
-            | synonym_parser
-            | ec_parser
-            | engineered_parser
-            | mutation_parser
-            | other_details_parser
-            | synthetic_parser
-            | organism_scientific_parser
-            | organism_common_parser
-            | organism_tax_id_parser
-            | strain_parser
-            | variant_parser
-            | cell_line_parser
-            | atcc_parser
-            | organ_parser
-            | tissue_parser
-            | cell_parser
-            | organelle_parser
-            | secretion_parser
-            | cellular_location_parser
-            | plasmid_parser
-            | gene_parser
-            | expression_system_parser
-            | expression_system_common_parser
-            | expression_system_tax_id_parser
-            | expression_system_strain_parser
-            | expression_system_variant_parser
-            | expression_system_cell_line_parser
-            | expression_system_atcc_number_parser
-            | expression_system_organ_parser
-            | expression_system_tissue_parser
-            | expression_system_cell_parser
-            | expression_system_organelle_parser
-            | expression_system_cellular_location_parser
-            | expression_system_vector_type_parser
-            | expression_system_vector_parser
-            | expression_system_plasmid_parser
-            | expression_system_gene_parser
-    )
-);
-
-/// parses a list of ; seperated tokens
-pub fn tokens_parser(s: &[u8]) -> IResult<&[u8], Vec<Token>> {
-    separated_list(tag(";"), token_parser)(s)
 }
 
-named!(
-    cmpnd_line_parser<Continuation<CmpndLine>>,
-    do_parse!(
-        compnd
-            >> space1
-            >> cont: opt!(integer)
-            >> space0
-            >> rest: till_line_ending
-            >> line_ending
-            >> (Continuation::<CmpndLine> {
-                continuation: cont.unwrap_or(0),
-                remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
-                phantom: PhantomData,
-            })
-    )
-);
+fn int_list(value: &str) -> Option<Vec<u32>> {
+    parse_all(list(','), value)?
+        .iter()
+        .map(|i| i.parse().ok())
+        .collect()
+}
 
-make_line_folder!(cmpnd_line_folder, cmpnd_line_parser, CmpndLine);
+/// Converts a specification list key value pair to a [Token]. Unknown keys
+/// and values that do not match the key's type become [Token::Other].
+pub(crate) fn token(key: &str, value: &str) -> Token {
+    let text = || Some(value.to_owned());
+    let items = || parse_all(list(','), value);
+    let token = match key {
+        "MOL_ID" => value.parse().ok().map(Token::MoleculeId),
+        "MOLECULE" => text().map(Token::Molecule),
+        "CHAIN" => items().map(|identifiers| Token::Chain { identifiers }),
+        "FRAGMENT" => text().map(Token::Fragment),
+        "SYNONYM" => items().map(|synonyms| Token::Synonym { synonyms }),
+        "EC" => items().map(|commission_numbers| Token::Ec { commission_numbers }),
+        "ENGINEERED" => yes_no(value).map(Token::Engineered),
+        "MUTATION" => yes_no(value).map(Token::Mutation),
+        "OTHER_DETAILS" => text().map(Token::OtherDetails),
+        "SYNTHETIC" => text().map(Token::Synthetic),
+        "ORGANISM_SCIENTIFIC" => text().map(Token::OrganismScientific),
+        "ORGANISM_COMMON" => items().map(|organisms| Token::OrganismCommon { organisms }),
+        "ORGANISM_TAXID" => int_list(value).map(|id| Token::OrganismTaxId { id }),
+        "STRAIN" => text().map(Token::Strain),
+        "VARIANT" => text().map(Token::Variant),
+        "CELL_LINE" => text().map(Token::CellLine),
+        "ATCC" => value.parse().ok().map(Token::Atcc),
+        "ORGAN" => text().map(Token::Organ),
+        "TISSUE" => text().map(Token::Tissue),
+        "CELL" => text().map(Token::Cell),
+        "ORGANELLE" => text().map(Token::Organelle),
+        "SECRETION" => text().map(Token::Secretion),
+        "CELLULAR_LOCATION" => text().map(Token::CellularLocation),
+        "PLASMID" => text().map(Token::Plasmid),
+        "GENE" => items().map(|gene| Token::Gene { gene }),
+        "EXPRESSION_SYSTEM" => text().map(Token::ExpressionSystem),
+        "EXPRESSION_SYSTEM_COMMON" => {
+            items().map(|systems| Token::ExpressionSystemCommon { systems })
+        }
+        "EXPRESSION_SYSTEM_TAXID" => int_list(value).map(|id| Token::ExpressionSystemTaxId { id }),
+        "EXPRESSION_SYSTEM_STRAIN" => text().map(Token::ExpressionSystemStrain),
+        "EXPRESSION_SYSTEM_VARIANT" => text().map(Token::ExpressionSystemVariant),
+        "EXPRESSION_SYSTEM_CELL_LINE" => text().map(Token::ExpressionSystemCellLine),
+        "EXPRESSION_SYSTEM_ATCC_NUMBER" => value.parse().ok().map(Token::ExpressionSystemAtcc),
+        "EXPRESSION_SYSTEM_ORGAN" => text().map(Token::ExpressionSystemOrgan),
+        "EXPRESSION_SYSTEM_TISSUE" => text().map(Token::ExpressionSystemTissue),
+        "EXPRESSION_SYSTEM_CELL" => text().map(Token::ExpressionSystemCell),
+        "EXPRESSION_SYSTEM_ORGANELLE" => text().map(Token::ExpressionSystemOrganelle),
+        "EXPRESSION_SYSTEM_CELLULAR_LOCATION" => {
+            text().map(Token::ExpressionSystemCellularLocation)
+        }
+        "EXPRESSION_SYSTEM_VECTOR_TYPE" => text().map(Token::ExpressionSystemVectorType),
+        "EXPRESSION_SYSTEM_VECTOR" => text().map(Token::ExpressionSystemVector),
+        "EXPRESSION_SYSTEM_PLASMID" => text().map(Token::ExpressionSystemPlasmid),
+        "EXPRESSION_SYSTEM_GENE" => text().map(Token::ExpressionSystemGene),
+        _ => None,
+    };
+    token.unwrap_or_else(|| Token::Other {
+        key: key.to_owned(),
+        value: value.to_owned(),
+    })
+}
 
-named!(#[doc=r#"Parses COMPND record which is a multi line continuation record. Contains a list of comma separated predefined key-value pairs.
-Predefined keys are called tokens and can be found in [Token](../ast/types/enum.Token.html)
-If succesfull returns [Record](../ast/types/enum.Record.html) variant containing [CMPND](../ast/types/struct.Cmpnd.html) instance.
-Record layout is given below :
+/// Parses the specification list of continued COMPND or SOURCE lines.
+pub(crate) fn tokens(lines: &[Line], last_col: usize) -> Option<Vec<Token>> {
+    let text = join_continued(lines.iter().map(|l| l.cols(11, last_col)));
+    let pairs = parse_all(specification_list, &text)?;
+    Some(pairs.into_iter().map(|(k, v)| token(k, v)).collect())
+}
 
-| COLUMNS  | DATA TYPE          | FIELD        | DEFINITION                               |
-|----------|--------------------|--------------|------------------------------------------|
-| 1 -  6   | Record name        | "COMPND"     |                                          |
-| 8 - 10   | Continuation       | continuation | Allows concatenation of multiple records.|
-| 11 - 80  | Specification list | compound     | Description of the molecular components. |
-
-"#],
-
-    pub cmpnd_token_parser<Record>,
-    map_opt!(
-        cmpnd_line_folder,
-        |v: Vec<u8>|  tokens_parser(v.as_slice())
-                        .map(|res| Record::Cmpnd(Cmpnd{ tokens : res.1}))
-                        .ok()
-    )
-);
+/// Parses continued COMPND lines.
+pub(crate) fn parse(lines: &[Line]) -> Option<Record> {
+    Some(Record::Cmpnd(Cmpnd {
+        tokens: tokens(lines, 80)?,
+    }))
+}
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    use crate::{test_util::single_record, Record, Token};
 
     #[test]
-    fn mol_id_parser() {
-        if let Ok((_, Token::MoleculeId(res))) = super::mol_id_parser("MOL_ID:  1".as_bytes()) {
-            assert_eq!(res, 1);
-        } else {
-            panic!();
-        }
-    }
-
-    #[test]
-    fn molecule_parser() {
-        if let Ok((_, Token::Molecule(name))) =
-            super::molecule_parser("MOLECULE:  HEMOGLOBIN ALPHA CHAIN\n".as_bytes())
-        {
-            assert_eq!(name, "HEMOGLOBIN ALPHA CHAIN");
-        } else {
-            panic!();
-        }
-    }
-
-    #[test]
-    fn test_chain_parser() {
-        if let Ok((_, Token::Chain { identifiers: res })) = chain_parser("CHAIN: A,  C".as_bytes())
-        {
-            assert_eq!(res[1], "C")
-        }
-    }
-
-    #[test]
-    fn test_synonym_parser() {
-        if let Ok((_, Token::Synonym { synonyms: res })) =
-            synonym_parser("SYNONYM: PRECURSOR OF PLEUROTOLYSIN B".as_bytes())
-        {
-            assert_eq!(res[0], "PRECURSOR OF PLEUROTOLYSIN B");
-        }
-    }
-
-    #[test]
-    fn test_ec_parser() {
-        if let Ok((
-            _,
-            Token::Ec {
-                commission_numbers: res,
-            },
-        )) = ec_parser("EC:  3.2.1.14, 3.2.1.17".as_bytes())
-        {
-            assert_eq!(res[0], "3.2.1.14")
-        }
-    }
-
-    #[test]
-    fn test_cmpnd_parser() {
-        if let Ok((_, res)) = cmpnd_line_folder(
-            r#"COMPND    MOL_ID:  1;
-COMPND   2 MOLECULE:  HEMOGLOBIN ALPHA CHAIN;
-"#
-            .as_bytes(),
-        ) {
-            assert_eq!(
-                str::from_utf8(res.as_slice()).unwrap(),
-                "MOL_ID:  1; MOLECULE:  HEMOGLOBIN ALPHA CHAIN;"
-            );
-        }
-    }
-
-    #[test]
-    fn test_cmpnd_token_parser() {
-        if let Ok((_, Record::Cmpnd(Cmpnd { tokens: res }))) = cmpnd_token_parser(
-            r#"COMPND    MOL_ID:  1;
+    fn compnd() {
+        let r = single_record(
+            "COMPND    MOL_ID:  1;
 COMPND   2 MOLECULE:  HEMOGLOBIN ALPHA CHAIN;
 COMPND   3 CHAIN: A,  C;
-COMPND  10 SYNONYM:  DEOXYHEMOGLOBIN BETA CHAIN;
-COMPND   4 EC:  3.2.1.14, 3.2.1.17;
-COMPND  11 ENGINEERED: YES;
-COMPND  12 MUTATION:  NO
-"#
-            .as_bytes(),
-        ) {
-            assert_eq!(res[0], Token::MoleculeId(1));
-            assert_eq!(
-                res[1],
-                Token::Molecule("HEMOGLOBIN ALPHA CHAIN".to_string())
-            );
-            assert_eq!(
-                res[2],
+COMPND   4 SYNONYM:  DEOXYHEMOGLOBIN BETA CHAIN;
+COMPND   5 EC:  3.2.1.14, 3.2.1.17;
+COMPND   6 ENGINEERED: YES;
+COMPND   7 MUTATION:  NO;
+COMPND   8 OTHER_DETAILS: RATIO 1:1
+",
+        );
+        let Record::Cmpnd(c) = r else { panic!() };
+        assert_eq!(
+            c.tokens,
+            [
+                Token::MoleculeId(1),
+                Token::Molecule("HEMOGLOBIN ALPHA CHAIN".to_owned()),
                 Token::Chain {
-                    identifiers: vec!["A".to_string(), "C".to_string()]
-                }
-            );
-            assert_eq!(res[5], Token::Engineered(true));
-        }
+                    identifiers: vec!["A".to_owned(), "C".to_owned()]
+                },
+                Token::Synonym {
+                    synonyms: vec!["DEOXYHEMOGLOBIN BETA CHAIN".to_owned()]
+                },
+                Token::Ec {
+                    commission_numbers: vec!["3.2.1.14".to_owned(), "3.2.1.17".to_owned()]
+                },
+                Token::Engineered(true),
+                Token::Mutation(false),
+                Token::OtherDetails("RATIO 1:1".to_owned()),
+            ]
+        );
+    }
+
+    #[test]
+    fn value_split_across_lines() {
+        let r = single_record(
+            "COMPND    MOL_ID: 1;
+COMPND   2 SYNONYM: PROTEIN-BETA-ASPARTATE METHYLTRANSFERASE; PIMT; PROTEIN L-
+COMPND   3 ISOASPARTATE;
+",
+        );
+        let Record::Cmpnd(c) = r else { panic!() };
+        assert_eq!(c.tokens.len(), 2);
     }
 }

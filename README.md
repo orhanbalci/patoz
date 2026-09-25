@@ -12,41 +12,19 @@ patoz = "0.1.0"
 ```
 # 🔧 Examples
 ```rust
-
-use std::{
-    fs::File,
-    io::{BufReader, Read},
-    path::PathBuf,
-};
-
-use patoz::parse;
-
 fn main() {
-    let mut current_file_path = PathBuf::from(file!());
-    current_file_path.pop();
-    current_file_path.pop();
-    current_file_path.push("1BYI.pdb");
-    let content = read_file(&current_file_path);
-    if let Ok((_, mut res)) = parse(&content) {
-        println!(
-            "Classification : {:?}",
-            res.header().header().unwrap().classification
-        );
-        println!("Id Code : {:?}", res.header().header().unwrap().id_code);
-        println!("Keywords : {:?}", res.header().keywds().unwrap().keywords);
-    }
-}
+    let content = std::fs::read_to_string("res/1BYI.pdb").unwrap();
+    let mut pdb = patoz::parse(&content);
 
-fn read_file(path: &PathBuf) -> String {
-    let file = File::open(path).unwrap();
-    let mut buf_reader = BufReader::new(file);
-    let mut contents = String::new();
-    if let Ok(_read_res) = buf_reader.read_to_string(&mut contents) {
-        contents
-    } else {
-        "".to_owned()
-    }
+    println!("Classification : {:?}", pdb.header().header().unwrap().classification);
+    println!("Id Code : {:?}", pdb.header().header().unwrap().id_code);
+    println!("Keywords : {:?}", pdb.header().keywds().unwrap().keywords);
 }
+```
+Every line of the file ends up in a record. Lines of record types that are not supported yet, or that do not
+match the specification, are kept as `Record::Unknown`. To see how much of your files patoz understands:
+```
+cargo run --example coverage -- path/to/*.pdb
 ```
 # 🕸️ WebAssembly
 `patoz-wasm` exposes the parser to JavaScript. Build it with [wasm-pack](https://rustwasm.github.io/wasm-pack/):

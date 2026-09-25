@@ -1,57 +1,26 @@
-/*!
-Contains parsers related to [Keywds](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#KEYWDS) records.
-The KEYWDS record contains a set of terms relevant to the entry.
-*/
-use super::{ast::types::*, primitive::*};
-use nom::{
-    character::complete::{line_ending, space0, space1},
-    do_parse, fold_many1, map_opt, named, opt,
-};
+use crate::{ast::types::*, primitive::*};
 
-use crate::make_line_folder;
+/// Parses continued [KEYWDS](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#KEYWDS) lines.
+pub(crate) fn parse(lines: &[Line]) -> Option<Record> {
+    let text = join_continued(lines.iter().map(|l| l.cols(11, 79)));
+    Some(Record::Keywds(Keywds {
+        keywords: parse_all(list(','), &text)?,
+    }))
+}
 
-use std::{marker::PhantomData, str, str::FromStr};
+#[cfg(test)]
+mod test {
+    use crate::{test_util::single_record, Record};
 
-#[allow(dead_code)]
-struct KeywdsLine;
-
-named!(
-    keywds_line_parser<Continuation<KeywdsLine>>,
-    do_parse!(
-        keywds
-            >> space1
-            >> cont: opt!(integer)
-            >> space0
-            >> rest: till_line_ending
-            >> line_ending
-            >> (Continuation::<KeywdsLine> {
-                continuation: cont.unwrap_or(0),
-                remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
-                phantom: PhantomData,
-            })
-    )
-);
-
-make_line_folder!(keywds_line_folder, keywds_line_parser, KeywdsLine);
-
-named!(
-    #[doc=r#"Parses KEYWDS record which is a multiline continuation record. Contains comma-seperated list of  keywords relevant to pdb entry.If successfull returns [Record](../ast/types/enum.Record.html) variant containing [KEYWDS](../ast/types/struct.Keywds.html) instance.
-
-
- Record structure :
-
-| COLUMNS | DATA  TYPE   | FIELD        | DEFINITION                                   |
-|---------|--------------|--------------|----------------------------------------------|
-| 1 -  6  | Record name  | KEYWDS       |                                              |
-| 9 - 10  | Continuation | continuation | Allows concatenation of records if necessary.|
-| 11 - 79 | List         | keywds       | Comma-separated list of keywords relevant    |
-|         |              |              | to the entry.                                |
-
- "#],
-    pub keywds_parser<Record>,
-    map_opt!(keywds_line_folder, |v: Vec<u8>| keywds_value_parser(
-        v.as_slice()
-    )
-    .map(|res| Record::Keywds (Keywds{ keywords: res.1 }))
-    .ok())
-);
+    #[test]
+    fn keywds() {
+        let r = single_record(
+            "KEYWDS    VALENCE ELECTRON DENSITY, MULTI-SUBSTATE, MULTIPOLE REFINEMENT, PLANT
+KEYWDS   2 PROTEIN
+",
+        );
+        let Record::Keywds(k) = r else { panic!() };
+        assert_eq!(k.keywords.len(), 4);
+        assert_eq!(k.keywords[3], "PLANT PROTEIN");
+    }
+}

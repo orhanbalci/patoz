@@ -1,220 +1,112 @@
-use super::ast::{pdb_file::*, types::*};
-use nom::{alt, complete, fold_many0, map, named, IResult};
-
-use super::{
-    author::author_record_parser,
-    caveat::caveat_record_parser,
-    compnd::cmpnd_token_parser,
-    dbref::dbref_record_parser,
-    dbref1::dbref_partial_parser,
-    expdta::expdata_record_parser,
-    header::header_parser,
-    jrnl::{
-        jrnl_author_record_parser, jrnl_doi_record_parser, jrnl_edit_record_parser,
-        jrnl_pmid_record_parser, jrnl_publ_record_parser, jrnl_ref_record_parser,
-        jrnl_refn_record_parser, jrnl_title_record_parser,
-    },
-    keywds::keywds_parser,
-    mdltyp::mdltyp_record_parser,
-    modres::modres_record_parser,
-    nummdl::nummdl_record_parser,
-    obslte::obslte_record_parser,
-    primitive::line,
-    remark::remark_record_parser,
-    revdat::revdat_record_parser,
-    seqadv::seqadv_record_parser,
-    seqres::seqres_record_parser,
-    source::source_token_parser,
-    split::split_record_parser,
-    sprsde::sprsde_record_parser,
-    title::title_record_parser,
+use crate::{
+    ast::{pdb_file::*, types::*},
+    author, caveat, compnd, dbref, dbref1, expdta, header, jrnl, keywds, mdltyp, modres, nummdl,
+    obslte,
+    primitive::Line,
+    revdat, seqadv, seqres, source, split, sprsde, title,
 };
 
-named!(
-    pdb_record_parser<Record>,
-    alt!(
-        complete!(header_parser)
-            | complete!(obslte_record_parser)
-            | complete!(title_record_parser)
-            | complete!(split_record_parser)
-            | complete!(caveat_record_parser)
-            | complete!(sprsde_record_parser)
-            | complete!(cmpnd_token_parser)
-            | complete!(source_token_parser)
-            | complete!(keywds_parser)
-            | complete!(expdata_record_parser)
-            | complete!(nummdl_record_parser)
-            | complete!(mdltyp_record_parser)
-            | complete!(author_record_parser)
-            | complete!(revdat_record_parser)
-            | complete!(jrnl_author_record_parser)
-            | complete!(jrnl_title_record_parser)
-            | complete!(jrnl_edit_record_parser)
-            | complete!(jrnl_refn_record_parser)
-            | complete!(jrnl_ref_record_parser)
-            | complete!(jrnl_publ_record_parser)
-            | complete!(jrnl_pmid_record_parser)
-            | complete!(jrnl_doi_record_parser)
-            | complete!(dbref_record_parser)
-            | complete!(dbref_partial_parser)
-            | complete!(seqadv_record_parser)
-            | complete!(remark_record_parser)
-            | complete!(modres_record_parser)
-            | complete!(seqres_record_parser)
-            | complete!(unknown_record_parser)
-    )
-);
-
-/// Fallback for lines no record parser recognizes so parsing never stops
-/// early. Must stay the last alternative.
-fn unknown_record_parser(s: &[u8]) -> IResult<&[u8], Record> {
-    let (rest, l) = line(s)?;
-    Ok((
-        rest,
-        Record::Unknown(String::from_utf8_lossy(l).into_owned()),
-    ))
+/// Parses pdb file content. Every line ends up in a record: lines of record
+/// types that are not supported yet, or that do not match the
+/// specification, become [Record::Unknown].
+pub fn parse(content: &str) -> PdbFile<Vec<Record>> {
+    let lines: Vec<Line> = content.lines().map(Line).collect();
+    let mut records = Vec::new();
+    let mut rest = &lines[..];
+    while !rest.is_empty() {
+        let (group, next) = rest.split_at(group_len(rest));
+        match parse_group(group) {
+            Some(record) => records.push(record),
+            None => records.extend(group.iter().map(|l| Record::Unknown(l.0.to_owned()))),
+        }
+        rest = next;
+    }
+    records.to_pdb_file()
 }
 
-named!(
-    pdb_records_parser<PdbFile<Vec<Record>>>,
-    map!(
-        fold_many0!(pdb_record_parser, Vec::new(), |mut acc, r: Record| {
-            acc.push(r);
-            acc
-        }),
-        |vr: Vec<Record>| vr.to_pdb_file()
-    )
-);
+/// Number of lines that belong to the record starting at `lines[0]`.
+fn group_len(lines: &[Line]) -> usize {
+    let first = lines[0];
+    let name = first.record_name();
+    let continues = |same: &dyn Fn(&Line) -> bool| {
+        1 + lines[1..]
+            .iter()
+            .take_while(|l| l.record_name() == name && same(l))
+            .count()
+    };
+    match name {
+        "OBSLTE" | "TITLE" | "SPLIT" | "CAVEAT" | "COMPND" | "SOURCE" | "KEYWDS" | "EXPDTA"
+        | "MDLTYP" | "AUTHOR" | "SPRSDE" | "REVDAT" => continues(&|_| true),
+        "JRNL" => continues(&|l| l.cols(13, 16) == first.cols(13, 16)),
+        "SEQRES" => continues(&|l| l.cols(12, 12) == first.cols(12, 12)),
+        "DBREF1" if lines.get(1).is_some_and(|l| l.record_name() == "DBREF2") => 2,
+        _ => 1,
+    }
+}
 
-/// main parse function
-pub fn parse(s: &str) -> IResult<&[u8], PdbFile<Vec<Record>>> {
-    pdb_records_parser(s.as_bytes())
+fn parse_group(lines: &[Line]) -> Option<Record> {
+    let first = lines[0];
+    match first.record_name() {
+        "HEADER" => header::parse(first),
+        "OBSLTE" => obslte::parse(lines),
+        "TITLE" => title::parse(lines),
+        "SPLIT" => split::parse(lines),
+        "CAVEAT" => caveat::parse(lines),
+        "COMPND" => compnd::parse(lines),
+        "SOURCE" => source::parse(lines),
+        "KEYWDS" => keywds::parse(lines),
+        "EXPDTA" => expdta::parse(lines),
+        "NUMMDL" => nummdl::parse(first),
+        "MDLTYP" => mdltyp::parse(lines),
+        "AUTHOR" => author::parse(lines),
+        "REVDAT" => revdat::parse(lines),
+        "SPRSDE" => sprsde::parse(lines),
+        "JRNL" => jrnl::parse(lines),
+        "REMARK" => Some(Record::Remark),
+        "DBREF" => dbref::parse(first),
+        "DBREF1" if lines.len() == 2 => dbref1::parse(first, lines[1]),
+        "SEQADV" => seqadv::parse(first),
+        "SEQRES" => seqres::parse(lines),
+        "MODRES" => modres::parse(first),
+        _ => None,
+    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use std::{
-        fs::File,
-        io::{BufReader, Read},
-        path::PathBuf,
-    };
+    use std::path::PathBuf;
 
     #[test]
-    fn header_parser() {
-        let head = super::header_parser(
-            "HEADER    PHOTOSYNTHESIS                          28-MAR-07   2UXK \n".as_bytes(),
-        )
-        .unwrap()
-        .1;
-        if let Record::Header(Header {
-            classification: class,
-            ..
-        }) = head
-        {
-            assert_eq!(class, "PHOTOSYNTHESIS")
-        } else {
-            panic!();
-        }
-    }
-
-    #[test]
-    fn header_parser_2() {
-        let head = super::header_parser(
-            "HEADER    TRANSFERASE/TRANSFERASE                 28-MAR-07   2UXK \n".as_bytes(),
-        )
-        .unwrap()
-        .1;
-        if let Record::Header(Header {
-            classification: class,
-            ..
-        }) = head
-        {
-            assert_eq!(class, "TRANSFERASE/TRANSFERASE")
-        } else {
-            panic!();
-        }
-    }
-
-    #[test]
-    fn obslte_parser() {
-        let obs = obslte_record_parser("OBSLTE  02 31-JAN-94 1MBP      2MBP    \n".as_bytes())
-            .unwrap()
-            .1;
-
-        if let Record::Obslte(Obslte {
-            replacement_ids: reps,
-            ..
-        }) = obs
-        {
-            assert_eq!(reps[0], "1MBP");
-        } else {
+    fn unknown_lines_are_kept() {
+        let pdb = parse("HEADER    HYDROLASE                               20-APR-99   1CJY\nATOM      1  N\n\n");
+        let [Record::Header(_), Record::Unknown(atom), Record::Unknown(blank)] = pdb.records()
+        else {
             panic!()
-        }
+        };
+        assert_eq!(atom, "ATOM      1  N");
+        assert_eq!(blank, "");
     }
 
     #[test]
-    fn title_parser() {
-        let tit = title_record_parser(
-            r#"TITLE     RHIZOPUSPEPSIN COMPLEXED WITH REDUCED PEPTIDE INHIBITOR
-"#
-            .as_bytes(),
-        )
-        .unwrap()
-        .1;
-
-        if let Record::Title(title) = tit {
-            assert_eq!(
-                title.title,
-                "RHIZOPUSPEPSIN COMPLEXED WITH REDUCED PEPTIDE INHIBITOR"
-            )
-        } else {
-            panic!()
-        }
+    fn failed_group_falls_back_to_unknown_lines() {
+        let pdb = parse("REVDAT   1   14-XXX-98 1BXO    0\nREVDAT   2   14-OCT-98 1BXO    1\n");
+        assert_eq!(pdb.records().len(), 2);
+        assert!(pdb
+            .records()
+            .iter()
+            .all(|r| matches!(r, Record::Unknown(_))));
     }
 
     #[test]
-    fn split_parser() {
-        let splt = split_record_parser(
-            "SPLIT      1VOQ 1VOR 1VOS 1VOU 1VOV 1VOW 1VOX 1VOY 1VP0 1VOZ \n".as_bytes(),
-        )
-        .unwrap()
-        .1;
-
-        if let Record::Split(split) = splt {
-            assert_eq!(split.id_codes[0], "1VOQ")
-        } else {
-            panic!()
-        }
-    }
-
-    #[test]
-    fn pdb_records_parser() {
-        if let Ok((_, mut res)) = super::pdb_records_parser(
-            r#"HEADER    HYDROLASE                               20-APR-99   1CJY   
-TITLE     HUMAN CYTOSOLIC PHOSPHOLIPASE A2
-"#
-            .as_bytes(),
-        ) {
-            if let Some(Header {
-                classification: class,
-                ..
-            }) = &mut res.header().header()
-            {
-                assert_eq!(class, "HYDROLASE");
-            }
-
-            if let Some(tit) = &mut res.header().title() {
-                assert_eq!(tit.title, "HUMAN CYTOSOLIC PHOSPHOLIPASE A2");
-            }
-        } else {
-            panic!();
-        }
+    fn dbref1_without_dbref2_is_unknown() {
+        let pdb = parse("DBREF1 1ABC A   61   322  UNIMES               UPI000148A153\n");
+        assert!(matches!(pdb.records(), [Record::Unknown(_)]));
     }
 
     #[test]
     fn ejg_header() {
-        if let Ok((_, mut res)) = super::pdb_records_parser(
+        let mut pdb = parse(
             r#"HEADER    PLANT PROTEIN                           02-MAR-00   1EJG
 TITLE     CRAMBIN AT ULTRAHIGH RESOLUTION VALENCE ELECTRON DENSITY
 COMPND    MOL_ID: 1;
@@ -235,45 +127,25 @@ JRNL        REF    PROC.NATL.ACAD.SCI.USA        V.  97  3171 2000
 JRNL        REFN                   ISSN 0027-8424
 JRNL        PMID   10737790
 JRNL        DOI    10.1073/PNAS.97.7.3171
-"#
-            .as_bytes(),
-        ) {
-            let pubmedid = &mut res.header().journal().pubmedid().unwrap();
-
-            assert_eq!(pubmedid.id, 10737790);
-        } else {
-            panic!()
-        }
+"#,
+        );
+        assert!(!pdb
+            .records()
+            .iter()
+            .any(|r| matches!(r, Record::Unknown(_))));
+        assert_eq!(pdb.records().len(), 12);
+        assert_eq!(pdb.header().journal().pubmedid().unwrap().id, 10737790);
+        assert_eq!(pdb.header().journal().authors().unwrap().authors.len(), 6);
     }
 
-    fn get_test_file_path(file_name: &str) -> PathBuf {
-        let mut current_file_path = PathBuf::from(file!());
-        current_file_path.pop();
-        current_file_path.pop();
-        current_file_path.push("res");
-        current_file_path.push(file_name);
-        current_file_path
-    }
-
-    fn read_file(path: &PathBuf) -> String {
-        let file = File::open(path).unwrap();
-        let mut buf_reader = BufReader::new(file);
-        let mut contents = String::new();
-        if let Ok(_read_res) = buf_reader.read_to_string(&mut contents) {
-            contents
-        } else {
-            "".to_owned()
-        }
-    }
     fn parse_from_file(pdb_entry: &str) {
         use serde_json::Value;
 
-        let test_file_path = get_test_file_path(&format!("{}.pdb", pdb_entry));
-        let expected_file_path = get_test_file_path(&format!("{}.exp", pdb_entry));
-        let contents = read_file(&test_file_path);
-        let expected = read_file(&expected_file_path);
+        let res = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("res");
+        let contents = std::fs::read_to_string(res.join(format!("{}.pdb", pdb_entry))).unwrap();
+        let expected = std::fs::read_to_string(res.join(format!("{}.exp", pdb_entry))).unwrap();
         let expected_val: Value = serde_json::from_str(&expected).unwrap();
-        let mut pdb_parsed = super::pdb_records_parser(contents.as_bytes()).unwrap().1;
+        let mut pdb_parsed = parse(&contents);
 
         assert_eq!(
             expected_val["header.classification"],
@@ -299,7 +171,6 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
                 .unwrap(),
             pdb_parsed.header().expdta().unwrap().techniques[0]
         );
-
         assert_eq!(
             Author(
                 expected_val["header.authors"][0]
@@ -309,7 +180,6 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
             ),
             pdb_parsed.header().authors().unwrap().authors[0]
         );
-
         assert_eq!(
             Author(
                 expected_val["header.journal.authors"][0]
@@ -319,44 +189,23 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
             ),
             pdb_parsed.header().journal().authors().unwrap().authors[0]
         );
-
         assert_eq!(
             expected_val["header.journal.title"],
             pdb_parsed.header().journal().title().unwrap().title
         );
-
+        let journal_ref = pdb_parsed.header().journal().reference().unwrap();
         assert_eq!(
             expected_val["header.journal.reference.publication_name"],
-            pdb_parsed
-                .header()
-                .journal()
-                .reference()
-                .unwrap()
-                .publication_name
+            journal_ref.publication_name
         );
-
         assert_eq!(
             expected_val["header.journal.reference.volume"],
-            pdb_parsed
-                .header()
-                .journal()
-                .reference()
-                .unwrap()
-                .volume
-                .unwrap()
+            journal_ref.volume.unwrap()
         );
-
         assert_eq!(
             expected_val["header.journal.reference.page"],
-            pdb_parsed
-                .header()
-                .journal()
-                .reference()
-                .unwrap()
-                .page
-                .unwrap()
+            journal_ref.page.unwrap()
         );
-
         assert_eq!(
             expected_val["primary.dbref.database"],
             pdb_parsed.primary().dbreference().unwrap().database

@@ -15,13 +15,7 @@ fn main() {
                 continue;
             }
         };
-        let pdb = match patoz::parse(&content) {
-            Ok((_, pdb)) => pdb,
-            Err(e) => {
-                eprintln!("{}: parse error {:?}", path, e);
-                continue;
-            }
-        };
+        let pdb = patoz::parse(&content);
         total += content.lines().count();
         for record in pdb.records() {
             if let patoz::Record::Unknown(l) = record {

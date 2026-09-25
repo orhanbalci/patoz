@@ -12,21 +12,17 @@ fn main() {
     for path in args {
         let content = std::fs::read_to_string(&path).unwrap();
         let mut out = String::new();
-        match patoz::parse(&content) {
-            Ok((_, pdb)) => {
-                let mut unknown: BTreeMap<&str, usize> = BTreeMap::new();
-                for record in pdb.records() {
-                    match record {
-                        patoz::Record::Unknown(l) => {
-                            *unknown.entry(l.get(..6).unwrap_or(l).trim()).or_default() += 1
-                        }
-                        r => writeln!(out, "{:?}", r).unwrap(),
-                    }
+        let pdb = patoz::parse(&content);
+        let mut unknown: BTreeMap<&str, usize> = BTreeMap::new();
+        for record in pdb.records() {
+            match record {
+                patoz::Record::Unknown(l) => {
+                    *unknown.entry(l.get(..6).unwrap_or(l).trim()).or_default() += 1
                 }
-                writeln!(out, "Unknown {:?}", unknown).unwrap();
+                r => writeln!(out, "{:?}", r).unwrap(),
             }
-            Err(e) => writeln!(out, "Error {:?}", e).unwrap(),
         }
+        writeln!(out, "Unknown {:?}", unknown).unwrap();
         let name = Path::new(&path).file_stem().unwrap().to_string_lossy();
         std::fs::write(Path::new(&out_dir).join(format!("{}.txt", name)), out).unwrap();
     }

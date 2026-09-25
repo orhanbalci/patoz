@@ -1,90 +1,32 @@
-/*!
-Contains parsers related to [Author](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#AUTHOR) records.
-The AUTHOR record contains the names of the people responsible for the contents of the entry.
-*/
-use super::{ast::types::*, primitive::*};
-use nom::{
-    bytes::complete::{tag, take_while},
-    character::{
-        complete::{line_ending, space0, space1},
-        is_alphanumeric, is_space,
-    },
-    do_parse, fold_many1, map_opt, map_res,
-    multi::separated_list,
-    named, opt, Err, IResult,
-};
+use crate::{ast::types::*, primitive::*};
 
-use crate::make_line_folder;
-
-use std::{marker::PhantomData, str, str::FromStr};
-
-#[allow(dead_code)]
-struct AuthorLine;
-
-named!(
-    author_line_parser<Continuation<AuthorLine>>,
-    do_parse!(
-        author
-            >> space1
-            >> cont: opt!(integer)
-            >> space0
-            >> rest: till_line_ending
-            >> line_ending
-            >> (Continuation::<AuthorLine> {
-                continuation: cont.unwrap_or(0),
-                remaining: String::from_str(str::from_utf8(rest).unwrap()).unwrap(),
-                phantom: PhantomData,
-            })
-    )
-);
-
-make_line_folder!(author_line_folder, author_line_parser, AuthorLine);
-
-named!(
-    author_value_parser<Author>,
-    map_res!(
-        map_res!(
-            map_res!(
-                take_while(|s| {
-                    is_alphanumeric(s)
-                        || is_space(s)
-                        || char::from(s) == '.'
-                        || char::from(s) == '\''
-                        || char::from(s) == '-'
-                }),
-                str::from_utf8
-            ),
-            str::FromStr::from_str
-        ),
-        |s: String| {
-            Result::Ok::<Author, Err<String>>(Author(String::from_str(s.trim()).unwrap()))
-        }
-    )
-);
-
-///parses , separated author names. If successfull returns list of
-///[Authors](../ast/types/struct.Author.html)
-pub fn author_list_parser(s: &[u8]) -> IResult<&[u8], Vec<Author>> {
-    separated_list(tag(","), author_value_parser)(s)
+/// Parses a comma separated author list.
+pub(crate) fn authors(text: &str) -> Option<Vec<Author>> {
+    parse_all(list(','), text).map(|names| names.into_iter().map(Author).collect())
 }
 
-named!(
-#[doc=r#"Parses AUTHOR record which is a multiline continuation record. Contains comma-seperated list of author names. If successfull returns [Record](../ast/types/enum.Record.html) variant containing [AUTHORS](../ast/types/struct.Authors.html) instance.
+/// Parses continued [AUTHOR](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#AUTHOR) lines.
+pub(crate) fn parse(lines: &[Line]) -> Option<Record> {
+    let text = join_continued(lines.iter().map(|l| l.cols(11, 79)));
+    Some(Record::Authors(Authors {
+        authors: authors(&text)?,
+    }))
+}
 
-Record structure :
+#[cfg(test)]
+mod test {
+    use crate::{test_util::single_record, Author, Record};
 
-| COLUMNS | DATA  TYPE   | FIELD        | DEFINITION                                   |
-|---------|--------------|--------------|----------------------------------------------|
-| 1 -  6  | Record name  | AUTHOR       |                                              |
-| 9 - 10  | Continuation | continuation | Allows concatenation of multiple records.    |
-| 11 - 79 | List         | authorList   | List of the author names, separated          |
-|         |              |              | by commas.                                   |
-
-"#],
-    pub author_record_parser<Record>,
-    map_opt!(author_line_folder, |v: Vec<u8>| {
-        author_list_parser(v.as_slice())
-            .map(|res| Record::Authors(Authors { authors: res.1 }))
-            .ok()
-    })
-);
+    #[test]
+    fn author() {
+        let r = single_record(
+            "AUTHOR    C.JELSCH,M.M.TEETER,V.LAMZIN,V.PICHON-LESME,B.BLESSING,
+AUTHOR   2 C.LECOMTE, D.VAN DER HELM
+",
+        );
+        let Record::Authors(a) = r else { panic!() };
+        assert_eq!(a.authors.len(), 7);
+        assert_eq!(a.authors[0], Author("C.JELSCH".to_owned()));
+        assert_eq!(a.authors[6], Author("D.VAN DER HELM".to_owned()));
+    }
+}

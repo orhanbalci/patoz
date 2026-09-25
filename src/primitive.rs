@@ -1,279 +1,84 @@
-/*! contains lowest level parsers that are used by multiple record parsers
+/*!
+Building blocks shared by record parsers: fixed column access to lines and
+nom parsers for values found inside records.
 */
-use chrono::{
-    format::{strftime::StrftimeItems, Parsed},
-    NaiveDate,
-};
-
+use chrono::NaiveDate;
 use nom::{
-    alt,
-    branch::alt,
-    bytes::complete::{tag, take, take_till, take_while},
-    character::{
-        complete::{alpha1, alphanumeric1, digit1, multispace1, space0, space1},
-        is_alphanumeric, is_digit, is_space,
-    },
-    combinator::{map, map_res, recognize},
-    do_parse, fold_many0, map_opt, map_res,
-    multi::separated_list,
-    named, separated_list,
-    sequence::tuple,
-    tag, take, take_str, IResult,
+    bytes::complete::{take_till, take_while1},
+    character::complete::{alpha1, char, space0, u32 as uint},
+    combinator::{all_consuming, map_opt, opt},
+    error::Error,
+    multi::separated_list1,
+    sequence::{delimited, separated_pair, terminated},
+    IResult, Parser,
 };
-use std::{result::Result, str, str::FromStr};
+use std::str::FromStr;
 
-macro_rules! make_tagger(
-    ($fnname:ident) =>(
-            pub fn $fnname(s : &[u8]) -> IResult<&[u8], &[u8]>{
-                tag(stringify!($fnname).to_ascii_uppercase().as_str())(s)
-            }
-        );
-    );
+/// A line of a pdb file addressed by the 1-based inclusive column numbers
+/// used in the format specification. Columns past the end of a short line
+/// read as blank.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct Line<'a>(pub &'a str);
 
-#[macro_export]
-macro_rules! make_token_tagger(
-    ($tokenname : ident) => (
-            named!(
-            pub $tokenname<()>,
-            do_parse!(
-                tag!(stringify!($tokenname).to_ascii_uppercase().as_str())
-                >> tag!(":")
-                >> ()
-            )
-        );
-    );
-);
+impl<'a> Line<'a> {
+    /// raw text of columns `from..=to`
+    pub fn cols(&self, from: usize, to: usize) -> &'a str {
+        let start = (from - 1).min(self.0.len());
+        let end = to.min(self.0.len()).max(start);
+        self.0.get(start..end).unwrap_or("")
+    }
 
-#[macro_export]
-macro_rules! make_token_parser(
-    ($doc_comment : expr, $parser_name : ident, $tagger_name : ident, $value_parser : ident, $parse_val : ident, $ret_val : expr) => (
-        named!(#[doc=$doc_comment],
-            pub $parser_name<Token>,
-            do_parse!(
-                space0
-                    >> $tagger_name
-                    >> space1
-                    >> $parse_val : $value_parser
-                    >> space0
-                    >> ($ret_val)
-            )
-        );
-    );
-);
+    /// text of columns `from..=to` without surrounding whitespace
+    pub fn text(&self, from: usize, to: usize) -> &'a str {
+        self.cols(from, to).trim()
+    }
 
-#[macro_export]
-macro_rules! make_line_folder (
-    ($parser_name : ident, $line_parser : ident, $line_type : ty) => {
-        named!(
-            $parser_name<Vec<u8>>,
-            fold_many1!(
-                    $line_parser,
-                    Vec::new(),
-                    |acc : Vec<u8>, item : Continuation<$line_type>|{
-                        let rem = if acc.len() > 0 { " ".to_owned() + &item.remaining }else{ item.remaining };
-                        let trimmed =  rem.trim_end();
-                        acc.into_iter().chain(trimmed.bytes()).collect()
-                    }
-                )
-            );
-    };
-);
+    /// record name in columns 1-6
+    pub fn record_name(&self) -> &'a str {
+        self.text(1, 6)
+    }
 
-make_tagger!(master);
-make_tagger!(header);
-make_tagger!(obslte);
-make_tagger!(title);
-make_tagger!(split);
-make_tagger!(caveat);
-make_tagger!(compnd);
-make_tagger!(source);
-make_tagger!(keywds);
-make_tagger!(expdta);
-make_tagger!(nummdl);
-make_tagger!(mdltyp);
-make_tagger!(author);
-make_tagger!(revdat);
-make_tagger!(sprsde);
-make_tagger!(seqres);
-make_tagger!(jrnl);
-make_tagger!(auth);
-make_tagger!(end);
-make_tagger!(titl);
-make_tagger!(edit);
-make_tagger!(dbref);
-make_tagger!(dbref1);
-make_tagger!(dbref2);
-make_tagger!(seqadv);
-make_tagger!(modres);
-make_tagger!(remark);
+    /// character at `col`, `None` if blank
+    pub fn char_at(&self, col: usize) -> Option<char> {
+        self.cols(col, col).chars().next().filter(|c| *c != ' ')
+    }
 
-named!(
-    #[doc=r#"
-Parses two digit numbers.
-# Example
-```
-# use patoz::primitive::twodigit_integer;
-let a = " 9";
-let b = "9 ";
-let c = "99";
-let empty_remaining  : [u8;0] = [];
-assert_eq!(Ok((&empty_remaining[..],9)), twodigit_integer(a.as_bytes()));
-assert_eq!(Ok((&empty_remaining[..],9)), twodigit_integer(b.as_bytes()));
-assert_eq!(Ok((&empty_remaining[..],99)),twodigit_integer(c.as_bytes()));
-```
-    "#],
-    pub twodigit_integer<u32>,
-    map_res!(map_res!(take!(2), str::from_utf8), |s : &str| str::FromStr::from_str(s.trim()))
-);
+    /// number in columns `from..=to`, `None` if blank or not a number
+    pub fn int<T: FromStr>(&self, from: usize, to: usize) -> Option<T> {
+        self.text(from, to).parse().ok()
+    }
 
-named!(
-    #[doc=r#"
-Parses three digit numbers.
-# Example
-```
-# use patoz::primitive::threedigit_integer;
-let a = "  9";
-let b = "9  ";
-let c = "99 ";
-let d = "123";
-let empty_remaining  : [u8;0] = [];
-assert_eq!(Ok((&empty_remaining[..],9)), threedigit_integer(a.as_bytes()));
-assert_eq!(Ok((&empty_remaining[..],9)), threedigit_integer(b.as_bytes()));
-assert_eq!(Ok((&empty_remaining[..],99)),threedigit_integer(c.as_bytes()));
-assert_eq!(Ok((&empty_remaining[..],123)),threedigit_integer(d.as_bytes()));
-```
-    "#],
-    pub threedigit_integer<u32>,
-    map_res!(map_res!(take!(3), str::from_utf8), |s : &str| str::FromStr::from_str(s.trim()))
-);
+    /// four character id codes starting at column `from`, 5 columns apart
+    pub fn id_codes(&self, from: usize, count: usize) -> impl Iterator<Item = String> + 'a {
+        let line = *self;
+        (0..count)
+            .map(move |i| line.text(from + 5 * i, from + 5 * i + 3))
+            .filter(|id| !id.is_empty())
+            .map(str::to_owned)
+    }
+}
 
-named!(
-    pub fourdigit_integer<u32>,
-    map_res!(map_res!(take!(4), str::from_utf8), |s : &str| str::FromStr::from_str(s.trim()))
-);
+/// Joins the text of continued lines with a space. A line ending with a
+/// hyphen continues its word on the next line so no space is added.
+pub(crate) fn join_continued<'a>(parts: impl IntoIterator<Item = &'a str>) -> String {
+    let mut joined = String::new();
+    for part in parts.into_iter().map(str::trim).filter(|p| !p.is_empty()) {
+        if !joined.is_empty() && !joined.ends_with('-') {
+            joined.push(' ');
+        }
+        joined.push_str(part);
+    }
+    joined
+}
 
-named!(
-    pub fivedigit_integer<u32>,
-    map_res!(map_res!(take!(5), str::from_utf8), |s : &str| str::FromStr::from_str(s.trim()))
-);
-
-named!(
-    #[doc=r#"
-Parses arbitrary digit positive integers. Needs at least one digit.
-# Example
-```
-# use patoz::primitive::integer;
-let a = "975";
-let b = "0";
-let c = "1000";
-
-let empty_remaining  : [u8;0] = [];
-assert_eq!(Ok((&empty_remaining[..],975)), integer(a.as_bytes()));
-assert_eq!(Ok((&empty_remaining[..],0)), integer(b.as_bytes()));
-assert_eq!(Ok((&empty_remaining[..],1000)), integer(c.as_bytes()));
-```
-    "#],
-    pub integer<u32>,
-    map_res!(map_res!(digit1, str::from_utf8), str::FromStr::from_str)
-);
-
-named!(
-    pub integer_with_spaces<u32>,
-    do_parse!(space0 >> res: integer >> space0 >> (res))
-);
-
-named!(
-    pub integer_list<&[u8],Vec<u32>>,
-    separated_list!(tag(","), integer_with_spaces)
-);
-
-named!(
-    pub ascii_word<String>,
-    map_res!(map_res!(alpha1, str::from_utf8), String::from_str)
-);
-
-named!(
-    pub alphanum_word<String>,
-    map_res!(
-        map_res!(alphanumeric1, str::from_utf8),
-        str::FromStr::from_str
-    )
-);
-
-named!(
-    pub mspace<String>,
-    map_res!(
-        map_res!(space1, str::from_utf8),
-        str::FromStr::from_str
-    )
-);
-
-named!(
-    pub alphanum_word_with_spaces_inside<String>,
-    map_res!(
-        map_res!(take_while(|s| {is_alphanumeric(s) || is_space(s)}), str::from_utf8),
-        |s : &str| {str::FromStr::from_str(s.trim())}
-    )
-);
-named!(
-    pub keywords_parser<String>,
-    map_res!(
-        map_res!(take_while(|s| {is_alphanumeric(s) ||
-            is_space(s) || char::from(s) == '-'
-        }), str::from_utf8),
-        |s : &str| {str::FromStr::from_str(s.trim())}
-    )
-);
-
-named!(
-    pub molecule_name_parser<String>,
-    map_res!(
-        map_res!(take_while(|s| {is_alphanumeric(s) ||
-            is_space(s) || char::from(s) == '(' ||
-            char::from(s) == ')' ||
-            char::from(s) == ',' ||
-            char::from(s) == '/'
-        }), str::from_utf8),
-        |s : &str| {str::FromStr::from_str(s.trim())}
-    )
-);
-
-named!(
-    pub db_id_code_parser<String>,
-    map_res!(
-        map_res!(take_while(|s| {is_alphanumeric(s) ||
-            char::from(s) == '_'
-        }), str::from_utf8),
-        |s : &str| {str::FromStr::from_str(s.trim())}
-    )
-);
-
-named!(
-    pub title_parser<String>,
-    map_res!(
-        map_res!(take_while(|s| {is_alphanumeric(s) ||
-            is_space(s) || char::from(s) == '(' ||
-            char::from(s) == ')' ||
-            char::from(s) == '.' ||
-            char::from(s) == '/' ||
-            char::from(s) == '[' ||
-            char::from(s) == ']' ||
-            char::from(s) == ':' ||
-            char::from(s) == '-'
-        }), str::from_utf8),
-        |s : &str| {str::FromStr::from_str(s.trim())}
-    )
-);
-
-named!(
-    pub month_parser<u32>,
-    map_res!(ascii_word, |s: String| -> Result<u32, ()> {
-        let mut parsed = Parsed::new();
-        chrono::format::parse(&mut parsed, s.as_str(), StrftimeItems::new("%b"))
-            .map_err(|_| ())?;
-        parsed.month.ok_or(())
-    })
-);
+/// Runs `parser` on the whole of `input`, `None` if it fails or leaves
+/// anything unparsed.
+pub(crate) fn parse_all<'a, O>(
+    parser: impl Parser<&'a str, Output = O, Error = Error<&'a str>>,
+    input: &'a str,
+) -> Option<O> {
+    all_consuming(parser).parse(input).ok().map(|(_, o)| o)
+}
 
 /// PDB dates carry two digit years. PDB archive started in 1971 so years
 /// from 71 onwards belong to 20th century, earlier ones to 21st century.
@@ -285,222 +90,75 @@ fn four_digit_year(year: u32) -> i32 {
     }
 }
 
-named!(
-    pub date_parser<NaiveDate>,
-    map_opt!(
-        do_parse!(
-            dayp: integer
-                >> tag!("-")
-                >> monthp: month_parser
-                >> tag!("-")
-                >> yearp: integer
-                >> ((yearp, monthp, dayp))
-        ),
-        |(yearp, monthp, dayp)| NaiveDate::from_ymd_opt(four_digit_year(yearp), monthp, dayp)
-    )
-);
-
-named!(
-    pub alphanum_word_space<String>,
-    do_parse!(w: alphanum_word >> space1 >> (w))
-);
-
-// named!(
-//     pub idcode_parser<String>,
-//     map_res!(map_res!(do_parse!(digit1 >> alphanumeric1 >> ()), str::from_utf8), |s: &str |{str::FromStr::from_str(s)} )
-// );
-
-named!(
-    pub idcode_list<Vec<String>>,
-    fold_many0!(alphanum_word_space, Vec::new(), |mut acc: Vec<String>,
-                                                  item: String|
-     -> Vec<String> {
-        acc.push(item);
-        acc
+fn month(s: &str) -> IResult<&str, u32> {
+    const MONTHS: [&str; 12] = [
+        "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC",
+    ];
+    map_opt(alpha1, |m: &str| {
+        MONTHS.iter().position(|x| *x == m).map(|i| i as u32 + 1)
     })
-);
-
-pub fn chain_value_parser(s: &[u8]) -> IResult<&[u8], Vec<String>> {
-    separated_list(tag(","), alphanum_word_with_spaces_inside)(s)
+    .parse(s)
 }
 
-pub fn keywds_value_parser(s: &[u8]) -> IResult<&[u8], Vec<String>> {
-    separated_list(tag(","), keywords_parser)(s)
-}
-
-pub fn structural_annotation(s: &[u8]) -> IResult<&[u8], String> {
-    map_res(
-        map_res(
-            take_while(|s: u8| s == b',' || is_alphanumeric(s) || is_space(s)),
-            str::from_utf8,
-        ),
-        str::FromStr::from_str,
-    )(s)
-}
-
-pub fn structural_annotation_list_parser(s: &[u8]) -> IResult<&[u8], Vec<String>> {
-    separated_list(tag(";"), structural_annotation)(s)
-}
-
-pub fn ec_value_parser(s: &[u8]) -> IResult<&[u8], Vec<String>> {
-    separated_list(
-        tag(","),
-        map_res(
-            map_res(
-                take_while(|c: u8| c == b'.' || is_digit(c) || is_space(c)),
-                str::from_utf8,
-            ),
-            str::FromStr::from_str,
-        ),
-    )(s)
-}
-
-pub fn yes(s: &[u8]) -> IResult<&[u8], bool> {
-    map_res(tag("YES"), |_| -> Result<bool, ()> { Ok(true) })(s)
-}
-
-pub fn no(s: &[u8]) -> IResult<&[u8], bool> {
-    map_res(tag("NO"), |_| -> Result<bool, ()> { Ok(false) })(s)
-}
-
-pub fn yes_no_parser(s: &[u8]) -> IResult<&[u8], bool> {
-    alt((yes, no))(s)
-}
-
-pub fn merge_db_ref(def_1: crate::Dbref1, def_2: Dbref2) -> Dbref {
-    Dbref {
-        idcode: def_1.idcode,
-        chain_id: def_1.chain_id,
-        seq_begin: def_1.seq_begin,
-        initial_sequence: def_1.initial_sequence,
-        seq_end: def_1.seq_end,
-        ending_sequence: def_1.ending_sequence,
-        database: def_1.database,
-        db_accession: def_2.db_accession,
-        db_idcode: def_1.db_idcode,
-        db_seq_begin: def_2.db_seq_begin,
-        db_seq_end: def_2.db_seq_end,
-        idbns_begin: None,
-        dbins_end: None,
-    }
-}
-// pub fn idcode_parser(s: &[u8]) -> IResult<&[u8], String> {
-//     map(take(4u32), |res: &[u8]| {
-//         if let Ok((_, r)) = alphanum_word(res) {
-//             r
-//         } else {
-//             "".to_owned()
-//         }
-//     })(s)
-// }
-
-#[macro_export]
-macro_rules! wrap_len(
-($fn_name : ident, $res_type : ty,  $len : literal, $p:ident) => (
-        pub fn $fn_name(s: &[u8]) -> IResult<&[u8], $res_type> {
-            map(take($len), |res: &[u8]|{
-                if let Ok((_, r)) = $p(res){r} else {Default::default()}
-            })(s)
-        }
-    );
-);
-
-pub fn idcode_parser(s: &[u8]) -> IResult<&[u8], String> {
-    map_res(
-        map_res(recognize(tuple((digit1, alphanumeric1))), str::from_utf8),
-        str::FromStr::from_str,
-    )(s)
-}
-
-wrap_len!(idcode_parser_len, String, 4u32, idcode_parser);
-wrap_len!(db_id_code_parser_len, String, 13u32, db_id_code_parser);
-wrap_len!(two_space, String, 2u32, mspace);
-wrap_len!(five_space, String, 5u32, mspace);
-
-use crate::{Dbref, Dbref2};
-
-use super::ast::types::ModificationType;
-
-named!(
-    pub modification_type_parser<ModificationType>,
-    alt!(
-        do_parse!(tag!("0") >> (ModificationType::InitialRelease)) |
-        do_parse!(tag!("1") >> (ModificationType::OtherModification)) |
-        do_parse!(take!(1) >> (ModificationType::UnknownModification))
+/// Parses dates of the form `DD-MMM-YY`.
+pub(crate) fn date(s: &str) -> IResult<&str, NaiveDate> {
+    map_opt(
+        (uint, char('-'), month, char('-'), uint),
+        |(day, _, month, _, year)| NaiveDate::from_ymd_opt(four_digit_year(year), month, day),
     )
-);
-
-make_token_tagger!(mol_id);
-make_token_tagger!(molecule);
-make_token_tagger!(chain);
-make_token_tagger!(fragment);
-make_token_tagger!(synonym);
-make_token_tagger!(ec);
-make_token_tagger!(engineered);
-make_token_tagger!(mutation);
-make_token_tagger!(other_details);
-make_token_tagger!(synthetic);
-make_token_tagger!(organism_scientific);
-make_token_tagger!(organism_common);
-make_token_tagger!(organism_taxid);
-make_token_tagger!(strain);
-make_token_tagger!(variant);
-make_token_tagger!(cell_line);
-make_token_tagger!(atcc);
-make_token_tagger!(organ);
-make_token_tagger!(tissue);
-make_token_tagger!(cell);
-make_token_tagger!(organelle);
-make_token_tagger!(secretion);
-make_token_tagger!(cellular_location);
-make_token_tagger!(plasmid);
-make_token_tagger!(gene);
-make_token_tagger!(expression_system);
-make_token_tagger!(expression_system_common);
-make_token_tagger!(expression_system_tax_id);
-make_token_tagger!(expression_system_strain);
-make_token_tagger!(expression_system_variant);
-make_token_tagger!(expression_system_cell_line);
-make_token_tagger!(expression_system_atcc_number);
-make_token_tagger!(expression_system_organ);
-make_token_tagger!(expression_system_tissue);
-make_token_tagger!(expression_system_cell);
-make_token_tagger!(expression_system_organelle);
-make_token_tagger!(expression_system_cellular_location);
-make_token_tagger!(expression_system_vector_type);
-make_token_tagger!(expression_system_vector);
-make_token_tagger!(expression_system_plasmid);
-make_token_tagger!(expression_system_gene);
-
-pub fn till_line_ending(s: &[u8]) -> IResult<&[u8], &[u8]> {
-    take_till(|c| char::from(c) == '\r' || char::from(c) == '\n')(s)
+    .parse(s)
 }
 
-named!(pub residue_parser<String>, map_res!(alt!(take_str!(3) | take_str!(2) | take_str!(1)), str::FromStr::from_str));
+/// Parses a list of items separated by `separator`, trimming whitespace
+/// around items and dropping empty ones.
+pub(crate) fn list<'a>(
+    separator: char,
+) -> impl Parser<&'a str, Output = Vec<String>, Error = Error<&'a str>> {
+    separated_list1(char(separator), take_till(move |c| c == separator)).map(|items: Vec<&str>| {
+        items
+            .into_iter()
+            .map(str::trim)
+            .filter(|i| !i.is_empty())
+            .map(str::to_owned)
+            .collect()
+    })
+}
 
-/// Consumes one line including its terminator and returns the line without
-/// the terminator. Fails only on empty input.
-pub fn line(s: &[u8]) -> IResult<&[u8], &[u8]> {
-    if s.is_empty() {
-        return Err(nom::Err::Error((s, nom::error::ErrorKind::Eof)));
+fn specification_key(s: &str) -> IResult<&str, &str> {
+    delimited(
+        space0,
+        take_while1(|c: char| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_'),
+        space0,
+    )
+    .parse(s)
+}
+
+/// Value of a specification list token. Values may contain `;` themselves
+/// (e.g. `SYNONYM: PIMT; PROTEIN L-ISOASPARTATE`), so a `;` only ends the
+/// value when a `KEY:` or the end of input follows it.
+fn specification_value(s: &str) -> IResult<&str, &str> {
+    let mut end = 0;
+    while let Some(i) = s[end..].find(';') {
+        let after = &s[end + i + 1..];
+        if after.trim().is_empty() || (specification_key, char(':')).parse(after).is_ok() {
+            return Ok((&s[end + i..], s[..end + i].trim()));
+        }
+        end += i + 1;
     }
-    let end = s.iter().position(|&b| b == b'\n').unwrap_or(s.len());
-    let rest = &s[(end + 1).min(s.len())..];
-    let l = &s[..end];
-    Ok((rest, l.strip_suffix(b"\r").unwrap_or(l)))
+    Ok(("", s.trim()))
 }
 
-/// Returns the text in 1-based inclusive columns `from..=to` of a line, as
-/// the PDB format specification numbers them. Columns past the end of a
-/// short line are treated as blank.
-pub fn columns(line: &[u8], from: usize, to: usize) -> &str {
-    let start = (from - 1).min(line.len());
-    let end = to.min(line.len());
-    str::from_utf8(&line[start..end]).unwrap_or("")
-}
-
-pub fn residue_list_parser(s: &[u8]) -> IResult<&[u8], Vec<String>> {
-    separated_list(multispace1, residue_parser)(s)
+/// Parses `KEY: value; KEY: value` specification lists used by COMPND and
+/// SOURCE records into key value pairs.
+pub(crate) fn specification_list(s: &str) -> IResult<&str, Vec<(&str, &str)>> {
+    terminated(
+        separated_list1(
+            char(';'),
+            separated_pair(specification_key, char(':'), specification_value),
+        ),
+        (opt(char(';')), space0),
+    )
+    .parse(s)
 }
 
 #[cfg(test)]
@@ -509,113 +167,78 @@ mod test {
     use chrono::Datelike;
 
     #[test]
+    fn columns_of_short_line() {
+        let line = Line("HEADER    PLANT");
+        assert_eq!(line.record_name(), "HEADER");
+        assert_eq!(line.text(11, 50), "PLANT");
+        assert_eq!(line.cols(60, 66), "");
+        assert_eq!(line.char_at(7), None);
+        assert_eq!(line.int::<u32>(11, 15), None);
+    }
+
+    #[test]
+    fn id_codes() {
+        let line = Line("SPLIT      1VOQ 1VOR 1VOS");
+        assert_eq!(
+            line.id_codes(12, 14).collect::<Vec<_>>(),
+            ["1VOQ", "1VOR", "1VOS"]
+        );
+    }
+
+    #[test]
+    fn join_continued_lines() {
+        assert_eq!(join_continued(["A B ", " C", ""]), "A B C");
+        assert_eq!(join_continued(["N-(3-", "DIMETHOXY"]), "N-(3-DIMETHOXY");
+    }
+
+    #[test]
     fn test_date_parser() {
-        let temp: NaiveDate = date_parser("12-SEP-09".as_bytes()).unwrap().1;
+        let temp = parse_all(date, "12-SEP-09").unwrap();
         assert_eq!(temp.day(), 12);
         assert_eq!(temp.year(), 2009);
     }
 
     #[test]
     fn test_date_parser_twentieth_century() {
-        let temp: NaiveDate = date_parser("15-OCT-98".as_bytes()).unwrap().1;
+        let temp = parse_all(date, "15-OCT-98").unwrap();
         assert_eq!(temp, NaiveDate::from_ymd_opt(1998, 10, 15).unwrap());
     }
 
     #[test]
     fn test_date_parser_invalid_date() {
-        assert!(date_parser("31-FEB-99".as_bytes()).is_err());
+        assert!(parse_all(date, "31-FEB-99").is_none());
     }
 
     #[test]
     fn test_date_parser_invalid_month() {
-        assert!(date_parser("12-XYZ-09".as_bytes()).is_err());
+        assert!(parse_all(date, "12-XYZ-09").is_none());
     }
 
     #[test]
-    fn test_yes_parser() {
-        let (_, res) = yes("YES".as_bytes()).unwrap();
-        assert!(res);
-    }
-
-    #[test]
-    fn test_no_parser() {
-        let (_, res) = no("NO".as_bytes()).unwrap();
-        assert!(!res);
-    }
-
-    #[test]
-    fn test_token_mol_id_parser() {
-        assert!(mol_id("MOL_ID:".as_bytes()).is_ok());
-    }
-
-    #[test]
-    fn test_residue_list_parser() {
-        let res = residue_list_parser("GLY ILE VAL".as_bytes());
-        match res {
-            Ok((_, r)) => {
-                assert_eq!(r, vec!["GLY", "ILE", "VAL"]);
-            }
-            Err(_err) => panic!(),
-        }
-    }
-
-    #[test]
-    fn test_integer_list_parser() {
-        let res = integer_list("1,2,3".as_bytes());
-        match res {
-            Ok((_, r)) => {
-                assert_eq!(r[0], 1);
-            }
-            Err(e) => {
-                println!("{:?}", e);
-                panic!();
-            }
-        }
-    }
-
-    #[test]
-    fn test_structural_annotation_list_parser() {
-        let res = structural_annotation_list_parser(
-            "CA ATOMS ONLY, CHAIN A, B, C, D, E, F, G, H, I, J, K ; P ATOMS ONLY, CHAIN X, Y, Z-"
-                .as_bytes(),
+    fn test_list() {
+        assert_eq!(parse_all(list(','), "A,  C").unwrap(), ["A", "C"]);
+        assert_eq!(
+            parse_all(list(','), "D.VAN DER HELM, J.DOE,").unwrap(),
+            ["D.VAN DER HELM", "J.DOE"]
         );
-        match res {
-            Ok((_, ann)) => {
-                assert_eq!(
-                    ann[0],
-                    "CA ATOMS ONLY, CHAIN A, B, C, D, E, F, G, H, I, J, K "
-                );
-                assert_eq!(ann[1], " P ATOMS ONLY, CHAIN X, Y, Z");
-            }
-            Err(e) => {
-                println!("{:?}", e);
-                panic!();
-            }
-        }
     }
 
     #[test]
-    fn threedigit() {
-        if let Ok((_, res)) = super::threedigit_integer(b"  7") {
-            assert_eq!(7, res)
-        } else {
-            panic!()
-        }
+    fn test_specification_list() {
+        let tokens =
+            parse_all(specification_list, "MOL_ID:  1; OTHER_DETAILS: RATIO 1:1;").unwrap();
+        assert_eq!(tokens, [("MOL_ID", "1"), ("OTHER_DETAILS", "RATIO 1:1")]);
     }
 
     #[test]
-    fn parseint() {
-        let a = "  7".trim().parse::<u32>();
-        assert_eq!(7, a.unwrap());
+    fn specification_value_with_semicolon() {
+        let tokens =
+            parse_all(specification_list, "SYNONYM: PIMT; PROTEIN L-ISO; EC: 2.1").unwrap();
+        assert_eq!(tokens, [("SYNONYM", "PIMT; PROTEIN L-ISO"), ("EC", "2.1")]);
     }
 
     #[test]
-    fn two_space() {
-        assert!(super::two_space(b"  ").is_ok());
-    }
-
-    #[test]
-    fn two_space_fail() {
-        assert!(super::two_space(b" ").is_err());
+    fn specification_list_without_key_fails() {
+        assert!(parse_all(specification_list, "NOT A TOKEN").is_none());
     }
 }

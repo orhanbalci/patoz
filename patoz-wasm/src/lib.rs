@@ -14,7 +14,7 @@ struct ParseResult<'a> {
 /// yet are returned as `Unknown` records.
 #[wasm_bindgen]
 pub fn parse(content: &str) -> Result<JsValue, JsError> {
-    let (_, pdb_file) = patoz::parse(content).map_err(|e| JsError::new(&format!("{:?}", e)))?;
+    let pdb_file = patoz::parse(content);
     let result = ParseResult {
         records: pdb_file.records(),
     };

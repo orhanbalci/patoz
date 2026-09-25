@@ -1,66 +1,32 @@
-use super::{ast::types::*, primitive::*};
-use nom::{
-    character::complete::{anychar, line_ending, space1},
-    do_parse, named, opt,
-};
+use crate::{ast::types::*, primitive::*};
 
-named!(
-   pub modres_record_parser<Record>,
-    do_parse!(
-        modres
-            >> space1
-           >> idcode : idcode_parser_len
-           >> space1
-           >> residue_name : residue_parser
-           >> space1
-           >> chain_id : anychar
-           >> space1
-           >> sequence_number : integer
-           >> insertion_code : opt!(anychar) // TODO this should be none empty char.
-           >> space1
-           >> standart_residue_name : residue_parser
-           >> space1
-           >> comment : alphanum_word_with_spaces_inside
-           >> line_ending
-           >> (Record::Modres(
-               Modres{
-                    idcode,
-                    residue_name,
-                    chain_id,
-                    sequence_number,
-                    insertion_code,
-                    standart_residue_name,
-                    comment
-               }
-           ))
-    )
-);
+/// Parses a [MODRES](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#MODRES) record.
+pub(crate) fn parse(line: Line) -> Option<Record> {
+    Some(Record::Modres(Modres {
+        idcode: line.text(8, 11).to_owned(),
+        residue_name: line.text(13, 15).to_owned(),
+        chain_id: line.char_at(17).unwrap_or(' '),
+        sequence_number: line.int(19, 22)?,
+        insertion_code: line.char_at(23),
+        standart_residue_name: line.text(25, 27).to_owned(),
+        comment: line.text(30, 80).to_owned(),
+    }))
+}
 
 #[cfg(test)]
-pub mod test {
-    use super::*;
+mod test {
+    use crate::{test_util::single_record, Record};
 
     #[test]
-    fn test1() {
-        match super::modres_record_parser(
-            r#"MODRES 2R0L ASN A   74  ASN  GLYCOSYLATION SITE  
-"#
-            .as_bytes(),
-        ) {
-            Ok((_, Record::Modres(res))) => {
-                assert_eq!(res.idcode, "2R0L");
-                assert_eq!(res.residue_name, "ASN");
-                assert_eq!(res.chain_id, 'A');
-                assert_eq!(res.sequence_number, 74);
-                assert_eq!(res.insertion_code, Some(' '));
-                assert_eq!(res.standart_residue_name, "ASN");
-            }
-            Ok((_, _)) => {
-                println!("Unexpected record type");
-            }
-            Err(err) => {
-                println!("{}", err);
-            }
-        }
+    fn modres() {
+        let r = single_record("MODRES 2R0L ASN A   74  ASN  GLYCOSYLATION SITE  \n");
+        let Record::Modres(m) = r else { panic!() };
+        assert_eq!(m.idcode, "2R0L");
+        assert_eq!(m.residue_name, "ASN");
+        assert_eq!(m.chain_id, 'A');
+        assert_eq!(m.sequence_number, 74);
+        assert_eq!(m.insertion_code, None);
+        assert_eq!(m.standart_residue_name, "ASN");
+        assert_eq!(m.comment, "GLYCOSYLATION SITE");
     }
 }

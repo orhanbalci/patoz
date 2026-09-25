@@ -1,7 +1,7 @@
 [package]
 name = "patoz-wasm"
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
 authors = ["Orhan Balci <orhanbalci@gmail.com>"]
 description = "WebAssembly bindings for the patoz Protein Data Bank (pdb) file parser"
 repository = "https://github.com/orhanbalci/patoz.git"

@@ -1,36 +1,49 @@
 /*!
 Patoz is a strict, type safe PDB file parser. Converts text PDB file into a
 traversable record struct.
+
+```
+let mut pdb = patoz::parse("HEADER    PLANT PROTEIN                           02-MAR-00   1EJG\n");
+assert_eq!(pdb.header().header().unwrap().id_code, "1EJG");
+```
  */
-#![recursion_limit = "128"]
-
-extern crate nom;
-
 mod ast;
-pub mod author;
-pub mod caveat;
-pub mod compnd;
-pub mod dbref;
-pub mod dbref1;
-pub mod expdta;
-pub mod header;
-pub mod jrnl;
-pub mod keywds;
-pub mod mdltyp;
-pub mod modres;
-pub mod nummdl;
-pub mod obslte;
-pub mod primitive;
+mod author;
+mod caveat;
+mod compnd;
+mod dbref;
+mod dbref1;
+mod expdta;
+mod header;
+mod jrnl;
+mod keywds;
+mod mdltyp;
+mod modres;
+mod nummdl;
+mod obslte;
+mod primitive;
 mod record;
-pub mod remark;
-pub mod revdat;
-pub mod seqadv;
-pub mod seqres;
-pub mod source;
-pub mod split;
-pub mod sprsde;
-pub mod title;
+mod revdat;
+mod seqadv;
+mod seqres;
+mod source;
+mod split;
+mod sprsde;
+mod title;
 
 pub use ast::{pdb_file::*, types::*};
-pub use nom::IResult;
 pub use record::parse;
+
+#[cfg(test)]
+mod test_util {
+    use crate::Record;
+
+    /// Parses `content` which must contain exactly one record.
+    pub fn single_record(content: &str) -> Record {
+        let pdb = crate::parse(content);
+        match pdb.records() {
+            [record] => record.clone(),
+            records => panic!("expected one record, got {:?}", records),
+        }
+    }
+}

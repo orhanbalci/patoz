@@ -1,14 +1,5 @@
 use chrono::NaiveDate;
-use std::{marker::PhantomData, str::FromStr};
-
-#[derive(Debug)]
-pub(crate) struct Continuation<T> {
-    // TODO use to validate continuation line order
-    #[allow(dead_code)]
-    pub continuation: u32,
-    pub remaining: String,
-    pub phantom: PhantomData<T>,
-}
+use std::str::FromStr;
 
 ///Holds name of an author utilized by multiple
 ///parsers such as author and journal author parsers
@@ -54,17 +45,27 @@ impl FromStr for ExperimentalTechnique {
 pub enum Token {
     MoleculeId(u32),
     Molecule(String),
-    Chain { identifiers: Vec<String> },
+    Chain {
+        identifiers: Vec<String>,
+    },
     Fragment(String),
-    Synonym { synonyms: Vec<String> },
-    Ec { commission_numbers: Vec<String> },
+    Synonym {
+        synonyms: Vec<String>,
+    },
+    Ec {
+        commission_numbers: Vec<String>,
+    },
     Engineered(bool),
     Mutation(bool),
     OtherDetails(String),
     Synthetic(String),
     OrganismScientific(String),
-    OrganismCommon { organisms: Vec<String> },
-    OrganismTaxId { id: Vec<u32> },
+    OrganismCommon {
+        organisms: Vec<String>,
+    },
+    OrganismTaxId {
+        id: Vec<u32>,
+    },
     Strain(String),
     Variant(String),
     CellLine(String),
@@ -76,10 +77,16 @@ pub enum Token {
     Secretion(String),
     CellularLocation(String),
     Plasmid(String),
-    Gene { gene: Vec<String> },
+    Gene {
+        gene: Vec<String>,
+    },
     ExpressionSystem(String),
-    ExpressionSystemCommon { systems: Vec<String> },
-    ExpressionSystemTaxId { id: Vec<u32> },
+    ExpressionSystemCommon {
+        systems: Vec<String>,
+    },
+    ExpressionSystemTaxId {
+        id: Vec<u32>,
+    },
     ExpressionSystemStrain(String),
     ExpressionSystemVariant(String),
     ExpressionSystemCellLine(String),
@@ -93,6 +100,11 @@ pub enum Token {
     ExpressionSystemVector(String),
     ExpressionSystemPlasmid(String),
     ExpressionSystemGene(String),
+    /// a key this parser does not know, or a value not matching its key's type
+    Other {
+        key: String,
+        value: String,
+    },
 }
 
 /// Represents a modification made to this pdb entry.
@@ -160,6 +172,7 @@ pub struct Title {
 #[derive(Debug, Clone)]
 pub struct Obslte {
     pub replacement_date: NaiveDate,
+    pub id_code: String,
     pub replacement_ids: Vec<String>,
 }
 
@@ -167,6 +180,7 @@ impl std::default::Default for Obslte {
     fn default() -> Self {
         Obslte {
             replacement_date: NaiveDate::from_ymd_opt(1900, 1, 1).unwrap(),
+            id_code: String::default(),
             replacement_ids: Vec::new(),
         }
     }
@@ -339,16 +353,16 @@ pub struct Nummdl {
 pub struct Dbref {
     pub idcode: String,
     pub chain_id: char,
-    pub seq_begin: u32,
+    pub seq_begin: i32,
     pub initial_sequence: Option<char>,
-    pub seq_end: u32,
+    pub seq_end: i32,
     pub ending_sequence: Option<char>,
     pub database: String,
     pub db_accession: String,
     pub db_idcode: String,
-    pub db_seq_begin: u32,
+    pub db_seq_begin: i32,
     pub idbns_begin: Option<char>,
-    pub db_seq_end: u32,
+    pub db_seq_end: i32,
     pub dbins_end: Option<char>,
 }
 
@@ -357,9 +371,9 @@ pub struct Dbref {
 pub struct Dbref1 {
     pub idcode: String,
     pub chain_id: char,
-    pub seq_begin: u32,
+    pub seq_begin: i32,
     pub initial_sequence: Option<char>,
-    pub seq_end: u32,
+    pub seq_end: i32,
     pub ending_sequence: Option<char>,
     pub database: String,
     pub db_idcode: String,
@@ -371,8 +385,8 @@ pub struct Dbref2 {
     pub idcode: String,
     pub chain_id: char,
     pub db_accession: String,
-    pub db_seq_begin: u32,
-    pub db_seq_end: u32,
+    pub db_seq_begin: i32,
+    pub db_seq_end: i32,
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
@@ -381,7 +395,8 @@ pub struct Seqadv {
     pub idcode: String,
     pub conflicting_residue: String,
     pub chain_id: char,
-    pub sequence_number: u32,
+    /// residue number in the structure, `None` for deleted residues
+    pub sequence_number: Option<i32>,
     pub insertion_code: Option<char>,
     pub database: String,
     pub db_accession: String,
@@ -397,7 +412,7 @@ pub struct Modres {
     pub idcode: String,
     pub residue_name: String,
     pub chain_id: char,
-    pub sequence_number: u32,
+    pub sequence_number: i32,
     pub insertion_code: Option<char>,
     pub standart_residue_name: String,
     pub comment: String,
