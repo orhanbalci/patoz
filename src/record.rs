@@ -3,7 +3,7 @@ use crate::{
     atom, author, caveat, compnd, connectivity, dbref, dbref1, expdta, header, jrnl, keywds,
     master, mdltyp, modres, nummdl, obslte,
     primitive::Line,
-    revdat, seqadv, seqres, source, split, sprsde, title,
+    revdat, secondary, seqadv, seqres, source, split, sprsde, title,
 };
 
 /// Parses pdb file content. Every line ends up in a record: lines of record
@@ -39,6 +39,7 @@ fn group_len(lines: &[Line]) -> usize {
         | "MDLTYP" | "AUTHOR" | "SPRSDE" | "REVDAT" => continues(&|_| true),
         "JRNL" => continues(&|l| l.cols(13, 16) == first.cols(13, 16)),
         "SEQRES" => continues(&|l| l.cols(12, 12) == first.cols(12, 12)),
+        "SITE" => continues(&|l| l.cols(12, 14) == first.cols(12, 14)),
         "DBREF1" if lines.get(1).is_some_and(|l| l.record_name() == "DBREF2") => 2,
         _ => 1,
     }
@@ -75,6 +76,9 @@ fn parse_group(lines: &[Line]) -> Option<Record> {
         "TER" => atom::ter(first),
         "ENDMDL" => Some(Record::Endmdl),
         "MASTER" => master::parse(first),
+        "HELIX" => secondary::helix(first),
+        "SHEET" => secondary::sheet(first),
+        "SITE" => secondary::site(lines),
         "SSBOND" => connectivity::ssbond(first),
         "LINK" => connectivity::link(first),
         "CISPEP" => connectivity::cispep(first),
@@ -261,6 +265,14 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
         assert_eq!(
             master.num_ter as usize,
             count(|r| matches!(r, Record::Ter(_)))
+        );
+        assert_eq!(
+            master.num_helix as usize,
+            count(|r| matches!(r, Record::Helix(_)))
+        );
+        assert_eq!(
+            master.num_sheet as usize,
+            count(|r| matches!(r, Record::Sheet(_)))
         );
         assert_eq!(
             master.num_conect as usize,

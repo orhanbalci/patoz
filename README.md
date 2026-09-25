@@ -81,14 +81,14 @@ Lines of record types that are not supported yet come back as `{ "Unknown": "<li
 - [ ] [Hetnam](http://www.wwpdb.org/documentation/file-format-content/format33/sect4.html#HETNAM)
 - [ ] [Hetsyn](http://www.wwpdb.org/documentation/file-format-content/format33/sect4.html#HETSYN)
 ### Secondary Structure Section
-- [ ] [Helix](http://www.wwpdb.org/documentation/file-format-content/format33/sect5.html#HELIX)
-- [ ] [Sheet](http://www.wwpdb.org/documentation/file-format-content/format33/sect5.html#SHEET)
+- [x] [Helix](http://www.wwpdb.org/documentation/file-format-content/format33/sect5.html#HELIX)
+- [x] [Sheet](http://www.wwpdb.org/documentation/file-format-content/format33/sect5.html#SHEET)
 ### Connectivity Annotation Section
 - [x] [Ssbond](http://www.wwpdb.org/documentation/file-format-content/format33/sect6.html#SSBOND)
 - [x] [Link](http://www.wwpdb.org/documentation/file-format-content/format33/sect6.html#LINK)
 - [x] [Cispep](http://www.wwpdb.org/documentation/file-format-content/format33/sect6.html#CISPEP)
 ### Miscellaneous Features Section
-- [ ] [Site](http://www.wwpdb.org/documentation/file-format-content/format33/sect7.html#SITE)
+- [x] [Site](http://www.wwpdb.org/documentation/file-format-content/format33/sect7.html#SITE)
 ### Crystallographic and Coordinate Transformation Section
 - [ ] [Cryst1](http://www.wwpdb.org/documentation/file-format-content/format33/sect8.html#CRYST1)
 - [ ] [MtrixN](http://www.wwpdb.org/documentation/file-format-content/format33/sect8.html#MTRIXn)

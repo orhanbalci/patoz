@@ -27,6 +27,7 @@ mod obslte;
 mod primitive;
 mod record;
 mod revdat;
+mod secondary;
 mod seqadv;
 mod seqres;
 mod source;

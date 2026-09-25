@@ -552,6 +552,56 @@ pub struct Cispep {
     pub angle: Option<f64>,
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// helix between two residues
+pub struct Helix {
+    pub serial: u32,
+    pub helix_id: String,
+    pub start: ResidueRef,
+    pub end: ResidueRef,
+    /// helix class 1-10 as defined by the specification
+    pub class: Option<u32>,
+    pub comment: String,
+    pub length: Option<u32>,
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// strand of a beta sheet
+pub struct Sheet {
+    pub strand: u32,
+    pub sheet_id: String,
+    pub num_strands: u32,
+    pub start: ResidueRef,
+    pub end: ResidueRef,
+    /// sense relative to the previous strand: 0 first strand, 1 parallel,
+    /// -1 anti-parallel
+    pub sense: i32,
+    /// hydrogen bond registration with the previous strand, absent for the
+    /// first strand
+    pub registration: Option<SheetRegistration>,
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// atoms of a strand and the previous strand forming a hydrogen bond
+pub struct SheetRegistration {
+    pub current_atom: String,
+    pub current: ResidueRef,
+    pub previous_atom: String,
+    pub previous: ResidueRef,
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// residues forming a site, e.g. a ligand binding site
+pub struct Site {
+    pub site_id: String,
+    pub num_res: u32,
+    pub residues: Vec<ResidueRef>,
+}
+
 /// main enum unifying all record parser results.
 /// all sub parsers return a variant of this
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
@@ -592,9 +642,12 @@ pub enum Record {
     Ter(Ter),
     Hetatm(Atom),
     Endmdl,
+    Helix(Helix),
+    Sheet(Sheet),
     Ssbond(Ssbond),
     Link(Link),
     Cispep(Cispep),
+    Site(Site),
     Conect(Conect),
     Master(Master),
     End,
