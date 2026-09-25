@@ -84,9 +84,9 @@ Lines of record types that are not supported yet come back as `{ "Unknown": "<li
 - [ ] [Helix](http://www.wwpdb.org/documentation/file-format-content/format33/sect5.html#HELIX)
 - [ ] [Sheet](http://www.wwpdb.org/documentation/file-format-content/format33/sect5.html#SHEET)
 ### Connectivity Annotation Section
-- [ ] [Ssbond](http://www.wwpdb.org/documentation/file-format-content/format33/sect6.html#SSBOND)
-- [ ] [Link](http://www.wwpdb.org/documentation/file-format-content/format33/sect6.html#LINK)
-- [ ] [Cispep](http://www.wwpdb.org/documentation/file-format-content/format33/sect6.html#CISPEP)
+- [x] [Ssbond](http://www.wwpdb.org/documentation/file-format-content/format33/sect6.html#SSBOND)
+- [x] [Link](http://www.wwpdb.org/documentation/file-format-content/format33/sect6.html#LINK)
+- [x] [Cispep](http://www.wwpdb.org/documentation/file-format-content/format33/sect6.html#CISPEP)
 ### Miscellaneous Features Section
 - [ ] [Site](http://www.wwpdb.org/documentation/file-format-content/format33/sect7.html#SITE)
 ### Crystallographic and Coordinate Transformation Section
@@ -102,7 +102,7 @@ Lines of record types that are not supported yet come back as `{ "Unknown": "<li
 - [x] [Hetatm](http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#HETATM)
 - [x] [Endmdl](http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ENDMDL)
 ### Connectivity Section
-- [ ] [Conect](http://www.wwpdb.org/documentation/file-format-content/format33/sect10.html#CONECT)
+- [x] [Conect](http://www.wwpdb.org/documentation/file-format-content/format33/sect10.html#CONECT)
 ### Bookkeeping Section
 - [x] [Master](http://www.wwpdb.org/documentation/file-format-content/format33/sect11.html#MASTER)
 - [x] [End](http://www.wwpdb.org/documentation/file-format-content/format33/sect11.html#END)

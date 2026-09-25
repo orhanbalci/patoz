@@ -12,6 +12,7 @@ mod atom;
 mod author;
 mod caveat;
 mod compnd;
+mod connectivity;
 mod dbref;
 mod dbref1;
 mod expdta;

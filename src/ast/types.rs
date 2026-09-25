@@ -494,6 +494,64 @@ pub struct Master {
     pub num_seq: u32,
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// identifies a residue by its name and position in a chain
+pub struct ResidueRef {
+    pub residue_name: String,
+    pub chain_id: char,
+    pub residue_seq: i32,
+    pub insertion_code: Option<char>,
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// bonds of an atom listed in a CONECT record
+pub struct Conect {
+    pub serial: u32,
+    pub bonded: Vec<u32>,
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// disulfide bond between two cysteines
+pub struct Ssbond {
+    pub serial: u32,
+    pub residue1: ResidueRef,
+    pub residue2: ResidueRef,
+    pub symmetry1: String,
+    pub symmetry2: String,
+    pub length: Option<f64>,
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// connectivity between two atoms not implied by standard residues
+pub struct Link {
+    pub name1: String,
+    pub alt_loc1: Option<char>,
+    pub residue1: ResidueRef,
+    pub name2: String,
+    pub alt_loc2: Option<char>,
+    pub residue2: ResidueRef,
+    pub symmetry1: String,
+    pub symmetry2: String,
+    pub length: Option<f64>,
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// cis peptide bond between two residues
+pub struct Cispep {
+    pub serial: u32,
+    pub residue1: ResidueRef,
+    pub residue2: ResidueRef,
+    /// model number, 0 for single model entries
+    pub model: u32,
+    /// omega angle in degrees
+    pub angle: Option<f64>,
+}
+
 /// main enum unifying all record parser results.
 /// all sub parsers return a variant of this
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
@@ -534,6 +592,10 @@ pub enum Record {
     Ter(Ter),
     Hetatm(Atom),
     Endmdl,
+    Ssbond(Ssbond),
+    Link(Link),
+    Cispep(Cispep),
+    Conect(Conect),
     Master(Master),
     End,
     /// a line no record parser recognized, kept verbatim

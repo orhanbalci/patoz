@@ -1,7 +1,7 @@
 use crate::{
     ast::{pdb_file::*, types::*},
-    atom, author, caveat, compnd, dbref, dbref1, expdta, header, jrnl, keywds, master, mdltyp,
-    modres, nummdl, obslte,
+    atom, author, caveat, compnd, connectivity, dbref, dbref1, expdta, header, jrnl, keywds,
+    master, mdltyp, modres, nummdl, obslte,
     primitive::Line,
     revdat, seqadv, seqres, source, split, sprsde, title,
 };
@@ -75,6 +75,10 @@ fn parse_group(lines: &[Line]) -> Option<Record> {
         "TER" => atom::ter(first),
         "ENDMDL" => Some(Record::Endmdl),
         "MASTER" => master::parse(first),
+        "SSBOND" => connectivity::ssbond(first),
+        "LINK" => connectivity::link(first),
+        "CISPEP" => connectivity::cispep(first),
+        "CONECT" => connectivity::conect(first),
         "END" => Some(Record::End),
         _ => None,
     }
@@ -257,6 +261,10 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
         assert_eq!(
             master.num_ter as usize,
             count(|r| matches!(r, Record::Ter(_)))
+        );
+        assert_eq!(
+            master.num_conect as usize,
+            count(|r| matches!(r, Record::Conect(_)))
         );
         assert_eq!(
             master.num_remark as usize,

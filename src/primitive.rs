@@ -2,6 +2,7 @@
 Building blocks shared by record parsers: fixed column access to lines and
 nom parsers for values found inside records.
 */
+use crate::ResidueRef;
 use chrono::NaiveDate;
 use nom::{
     bytes::complete::{take_till, take_while1},
@@ -46,6 +47,17 @@ impl<'a> Line<'a> {
     /// number in columns `from..=to`, `None` if blank or not a number
     pub fn number<T: FromStr>(&self, from: usize, to: usize) -> Option<T> {
         self.text(from, to).parse().ok()
+    }
+
+    /// residue whose name starts at column `name`, followed by chain id at
+    /// `chain`, sequence number in `seq..=seq + 3` and insertion code
+    pub fn residue(&self, name: usize, chain: usize, seq: usize) -> Option<ResidueRef> {
+        Some(ResidueRef {
+            residue_name: self.text(name, name + 2).to_owned(),
+            chain_id: self.char_at(chain).unwrap_or(' '),
+            residue_seq: self.number(seq, seq + 3)?,
+            insertion_code: self.char_at(seq + 4),
+        })
     }
 
     /// four character id codes starting at column `from`, 5 columns apart
