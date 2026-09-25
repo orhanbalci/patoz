@@ -672,6 +672,42 @@ pub struct Mtrix {
     pub given: bool,
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// consecutive REMARK lines with the same remark number
+pub struct Remark {
+    pub number: u32,
+    /// text of each line after the remark number, columns 12-80
+    pub lines: Vec<String>,
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// a residue listed in REMARK 465 as not located in the experiment
+pub struct MissingResidue {
+    /// model number for multi model entries
+    pub model: Option<u32>,
+    pub residue: ResidueRef,
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// a biological assembly from REMARK 350
+pub struct BiologicalAssembly {
+    pub id: u32,
+    pub author_determined_unit: Option<String>,
+    pub software_determined_unit: Option<String>,
+    pub parts: Vec<AssemblyPart>,
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Clone, Default, PartialEq)]
+/// chains of an assembly and the operations generating their copies
+pub struct AssemblyPart {
+    pub chains: Vec<String>,
+    pub operations: Vec<Transformation>,
+}
+
 /// main enum unifying all record parser results.
 /// all sub parsers return a variant of this
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
@@ -705,7 +741,7 @@ pub enum Record {
     Dbref2(Dbref2),
     Seqadv(Seqadv),
     Modres(Modres),
-    Remark,
+    Remark(Remark),
     Cryst1(Cryst1),
     /// ORIGX1-3, transformation from orthogonal to submitted coordinates
     Origx(Transformation),

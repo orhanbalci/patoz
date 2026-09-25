@@ -68,7 +68,8 @@ Lines of record types that are not supported yet come back as `{ "Unknown": "<li
     - [x] Refn
     - [x] Pmid
     - [x] Doi
-- [ ] [Remarks](http://www.wwpdb.org/documentation/file-format-content/format33/remarks.html)
+- [x] [Remarks](http://www.wwpdb.org/documentation/file-format-content/format33/remarks.html)
+    - kept as text; REMARK 2 (resolution), 350 (biological assemblies) and 465 (missing residues) are also interpreted
 ### Primary Structure Section
 - [x] [Dbref](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#DBREF)
 - [x] [Dbref1](http://www.wwpdb.org/documentation/file-format-content/format33/sect3.html#DBREF1)

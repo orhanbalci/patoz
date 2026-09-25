@@ -28,6 +28,7 @@ mod nummdl;
 mod obslte;
 mod primitive;
 mod record;
+mod remark;
 mod revdat;
 mod secondary;
 mod seqadv;

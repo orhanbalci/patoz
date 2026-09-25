@@ -58,6 +58,30 @@ impl PdbFile<Vec<Record>> {
         }
     }
 
+    fn remark(&self, number: u32) -> Option<&Remark> {
+        self.records.iter().find_map(|r| match r {
+            Record::Remark(r) if r.number == number => Some(r),
+            _ => None,
+        })
+    }
+
+    /// resolution in angstroms from REMARK 2. `Some(None)` when resolution
+    /// is not applicable, e.g. for NMR entries; `None` if REMARK 2 is missing
+    /// or not understood
+    pub fn resolution(&self) -> Option<Option<f64>> {
+        crate::remark::resolution(self.remark(2)?)
+    }
+
+    /// residues not located in the experiment, from REMARK 465
+    pub fn missing_residues(&self) -> Option<Vec<MissingResidue>> {
+        crate::remark::missing_residues(self.remark(465)?)
+    }
+
+    /// biological assemblies from REMARK 350
+    pub fn biological_assemblies(&self) -> Option<Vec<BiologicalAssembly>> {
+        crate::remark::biological_assemblies(self.remark(350)?)
+    }
+
     /// record counts declared in the MASTER record
     pub fn master(&self) -> Option<&Master> {
         self.records.iter().find_map(|r| match r {

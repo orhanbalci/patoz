@@ -3,7 +3,7 @@ use crate::{
     atom, author, caveat, compnd, connectivity, crystal, dbref, dbref1, expdta, header, heterogen,
     jrnl, keywds, master, mdltyp, modres, nummdl, obslte,
     primitive::Line,
-    revdat, secondary, seqadv, seqres, source, split, sprsde, title,
+    remark, revdat, secondary, seqadv, seqres, source, split, sprsde, title,
 };
 
 /// Parses pdb file content. Every line ends up in a record: lines of record
@@ -38,6 +38,7 @@ fn group_len(lines: &[Line]) -> usize {
         "OBSLTE" | "TITLE" | "SPLIT" | "CAVEAT" | "COMPND" | "SOURCE" | "KEYWDS" | "EXPDTA"
         | "MDLTYP" | "AUTHOR" | "SPRSDE" | "REVDAT" => continues(&|_| true),
         "JRNL" => continues(&|l| l.cols(13, 16) == first.cols(13, 16)),
+        "REMARK" => continues(&|l| l.cols(8, 10) == first.cols(8, 10)),
         "SEQRES" => continues(&|l| l.cols(12, 12) == first.cols(12, 12)),
         "SITE" | "HETNAM" | "HETSYN" => continues(&|l| l.cols(12, 14) == first.cols(12, 14)),
         "FORMUL" => continues(&|l| l.cols(13, 15) == first.cols(13, 15)),
@@ -79,7 +80,7 @@ fn parse_group(lines: &[Line]) -> Option<Record> {
         "REVDAT" => revdat::parse(lines),
         "SPRSDE" => sprsde::parse(lines),
         "JRNL" => jrnl::parse(lines),
-        "REMARK" => Some(Record::Remark),
+        "REMARK" => remark::parse(lines),
         "DBREF" => dbref::parse(first),
         "DBREF1" if lines.len() == 2 => dbref1::parse(first, lines[1]),
         "SEQADV" => seqadv::parse(first),
@@ -312,10 +313,15 @@ JRNL        DOI    10.1073/PNAS.97.7.3171
             master.num_conect as usize,
             count(|r| matches!(r, Record::Conect(_)))
         );
-        assert_eq!(
-            master.num_remark as usize,
-            count(|r| matches!(r, Record::Remark))
-        );
+        let remark_lines: usize = pdb
+            .records()
+            .iter()
+            .map(|r| match r {
+                Record::Remark(r) => r.lines.len(),
+                _ => 0,
+            })
+            .sum();
+        assert_eq!(master.num_remark as usize, remark_lines);
     }
 
     #[test]
