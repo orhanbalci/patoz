@@ -1,14 +1,18 @@
 # Patoz
-Protein Data Bank (pdb) file parser
+Protein Data Bank (PDB) file parser and writer for Rust and WebAssembly
 
 ![Build Status](https://github.com/orhanbalci/patoz/workflows/CI/badge.svg)
 ![License](https://img.shields.io/github/license/orhanbalci/patoz.svg)
 
-⚠️ WIP This is a work in progress. Expect breaking changes frequently. Right now use at your own risk
+Patoz reads every record type of the [wwPDB format v3.3](http://www.wwpdb.org/documentation/file-format-content/format33/v3.3.html)
+into typed records, writes them back (99.998% of lines byte identical to the originals), and builds a format independent structure model with entities,
+models, chains, residues and atoms. It is checked against 486 structures from the PDB and their official mmCIF files.
+
+The API may still change before 1.0; see the [changelog](CHANGELOG.md).
 
 # 📦 Cargo.toml
 ```
-patoz = "0.1.0"
+patoz = "0.2.0"
 ```
 # 🔧 Examples
 ```rust
@@ -76,7 +80,12 @@ const atoms = models[0].chains.flatMap((c) => c.residues).flatMap((r) => r.atoms
 ```
 
 # 📊  Status
-## Record Parser Status
+All record types of the format are parsed. Lines that do not match the specification are kept as
+`Record::Unknown`, so every line of a file is accounted for.
+
+<details>
+<summary>Record types</summary>
+
 ### Title Section
 - [x] [Header](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#HEADER)
 - [x] [Obslte](http://www.wwpdb.org/documentation/file-format-content/format33/sect2.html#OBSLTE)
@@ -140,6 +149,8 @@ const atoms = models[0].chains.flatMap((c) => c.residues).flatMap((r) => r.atoms
 ### Bookkeeping Section
 - [x] [Master](http://www.wwpdb.org/documentation/file-format-content/format33/sect11.html#MASTER)
 - [x] [End](http://www.wwpdb.org/documentation/file-format-content/format33/sect11.html#END)
+
+</details>
 
 ## 📝 License
 

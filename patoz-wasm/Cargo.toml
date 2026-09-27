@@ -6,6 +6,8 @@ authors = ["Orhan Balci <orhanbalci@gmail.com>"]
 description = "WebAssembly bindings for the patoz Protein Data Bank (pdb) file parser"
 repository = "https://github.com/orhanbalci/patoz.git"
 license = "MIT"
+# not published yet; npm packaging is not set up
+publish = false
 
 [lib]
 crate-type = ["cdylib", "rlib"]

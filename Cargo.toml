@@ -4,15 +4,17 @@ exclude = ["pdb-harvester"]
 
 [package]
 name = "patoz"
-version = "0.1.1-alpha.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["Orhan Balci <orhanbalci@gmail.com>"]
-description = "Protein Data Bank (pdb) File Parser"
-homepage = "https://github.com/orhanbalci"
-repository = "https://github.com/orhanbalci/patoz.git"
-keywords = ["parser","nom", "pdb", "bioinformatics", "science"]
+description = "Protein Data Bank (PDB) file parser and writer with typed records and a structure model"
+homepage = "https://github.com/orhanbalci/patoz"
+repository = "https://github.com/orhanbalci/patoz"
+keywords = ["pdb", "protein", "bioinformatics", "parser", "structure"]
+categories = ["parser-implementations", "science"]
+rust-version = "1.77"
 license = "MIT"
-exclude = ["pdb-harvester", "pdb_harvester", "patoz-wasm"]
+exclude = ["pdb-harvester", "pdb_harvester", "patoz-wasm", "docs", ".github"]
 documentation = "https://docs.rs/patoz"
 readme = "README.md"
 
